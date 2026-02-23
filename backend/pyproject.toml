@@ -1,0 +1,15 @@
+[project]
+name = "job-scraper-api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiohttp>=3.13.3",
+    "beautifulsoup4>=4.14.3",
+    "fastapi>=0.131.0",
+    "lxml>=6.0.2",
+    "pydantic-settings>=2.13.1",
+    "python-dotenv>=1.2.1",
+    "uvicorn[standard]>=0.41.0",
+]
