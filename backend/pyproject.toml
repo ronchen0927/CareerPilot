@@ -1,7 +1,7 @@
 [project]
-name = "job-scraper-api"
-version = "0.1.0"
-description = "Add your description here"
+name = "jobradar"
+version = "1.0.0"
+description = "104 人力銀行職缺搜尋工具"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

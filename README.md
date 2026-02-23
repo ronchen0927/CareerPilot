@@ -1,10 +1,10 @@
-# 104 職缺搜尋
+# JobRadar
 
-利用爬蟲在 104 人力銀行上搜尋職缺，前後端分離架構。
+104 人力銀行職缺快速搜尋工具，前後端分離架構。
 
 ## 架構
 
-- **後端**：FastAPI + aiohttp + BeautifulSoup（非同步爬蟲）
+- **後端**：FastAPI + aiohttp（非同步爬蟲，使用 104 內部 JSON API）
 - **前端**：Vanilla HTML/CSS/JS SPA
 - **套件管理**：uv
 

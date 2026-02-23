@@ -15,9 +15,9 @@ logging.basicConfig(
 )
 
 app = FastAPI(
-    title="104 Job Scraper API",
-    description="104 人力銀行職缺爬蟲 API",
-    version="2.0.0",
+    title="JobRadar API",
+    description="104 人力銀行職缺搜尋 API",
+    version="1.0.0",
 )
 
 # CORS — 允許前端跨域請求
@@ -41,7 +41,7 @@ app.include_router(jobs.router)
 @app.get("/")
 async def root():
     return {
-        "message": "104 Job Scraper API",
+        "message": "JobRadar API",
         "docs": "/docs",
-        "version": "2.0.0",
+        "version": "1.0.0",
     }
