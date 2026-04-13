@@ -21,6 +21,8 @@ class JobListing(BaseModel):
     experience: str = Field(..., description="經歷要求")
     education: str = Field(..., description="最低學歷")
     salary: str = Field(..., description="薪水")
+    salary_low: int = Field(default=0, description="薪水下限（元/月）")
+    salary_high: int = Field(default=0, description="薪水上限（元/月）")
     is_featured: bool = Field(default=False, description="是否為精選職缺")
 
 

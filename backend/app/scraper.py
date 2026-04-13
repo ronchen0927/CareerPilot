@@ -99,9 +99,9 @@ def _parse_job(item: dict) -> JobListing | None:
         period = item.get("period", 0)
         experience = PERIOD_MAP.get(period, "不拘")
         education = _format_edu(item.get("optionEdu", []))
-        salary = _format_salary(
-            item.get("salaryLow", 0), item.get("salaryHigh", 0)
-        )
+        salary_low_val = item.get("salaryLow", 0)
+        salary_high_val = item.get("salaryHigh", 0)
+        salary = _format_salary(salary_low_val, salary_high_val)
 
         # Featured jobs don't have a normal date
         is_featured = item.get("jobRo", 0) == 1 and not appear_date
@@ -115,6 +115,8 @@ def _parse_job(item: dict) -> JobListing | None:
             experience=experience,
             education=education,
             salary=salary,
+            salary_low=salary_low_val,
+            salary_high=salary_high_val,
             is_featured=is_featured,
         )
     except Exception as e:

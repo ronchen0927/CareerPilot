@@ -636,6 +636,123 @@ body {
 }
 
 /* ========================================
+   Bookmark Button (in results table)
+   ======================================== */
+.btn-bookmark {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    border-radius: var(--radius-sm);
+    transition: color var(--transition-fast), transform var(--transition-fast);
+    line-height: 1;
+}
+
+.btn-bookmark:hover {
+    color: var(--warning);
+    transform: scale(1.25);
+}
+
+.btn-bookmark--active {
+    color: var(--warning);
+}
+
+/* ========================================
+   Export CSV Button
+   ======================================== */
+.btn-export {
+    padding: 0.35rem 0.9rem;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.btn-export:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+    background: var(--accent-glow);
+}
+
+/* ========================================
+   Bookmarks Section
+   ======================================== */
+.bookmarks {
+    margin-top: var(--space-xl);
+    animation: fade-in-up 0.5s ease both;
+}
+
+.bookmarks__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.bookmarks__title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--warning), #f97316);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ========================================
+   Status Select
+   ======================================== */
+.status-select {
+    padding: 0.3rem 0.5rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+
+.status-select:focus {
+    border-color: var(--border-focus);
+}
+
+.status--want      { border-color: var(--accent);   color: var(--accent-light); }
+.status--applied   { border-color: var(--warning);  color: var(--warning); }
+.status--interview { border-color: #8b5cf6;          color: #a78bfa; }
+.status--offer     { border-color: var(--success);  color: var(--success); }
+.status--reject    { border-color: var(--danger);   color: var(--danger); }
+
+/* ========================================
+   Remove Button
+   ======================================== */
+.btn-remove {
+    padding: 0.3rem 0.7rem;
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-sm);
+    color: var(--danger);
+    font-family: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.btn-remove:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--danger);
+}
+
+/* ========================================
    Utilities
    ======================================== */
 .hidden {

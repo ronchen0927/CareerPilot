@@ -4,7 +4,10 @@
  * Handles:
  * - Loading filter options from API
  * - Submitting search requests
+ * - Salary filter (client-side, instant)
  * - Rendering results table
+ * - Bookmark management (localStorage)
+ * - CSV export
  * - Loading / error state management
  */
 
@@ -23,6 +26,26 @@ const resultTime = document.getElementById("result-time");
 const resultsBody = document.getElementById("results-body");
 const areaContainer = document.getElementById("area-options");
 const expContainer = document.getElementById("experience-options");
+const minSalaryInput = document.getElementById("min-salary");
+const exportCsvBtn = document.getElementById("export-csv-btn");
+const bookmarksEl = document.getElementById("bookmarks");
+const bookmarksBody = document.getElementById("bookmarks-body");
+const bookmarkCountEl = document.getElementById("bookmark-count");
+
+// ==========================================
+// State
+// ==========================================
+let lastResults = [];       // All results from the last API call
+let displayedResults = [];  // After salary filter — what's shown in the table
+
+const STATUSES = ["想投", "已投", "面試中", "錄取", "不適合"];
+const STATUS_CSS = {
+    "想投":   "status--want",
+    "已投":   "status--applied",
+    "面試中": "status--interview",
+    "錄取":   "status--offer",
+    "不適合": "status--reject",
+};
 
 // ==========================================
 // Init — Load Options
@@ -32,12 +55,10 @@ async function loadOptions() {
         const res = await fetch(`${API_BASE}/api/jobs/options`);
         if (!res.ok) throw new Error("無法載入選項");
         const data = await res.json();
-
         renderCheckboxes(areaContainer, data.areas, "area");
         renderCheckboxes(expContainer, data.experience, "exp");
     } catch (err) {
         console.error("載入選項失敗:", err);
-        // Fallback: render hardcoded options
         renderFallbackOptions();
     }
 }
@@ -89,11 +110,9 @@ async function performSearch() {
 
     if (!keyword) return;
 
-    // Gather checked values
     const areas = getCheckedValues("#area-options input:checked");
     const experience = getCheckedValues("#experience-options input:checked");
 
-    // UI state
     showLoading();
 
     try {
@@ -120,18 +139,53 @@ function getCheckedValues(selector) {
 }
 
 // ==========================================
+// Salary Filter
+// ==========================================
+function getMinSalary() {
+    return parseInt(minSalaryInput.value, 10) || 0;
+}
+
+minSalaryInput.addEventListener("input", () => {
+    if (lastResults.length > 0) applyAndRenderResults();
+});
+
+function applyAndRenderResults() {
+    const minSalary = getMinSalary();
+    displayedResults = minSalary > 0
+        ? lastResults.filter(job => job.salary_low >= minSalary)
+        : [...lastResults];
+
+    if (minSalary > 0) {
+        resultCount.textContent = `${displayedResults.length} 筆（共 ${lastResults.length} 筆，已篩選）`;
+    } else {
+        resultCount.textContent = `${lastResults.length} 筆結果`;
+    }
+
+    renderTable(displayedResults);
+}
+
+// ==========================================
 // Render Results
 // ==========================================
 function renderResults(data) {
     hideLoading();
     errorEl.classList.add("hidden");
 
-    resultCount.textContent = `${data.count} 筆結果`;
+    lastResults = data.results;
     resultTime.textContent = `耗時 ${data.elapsed_time} 秒`;
 
-    resultsBody.innerHTML = data.results
-        .map(
-            (job, i) => `
+    applyAndRenderResults();
+
+    resultsEl.classList.remove("hidden");
+    resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderTable(jobs) {
+    const bookmarks = loadBookmarks();
+    resultsBody.innerHTML = jobs
+        .map((job, i) => {
+            const starred = !!bookmarks[job.link];
+            return `
       <tr class="${job.is_featured ? "featured" : ""}" style="animation-delay: ${i * 0.03}s">
         <td>
           ${job.is_featured
@@ -149,16 +203,175 @@ function renderResults(data) {
         <td>${escapeHtml(job.experience)}</td>
         <td>${escapeHtml(job.education)}</td>
         <td><span class="salary-text">${escapeHtml(job.salary)}</span></td>
+        <td>
+          <button class="btn-bookmark ${starred ? "btn-bookmark--active" : ""}"
+                  data-link="${escapeHtml(job.link)}"
+                  title="${starred ? "取消收藏" : "加入收藏"}">
+            ${starred ? "★" : "☆"}
+          </button>
+        </td>
       </tr>
-    `
-        )
+    `;
+        })
         .join("");
-
-    resultsEl.classList.remove("hidden");
-
-    // Scroll to results
-    resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+// Event delegation for results table bookmark buttons
+resultsBody.addEventListener("click", (e) => {
+    const btn = e.target.closest(".btn-bookmark");
+    if (!btn) return;
+    const link = btn.dataset.link;
+    const job = displayedResults.find(j => j.link === link);
+    if (job) toggleBookmark(job);
+});
+
+// ==========================================
+// Bookmark Management (localStorage)
+// ==========================================
+function loadBookmarks() {
+    try {
+        return JSON.parse(localStorage.getItem("jobradar_bookmarks") || "{}");
+    } catch {
+        return {};
+    }
+}
+
+function saveBookmarks(bookmarks) {
+    localStorage.setItem("jobradar_bookmarks", JSON.stringify(bookmarks));
+}
+
+function toggleBookmark(job) {
+    const bookmarks = loadBookmarks();
+    if (bookmarks[job.link]) {
+        delete bookmarks[job.link];
+    } else {
+        bookmarks[job.link] = {
+            job: job.job,
+            date: job.date,
+            company: job.company,
+            city: job.city,
+            salary: job.salary,
+            status: "想投",
+        };
+    }
+    saveBookmarks(bookmarks);
+    renderBookmarks();
+    updateStarButtons();
+}
+
+function setBookmarkStatus(link, status) {
+    const bookmarks = loadBookmarks();
+    if (bookmarks[link]) {
+        bookmarks[link].status = status;
+        saveBookmarks(bookmarks);
+    }
+}
+
+function removeBookmark(link) {
+    const bookmarks = loadBookmarks();
+    delete bookmarks[link];
+    saveBookmarks(bookmarks);
+    renderBookmarks();
+    updateStarButtons();
+}
+
+function updateStarButtons() {
+    const bookmarks = loadBookmarks();
+    document.querySelectorAll(".btn-bookmark").forEach(btn => {
+        const link = btn.dataset.link;
+        const starred = !!bookmarks[link];
+        btn.textContent = starred ? "★" : "☆";
+        btn.title = starred ? "取消收藏" : "加入收藏";
+        btn.classList.toggle("btn-bookmark--active", starred);
+    });
+}
+
+// ==========================================
+// Render Bookmark Section
+// ==========================================
+function renderBookmarks() {
+    const bookmarks = loadBookmarks();
+    const entries = Object.entries(bookmarks);
+
+    if (entries.length === 0) {
+        bookmarksEl.classList.add("hidden");
+        return;
+    }
+
+    bookmarksEl.classList.remove("hidden");
+    bookmarkCountEl.textContent = `${entries.length} 筆`;
+
+    bookmarksBody.innerHTML = entries
+        .map(([link, bm]) => `
+      <tr data-link="${escapeHtml(link)}">
+        <td>${escapeHtml(bm.date)}</td>
+        <td>
+          <a href="${escapeHtml(link)}" target="_blank" rel="noopener" class="job-link">
+            ${escapeHtml(bm.job)}
+          </a>
+        </td>
+        <td>${escapeHtml(bm.company)}</td>
+        <td>${escapeHtml(bm.city)}</td>
+        <td><span class="salary-text">${escapeHtml(bm.salary)}</span></td>
+        <td>
+          <select class="status-select ${STATUS_CSS[bm.status] || ""}">
+            ${STATUSES.map(s => `<option value="${s}" ${s === bm.status ? "selected" : ""}>${s}</option>`).join("")}
+          </select>
+        </td>
+        <td>
+          <button class="btn-remove">移除</button>
+        </td>
+      </tr>
+    `)
+        .join("");
+}
+
+// Event delegation for bookmark section
+bookmarksBody.addEventListener("change", (e) => {
+    if (e.target.classList.contains("status-select")) {
+        const link = e.target.closest("tr").dataset.link;
+        setBookmarkStatus(link, e.target.value);
+        e.target.className = `status-select ${STATUS_CSS[e.target.value] || ""}`;
+    }
+});
+
+bookmarksBody.addEventListener("click", (e) => {
+    const btn = e.target.closest(".btn-remove");
+    if (!btn) return;
+    const link = btn.closest("tr").dataset.link;
+    removeBookmark(link);
+});
+
+// ==========================================
+// CSV Export
+// ==========================================
+exportCsvBtn.addEventListener("click", () => {
+    if (displayedResults.length === 0) return;
+
+    const headers = ["刊登日期", "職位", "公司名稱", "城市", "經歷", "最低學歷", "薪水", "連結"];
+    const rows = displayedResults.map(job => [
+        job.date,
+        job.job,
+        job.company,
+        job.city,
+        job.experience,
+        job.education,
+        job.salary,
+        job.link,
+    ]);
+
+    const csv = [headers, ...rows]
+        .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `jobradar_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+});
 
 // ==========================================
 // UI State Helpers
@@ -227,4 +440,5 @@ themeToggle.addEventListener("click", toggleTheme);
 document.addEventListener("DOMContentLoaded", () => {
     initTheme();
     loadOptions();
+    renderBookmarks();
 });
