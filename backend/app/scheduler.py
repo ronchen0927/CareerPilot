@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 import aiohttp
 
 from .alerts import MAX_SEEN_LINKS, load_alerts, save_alerts
-from .models import JobSearchRequest
+from .models import JobListing, JobSearchRequest
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ async def _check_alerts() -> None:
         save_alerts(alerts)
 
 
-async def _fetch_new_jobs(alert: dict) -> list:
+async def _fetch_new_jobs(alert: dict) -> list[JobListing]:
     """Scrape jobs for the alert and return only unseen ones."""
     from .scraper import scrape_jobs
 

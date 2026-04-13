@@ -493,14 +493,6 @@ errorDismiss.addEventListener("click", () => {
     errorEl.classList.add("hidden");
 });
 
-// ==========================================
-// Utilities
-// ==========================================
-function escapeHtml(text) {
-    const div = document.createElement("div");
-    div.textContent = text || "";
-    return div.innerHTML;
-}
 
 // ==========================================
 // Theme Toggle
