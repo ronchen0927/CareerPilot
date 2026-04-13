@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 import logging
 import ssl
 
@@ -59,14 +58,7 @@ def _format_edu(edu_list: list[int]) -> str:
 
 def _build_url(keyword: str, area: str, page: int, jobexp: str) -> str:
     """Build 104 API URL."""
-    params = (
-        f"keyword={keyword}"
-        f"&order=15"
-        f"&page={page}"
-        f"&mode=s"
-        f"&jobsource=2021indexpoc"
-        f"&ro=0"
-    )
+    params = f"keyword={keyword}&order=15&page={page}&mode=s&jobsource=2021indexpoc&ro=0"
     if area:
         params += f"&area={area}"
     if jobexp:
@@ -134,8 +126,7 @@ async def scrape_jobs(request: JobSearchRequest) -> list[JobListing]:
     exp_str = "%2C".join(request.experience) if request.experience else ""
 
     urls = [
-        _build_url(request.keyword, area_str, page, exp_str)
-        for page in range(1, request.pages + 1)
+        _build_url(request.keyword, area_str, page, exp_str) for page in range(1, request.pages + 1)
     ]
 
     headers = {
@@ -163,9 +154,7 @@ async def scrape_jobs(request: JobSearchRequest) -> list[JobListing]:
             logger.error("爬取失敗 %s: %s", url, e)
             return []
 
-    async with aiohttp.ClientSession(
-        connector=connector, headers=headers
-    ) as session:
+    async with aiohttp.ClientSession(connector=connector, headers=headers) as session:
         tasks = [fetch(session, url) for url in urls]
         results = await asyncio.gather(*tasks)
 

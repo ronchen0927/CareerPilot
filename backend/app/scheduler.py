@@ -11,13 +11,12 @@ Every 60 seconds it checks all alerts. For each due alert it:
 
 import asyncio
 import logging
-import ssl
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import aiohttp
 
 from .alerts import MAX_SEEN_LINKS, load_alerts, save_alerts
-from .models import AlertCreateRequest, JobSearchRequest
+from .models import JobSearchRequest
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +39,7 @@ async def run_scheduler() -> None:
 # Internal helpers
 # ──────────────────────────────────────────
 
+
 def _is_due(alert: dict, now: datetime) -> bool:
     last_run = alert.get("last_run")
     if last_run is None:
@@ -57,7 +57,7 @@ async def _check_alerts() -> None:
     if not alerts:
         return
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     changed = False
 
     for alert_id, alert in list(alerts.items()):
@@ -122,9 +122,7 @@ async def _send_notification(alert: dict, new_jobs: list) -> None:
     message = (
         f"\n🔍 JobRadar 職缺提醒\n"
         f"關鍵字：{keyword}\n"
-        f"找到 {len(new_jobs)} 筆新職缺\n\n"
-        + "\n\n".join(job_lines)
-        + suffix
+        f"找到 {len(new_jobs)} 筆新職缺\n\n" + "\n\n".join(job_lines) + suffix
     )
 
     if notify_type == "line":

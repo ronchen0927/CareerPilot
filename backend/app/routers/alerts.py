@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException
 
@@ -14,10 +14,7 @@ async def list_alerts():
     """回傳所有已設定的職缺提醒（隱藏 seen_links 以減少回應大小）"""
     alerts = load_alerts()
     # Strip seen_links from the response to keep payload small
-    sanitized = [
-        {k: v for k, v in alert.items() if k != "seen_links"}
-        for alert in alerts.values()
-    ]
+    sanitized = [{k: v for k, v in alert.items() if k != "seen_links"} for alert in alerts.values()]
     return {"alerts": sanitized}
 
 
@@ -29,7 +26,7 @@ async def create_alert(request: AlertCreateRequest):
     alert = {
         "id": alert_id,
         **request.model_dump(),
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "last_run": None,
         "seen_links": [],
     }
@@ -65,7 +62,7 @@ async def trigger_alert(alert_id: str):
         seen: set[str] = set(alert.get("seen_links", []))
         seen.update(j.link for j in new_jobs)
         alert["seen_links"] = list(seen)
-        alert["last_run"] = datetime.now(timezone.utc).isoformat()
+        alert["last_run"] = datetime.now(UTC).isoformat()
         alerts[alert_id] = alert
         save_alerts(alerts)
 
