@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="JobRadar — 職缺提醒設定">
+  <title>JobRadar — 職缺提醒</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/alerts.css">
+</head>
+
+<body>
+  <!-- Theme toggle -->
+  <button id="theme-toggle" class="theme-toggle" aria-label="切換深色/淺色模式">
+    <span class="theme-toggle__icon">🌙</span>
+  </button>
+
+  <!-- Background glow effects -->
+  <div class="bg-glow bg-glow--1"></div>
+  <div class="bg-glow bg-glow--2"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="alerts-header">
+      <div class="alerts-header__left">
+        <a href="index.html" class="btn-back">← 回主頁</a>
+        <div>
+          <h1 class="alerts-title">職缺提醒</h1>
+          <p class="alerts-subtitle">設定條件，有新職缺時自動通知</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Create Alert Form -->
+    <section class="search-card" style="animation: fade-in-up 0.5s ease 0.1s both;">
+      <h2 class="section-title">新增提醒</h2>
+      <form id="alert-form">
+        <!-- Keyword -->
+        <div class="form-group">
+          <label class="form-label" for="alert-keyword">
+            <span class="form-label__icon">💼</span>
+            搜尋關鍵字
+          </label>
+          <input type="text" id="alert-keyword" class="form-input" placeholder="職稱、技能..." required>
+        </div>
+
+        <!-- Area + Experience (2 columns) -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              <span class="form-label__icon">📍</span>
+              地區
+            </label>
+            <div id="alert-area-options" class="checkbox-grid"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <span class="form-label__icon">⏳</span>
+              經歷
+            </label>
+            <div id="alert-exp-options" class="checkbox-grid"></div>
+          </div>
+        </div>
+
+        <!-- Pages + Min Salary (2 columns) -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="alert-pages">
+              <span class="form-label__icon">📄</span>
+              爬取頁數
+            </label>
+            <input type="number" id="alert-pages" class="form-input" value="3" min="1" max="10">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="alert-min-salary">
+              <span class="form-label__icon">💰</span>
+              最低月薪（元，0 不限）
+            </label>
+            <input type="number" id="alert-min-salary" class="form-input" value="0" min="0" step="1000">
+          </div>
+        </div>
+
+        <!-- Interval -->
+        <div class="form-group">
+          <label class="form-label" for="alert-interval">
+            <span class="form-label__icon">⏰</span>
+            檢查頻率
+          </label>
+          <select id="alert-interval" class="form-input form-select">
+            <option value="30">每 30 分鐘</option>
+            <option value="60" selected>每 1 小時</option>
+            <option value="120">每 2 小時</option>
+            <option value="240">每 4 小時</option>
+            <option value="480">每 8 小時</option>
+            <option value="1440">每天一次</option>
+          </select>
+        </div>
+
+        <!-- Notify Type -->
+        <div class="form-group">
+          <label class="form-label">
+            <span class="form-label__icon">🔔</span>
+            通知方式
+          </label>
+          <div class="notify-type-grid">
+            <label class="notify-type-chip">
+              <input type="radio" name="notify-type" value="line" checked>
+              <span>Line Notify</span>
+            </label>
+            <label class="notify-type-chip">
+              <input type="radio" name="notify-type" value="webhook">
+              <span>Webhook URL</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Notify Target -->
+        <div class="form-group">
+          <label class="form-label" for="alert-target">
+            <span class="form-label__icon" id="target-icon">🔑</span>
+            <span id="target-label">Line Notify Token</span>
+            <a id="target-hint" href="https://notify-bot.line.me/my/" target="_blank" rel="noopener"
+              class="form-label__link">取得 Token →</a>
+          </label>
+          <input type="text" id="alert-target" class="form-input"
+            placeholder="貼上 Line Notify Token..." required>
+        </div>
+
+        <button type="submit" id="alert-submit-btn" class="btn-search">
+          <span class="btn-search__text">建立提醒</span>
+          <span class="btn-search__icon">+</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- Active Alerts -->
+    <section id="alerts-list-section" class="alerts-list-section hidden">
+      <h2 class="section-title">已設定的提醒</h2>
+      <div id="alerts-list" class="alerts-list"></div>
+    </section>
+
+    <!-- Empty alerts state -->
+    <div id="alerts-empty" class="alerts-empty hidden">
+      <p class="alerts-empty__text">還沒有設定任何提醒，在上方填寫條件後點「建立提醒」。</p>
+    </div>
+
+    <!-- Error -->
+    <section id="error" class="error-card hidden">
+      <span class="error-card__icon">⚠️</span>
+      <p id="error-message" class="error-card__text"></p>
+      <button id="error-dismiss" class="btn-dismiss">關閉</button>
+    </section>
+  </div>
+
+  <script src="js/alerts.js"></script>
+</body>
+
+</html>

@@ -26,6 +26,19 @@ class JobListing(BaseModel):
     is_featured: bool = Field(default=False, description="是否為精選職缺")
 
 
+class AlertCreateRequest(BaseModel):
+    """建立新職缺提醒的請求參數"""
+
+    keyword: str = Field(..., min_length=1, description="搜尋關鍵字")
+    areas: list[str] = Field(default=[], description="地區代碼清單")
+    experience: list[str] = Field(default=[], description="經歷要求代碼清單")
+    pages: int = Field(default=3, ge=1, le=10, description="爬取頁數")
+    min_salary: int = Field(default=0, ge=0, description="最低月薪篩選（元）")
+    notify_type: str = Field(..., description="通知方式：line | webhook")
+    notify_target: str = Field(..., min_length=1, description="Line Notify Token 或 Webhook URL")
+    interval_minutes: int = Field(default=60, ge=30, le=1440, description="檢查間隔（分鐘）")
+
+
 class JobSearchResponse(BaseModel):
     """搜尋結果回應"""
 

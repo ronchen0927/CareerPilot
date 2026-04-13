@@ -1,4 +1,6 @@
+import asyncio
 import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -6,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .config import settings
-from .routers import jobs
+from .routers import alerts, jobs
 
 # Logging
 logging.basicConfig(
@@ -14,10 +16,25 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from .scheduler import run_scheduler
+
+    task = asyncio.create_task(run_scheduler())
+    yield
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
+
 app = FastAPI(
     title="JobRadar API",
     description="104 人力銀行職缺搜尋 API",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # CORS — 允許前端跨域請求
@@ -36,6 +53,7 @@ if static_dir.exists():
 
 # Routers
 app.include_router(jobs.router)
+app.include_router(alerts.router)
 
 
 @app.get("/")
