@@ -1,0 +1,361 @@
+/* ========================================
+   Dashboard Layout
+   ======================================== */
+.dashboard-container {
+    max-width: 100%;
+    padding: var(--space-xl);
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========================================
+   Dashboard Header
+   ======================================== */
+.dashboard-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+    animation: fade-in-down 0.5s ease;
+}
+
+.dashboard-header__left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-card);
+}
+
+.btn-back:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+}
+
+.dashboard-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--text-primary), var(--accent-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+}
+
+.dashboard-subtitle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 0.2rem;
+}
+
+/* ========================================
+   Stats Bar
+   ======================================== */
+.stats-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: 0.6rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-card);
+}
+
+.stat-total {
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding-right: var(--space-sm);
+    border-right: 1px solid var(--border-color);
+    margin-right: var(--space-xs);
+}
+
+.stat-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid;
+}
+
+/* ========================================
+   Kanban Board
+   ======================================== */
+.kanban-board {
+    display: flex;
+    gap: var(--space-lg);
+    overflow-x: auto;
+    padding-bottom: var(--space-lg);
+    align-items: flex-start;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+    animation: fade-in-up 0.5s ease 0.1s both;
+}
+
+.kanban-board::-webkit-scrollbar {
+    height: 6px;
+}
+
+.kanban-board::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.kanban-board::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+/* ========================================
+   Kanban Column
+   ======================================== */
+.kanban-column {
+    flex: 0 0 272px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-top: 3px solid var(--col-color);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(20px);
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 220px);
+    min-height: 200px;
+    transition: box-shadow var(--transition-fast);
+}
+
+.kanban-column__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.kanban-column__title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--col-color);
+    letter-spacing: 0.02em;
+}
+
+.kanban-column__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 0.4rem;
+    background: var(--col-bg);
+    border-radius: 100px;
+    color: var(--col-color);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* ========================================
+   Cards Container
+   ======================================== */
+.kanban-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    overflow-y: auto;
+    flex: 1;
+    transition: background var(--transition-fast);
+}
+
+.kanban-cards::-webkit-scrollbar {
+    width: 4px;
+}
+
+.kanban-cards::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+}
+
+.kanban-cards--drag-over {
+    background: var(--col-bg);
+    border-radius: var(--radius-md);
+}
+
+/* Drop zone placeholder at bottom of each column */
+.kanban-drop-zone {
+    flex-shrink: 0;
+    height: 4px;
+    border-radius: 2px;
+    transition: all var(--transition-base);
+}
+
+.kanban-cards--drag-over .kanban-drop-zone {
+    height: 56px;
+    border: 2px dashed var(--col-color);
+    border-radius: var(--radius-md);
+    background: transparent;
+}
+
+/* ========================================
+   Kanban Card
+   ======================================== */
+.kanban-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    cursor: grab;
+    position: relative;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast), opacity var(--transition-fast);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    user-select: none;
+}
+
+.kanban-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-2px);
+}
+
+.kanban-card:active {
+    cursor: grabbing;
+}
+
+.kanban-card--dragging {
+    opacity: 0.35;
+    transform: rotate(1.5deg) scale(1.02);
+}
+
+.kanban-card__remove {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    opacity: 0;
+    line-height: 1;
+}
+
+.kanban-card:hover .kanban-card__remove {
+    opacity: 1;
+}
+
+.kanban-card__remove:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.kanban-card__title {
+    display: block;
+    color: var(--accent-light);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.88rem;
+    margin-bottom: var(--space-sm);
+    padding-right: 1.4rem;
+    line-height: 1.4;
+    transition: color var(--transition-fast);
+}
+
+.kanban-card__title:hover {
+    color: #a5b4fc;
+    text-decoration: underline;
+}
+
+[data-theme="light"] .kanban-card__title:hover {
+    color: #4338ca;
+}
+
+.kanban-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.kanban-card__company {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.kanban-card__city {
+    color: var(--text-muted);
+}
+
+.kanban-card__city::before {
+    content: " · ";
+}
+
+.kanban-card__salary {
+    display: inline-block;
+    font-size: 0.78rem;
+    color: var(--success);
+    font-weight: 600;
+}
+
+/* ========================================
+   Empty State
+   ======================================== */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-2xl);
+    text-align: center;
+    animation: fade-in-up 0.5s ease both;
+}
+
+.empty-state__icon {
+    font-size: 3rem;
+    opacity: 0.4;
+}
+
+.empty-state__text {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.empty-state__hint {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
