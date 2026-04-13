@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="JobRadar — 投遞看板">
+  <title>JobRadar — 投遞看板</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+  <!-- Theme toggle -->
+  <button id="theme-toggle" class="theme-toggle" aria-label="切換深色/淺色模式">
+    <span class="theme-toggle__icon">🌙</span>
+  </button>
+
+  <!-- Background glow effects -->
+  <div class="bg-glow bg-glow--1"></div>
+  <div class="bg-glow bg-glow--2"></div>
+
+  <div class="dashboard-container">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="dashboard-header__left">
+        <a href="index.html" class="btn-back">← 回主頁搜尋</a>
+        <div>
+          <h1 class="dashboard-title">投遞看板</h1>
+          <p class="dashboard-subtitle">拖曳職缺卡片以更新投遞狀態</p>
+        </div>
+      </div>
+      <div id="stats-bar" class="stats-bar"></div>
+    </header>
+
+    <!-- Kanban Board -->
+    <div id="kanban-board" class="kanban-board"></div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="empty-state hidden">
+      <div class="empty-state__icon">📋</div>
+      <p class="empty-state__text">還沒有收藏的職缺</p>
+      <p class="empty-state__hint">回主頁搜尋並點擊 ☆ 來收藏職缺</p>
+      <a href="index.html" class="btn-goto" style="max-width:200px; margin-top:0.5rem">去搜尋職缺 →</a>
+    </div>
+  </div>
+
+  <script src="js/dashboard.js"></script>
+</body>
+
+</html>

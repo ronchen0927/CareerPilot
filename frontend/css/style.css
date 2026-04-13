@@ -898,6 +898,24 @@ body {
     background-clip: text;
 }
 
+.btn-dashboard {
+    margin-left: auto;
+    padding: 0.35rem 0.9rem;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.btn-dashboard:hover {
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
 /* ========================================
    Status Select
    ======================================== */
