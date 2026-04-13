@@ -260,12 +260,6 @@ function formatLastRun(isoStr) {
     return `${Math.floor(hr / 24)} 天前執行`;
 }
 
-function escapeHtml(text) {
-    const div = document.createElement("div");
-    div.textContent = String(text || "");
-    return div.innerHTML;
-}
-
 function showError(msg) {
     const errorEl = document.getElementById("error");
     document.getElementById("error-message").textContent = msg;
