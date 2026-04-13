@@ -1,5 +1,7 @@
 # 📡 JobRadar
 
+[![CI](https://github.com/ronchen0927/JobRadar/actions/workflows/ci.yml/badge.svg)](https://github.com/ronchen0927/JobRadar/actions/workflows/ci.yml)
+
 > 快速搜尋 [104 人力銀行](https://www.104.com.tw/) 職缺的工具，輸入關鍵字即可一鍵搜尋、篩選、收藏、追蹤，並支援新職缺自動通知。
 
 ## ✨ 功能特色
@@ -26,7 +28,7 @@
 
 ```bash
 cd backend
-uv sync                                          # 安裝依賴
+uv sync --group dev                               # 安裝依賴（含開發工具）
 uv run uvicorn app.main:app --reload --port 8000  # 啟動 API server（含排程）
 ```
 
@@ -57,6 +59,8 @@ python -m http.server 3000   # 或用 npx serve -l 3000
 | 前端 | Vanilla HTML / CSS / JavaScript（多頁 SPA） |
 | 套件管理 | uv |
 | 資料儲存 | localStorage（前端）、alerts.json（後端提醒設定） |
+| 測試 | pytest + httpx（79 個測試，含 API 整合測試） |
+| 程式碼品質 | Ruff（lint + format）、pre-commit hooks、GitHub Actions CI |
 
 ## 📡 API 參考
 
@@ -108,6 +112,22 @@ POST   /api/alerts/{id}/trigger # 立即觸發（測試用）
 ```
 
 > 💡 Line Notify Token 請至 https://notify-bot.line.me/my/ 申請
+
+## 🧪 開發與測試
+
+```bash
+cd backend
+uv run pytest                        # 執行全部測試
+uv run pytest tests/test_scraper.py  # 執行單一測試檔
+uv run ruff check .                  # Lint 檢查
+uv run ruff format .                 # 格式化
+```
+
+pre-commit hooks 會在每次 commit 時自動執行 Ruff lint 與格式化：
+
+```bash
+uv run pre-commit install   # 安裝 hooks（只需執行一次）
+```
 
 ## 📄 授權
 
