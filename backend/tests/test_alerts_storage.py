@@ -2,9 +2,6 @@
 
 import json
 
-import pytest
-
-import app.alerts as alerts_module
 from app.alerts import load_alerts, save_alerts
 
 

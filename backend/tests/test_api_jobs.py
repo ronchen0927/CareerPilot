@@ -2,8 +2,6 @@
 
 from unittest.mock import AsyncMock, patch
 
-import pytest
-
 from app.config import AREA_OPTIONS, EXPERIENCE_OPTIONS
 from app.models import JobListing
 
