@@ -37,13 +37,14 @@
     <!-- Search Form -->
     <section class="search-card">
       <form id="search-form">
-        <!-- Keyword -->
+        <!-- Keyword (comma-separated multi-keyword support) -->
         <div class="form-group">
           <label class="form-label" for="keyword">
             <span class="form-label__icon">💼</span>
             搜尋關鍵字
+            <span class="form-label__hint">多個關鍵字用逗號分隔，最多 5 個</span>
           </label>
-          <input type="text" id="keyword" class="form-input" placeholder="職稱、公司名、技能專長..." value="Python" required>
+          <input type="text" id="keyword" class="form-input" placeholder="例：Python, 後端工程師, Django" value="Python" required>
         </div>
 
         <!-- Pages -->
@@ -109,6 +110,8 @@
           <button id="export-csv-btn" class="btn-export">匯出 CSV</button>
         </div>
       </div>
+      <!-- Keyword tags (shown when multi-keyword search) -->
+      <div id="keyword-tags" class="keyword-tags"></div>
       <div class="table-wrapper">
         <table class="results-table">
           <thead>
@@ -159,6 +162,43 @@
         </table>
       </div>
     </section>
+  </div>
+
+  <!-- Job Detail Modal -->
+  <div id="job-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-job">
+    <div class="modal">
+      <button id="modal-close" class="modal__close" aria-label="關閉">✕</button>
+      <h3 id="modal-job" class="modal__title"></h3>
+      <div class="modal__grid">
+        <div class="modal__field">
+          <span class="modal__label">公司</span>
+          <span id="modal-company" class="modal__value"></span>
+        </div>
+        <div class="modal__field">
+          <span class="modal__label">城市</span>
+          <span id="modal-city" class="modal__value"></span>
+        </div>
+        <div class="modal__field">
+          <span class="modal__label">刊登日期</span>
+          <span id="modal-date" class="modal__value"></span>
+        </div>
+        <div class="modal__field">
+          <span class="modal__label">經歷要求</span>
+          <span id="modal-experience" class="modal__value"></span>
+        </div>
+        <div class="modal__field">
+          <span class="modal__label">最低學歷</span>
+          <span id="modal-education" class="modal__value"></span>
+        </div>
+        <div class="modal__field">
+          <span class="modal__label">薪水</span>
+          <span id="modal-salary" class="modal__value modal__value--salary"></span>
+        </div>
+      </div>
+      <a id="modal-link" href="#" target="_blank" rel="noopener" class="btn-goto">
+        前往 104 查看完整詳情 →
+      </a>
+    </div>
   </div>
 
   <script src="js/app.js"></script>

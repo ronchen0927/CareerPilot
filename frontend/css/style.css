@@ -636,6 +636,199 @@ body {
 }
 
 /* ========================================
+   Form label hint
+   ======================================== */
+.form-label__hint {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+/* ========================================
+   Keyword Tags (multi-keyword display)
+   ======================================== */
+.keyword-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+    min-height: 0;
+}
+
+.keyword-tags:empty {
+    display: none;
+}
+
+.keyword-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.7rem;
+    background: var(--accent-glow);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 100px;
+    color: var(--accent-light);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* ========================================
+   Job Detail Button (triggers modal)
+   ======================================== */
+.job-detail-btn {
+    background: transparent;
+    border: none;
+    color: var(--accent-light);
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+    transition: color var(--transition-fast);
+    line-height: 1.4;
+}
+
+.job-detail-btn:hover {
+    color: #a5b4fc;
+    text-decoration: underline;
+}
+
+[data-theme="light"] .job-detail-btn:hover {
+    color: #4338ca;
+}
+
+/* ========================================
+   Job Detail Modal
+   ======================================== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+    animation: fade-in-modal 0.2s ease;
+}
+
+@keyframes fade-in-modal {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.modal {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: var(--space-2xl);
+    width: 100%;
+    max-width: 520px;
+    position: relative;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+    animation: slide-up-modal 0.25s ease;
+}
+
+@keyframes slide-up-modal {
+    from { transform: translateY(16px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+.modal__close {
+    position: absolute;
+    top: var(--space-lg);
+    right: var(--space-lg);
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.modal__close:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.modal__title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-lg);
+    padding-right: var(--space-xl);
+    line-height: 1.4;
+}
+
+.modal__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+
+.modal__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.modal__label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.modal__value {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.modal__value--salary {
+    color: var(--success);
+    font-weight: 600;
+}
+
+.btn-goto {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.85rem;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border-radius: var(--radius-md);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all var(--transition-base);
+    box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+.btn-goto:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px var(--accent-glow);
+    color: #fff;
+}
+
+@media (max-width: 480px) {
+    .modal__grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========================================
    Bookmark Button (in results table)
    ======================================== */
 .btn-bookmark {

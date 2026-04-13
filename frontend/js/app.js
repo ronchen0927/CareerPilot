@@ -3,9 +3,9 @@
  *
  * Handles:
  * - Loading filter options from API
- * - Submitting search requests
+ * - Multi-keyword search (comma-separated, parallel fetches, merged & deduped)
  * - Salary filter (client-side, instant)
- * - Rendering results table
+ * - Rendering results table with job detail modal
  * - Bookmark management (localStorage)
  * - CSV export
  * - Loading / error state management
@@ -23,6 +23,7 @@ const errorMsg = document.getElementById("error-message");
 const errorDismiss = document.getElementById("error-dismiss");
 const resultCount = document.getElementById("result-count");
 const resultTime = document.getElementById("result-time");
+const keywordTagsEl = document.getElementById("keyword-tags");
 const resultsBody = document.getElementById("results-body");
 const areaContainer = document.getElementById("area-options");
 const expContainer = document.getElementById("experience-options");
@@ -31,6 +32,8 @@ const exportCsvBtn = document.getElementById("export-csv-btn");
 const bookmarksEl = document.getElementById("bookmarks");
 const bookmarksBody = document.getElementById("bookmarks-body");
 const bookmarkCountEl = document.getElementById("bookmark-count");
+const jobModal = document.getElementById("job-modal");
+const modalClose = document.getElementById("modal-close");
 
 // ==========================================
 // State
@@ -97,7 +100,7 @@ function renderFallbackOptions() {
 }
 
 // ==========================================
-// Search
+// Search (multi-keyword support)
 // ==========================================
 searchForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -105,30 +108,67 @@ searchForm.addEventListener("submit", async (e) => {
 });
 
 async function performSearch() {
-    const keyword = document.getElementById("keyword").value.trim();
+    const rawKeyword = document.getElementById("keyword").value.trim();
+    // Split by comma, deduplicate, drop empty entries
+    const keywords = [...new Set(
+        rawKeyword.split(",").map(k => k.trim()).filter(Boolean)
+    )];
+
+    if (keywords.length === 0) return;
+    if (keywords.length > 5) {
+        showError("最多支援 5 個關鍵字，請減少後再搜尋");
+        return;
+    }
+
     const pages = parseInt(document.getElementById("pages").value, 10) || 5;
-
-    if (!keyword) return;
-
     const areas = getCheckedValues("#area-options input:checked");
     const experience = getCheckedValues("#experience-options input:checked");
 
-    showLoading();
+    showLoading(keywords);
 
     try {
-        const res = await fetch(`${API_BASE}/api/jobs/search`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ keyword, pages, areas, experience }),
-        });
+        // Fire all keyword searches in parallel
+        const responses = await Promise.all(
+            keywords.map(keyword =>
+                fetch(`${API_BASE}/api/jobs/search`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ keyword, pages, areas, experience }),
+                })
+            )
+        );
 
-        if (!res.ok) {
-            const detail = await res.json().catch(() => ({}));
-            throw new Error(detail.detail || `HTTP ${res.status}`);
+        const allData = await Promise.all(
+            responses.map(async (res) => {
+                if (!res.ok) {
+                    const detail = await res.json().catch(() => ({}));
+                    throw new Error(detail.detail || `HTTP ${res.status}`);
+                }
+                return res.json();
+            })
+        );
+
+        // Merge, deduplicate by link, sort by date descending
+        const seen = new Set();
+        const merged = [];
+        let maxElapsed = 0;
+
+        for (const data of allData) {
+            maxElapsed = Math.max(maxElapsed, data.elapsed_time);
+            for (const job of data.results) {
+                if (!seen.has(job.link)) {
+                    seen.add(job.link);
+                    merged.push(job);
+                }
+            }
         }
 
-        const data = await res.json();
-        renderResults(data);
+        merged.sort((a, b) => b.date.localeCompare(a.date));
+
+        renderResults(
+            { results: merged, count: merged.length, elapsed_time: maxElapsed },
+            keywords
+        );
     } catch (err) {
         showError(err.message || "搜尋時發生未知錯誤");
     }
@@ -167,17 +207,25 @@ function applyAndRenderResults() {
 // ==========================================
 // Render Results
 // ==========================================
-function renderResults(data) {
+function renderResults(data, keywords = []) {
     hideLoading();
     errorEl.classList.add("hidden");
 
     lastResults = data.results;
     resultTime.textContent = `耗時 ${data.elapsed_time} 秒`;
 
+    renderKeywordTags(keywords);
     applyAndRenderResults();
 
     resultsEl.classList.remove("hidden");
     resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderKeywordTags(keywords) {
+    if (!keywordTagsEl) return;
+    keywordTagsEl.innerHTML = keywords
+        .map(k => `<span class="keyword-tag">${escapeHtml(k)}</span>`)
+        .join("");
 }
 
 function renderTable(jobs) {
@@ -194,9 +242,9 @@ function renderTable(jobs) {
                 }
         </td>
         <td>
-          <a href="${escapeHtml(job.link)}" target="_blank" rel="noopener" class="job-link">
+          <button class="job-link job-detail-btn" data-link="${escapeHtml(job.link)}">
             ${escapeHtml(job.job)}
-          </a>
+          </button>
         </td>
         <td>${escapeHtml(job.company)}</td>
         <td>${escapeHtml(job.city)}</td>
@@ -216,13 +264,53 @@ function renderTable(jobs) {
         .join("");
 }
 
-// Event delegation for results table bookmark buttons
+// Consolidated event delegation for results table
 resultsBody.addEventListener("click", (e) => {
-    const btn = e.target.closest(".btn-bookmark");
-    if (!btn) return;
-    const link = btn.dataset.link;
-    const job = displayedResults.find(j => j.link === link);
-    if (job) toggleBookmark(job);
+    const detailBtn = e.target.closest(".job-detail-btn");
+    if (detailBtn) {
+        const link = detailBtn.dataset.link;
+        const job = displayedResults.find(j => j.link === link);
+        if (job) openJobModal(job);
+        return;
+    }
+
+    const bookmarkBtn = e.target.closest(".btn-bookmark");
+    if (bookmarkBtn) {
+        const link = bookmarkBtn.dataset.link;
+        const job = displayedResults.find(j => j.link === link);
+        if (job) toggleBookmark(job);
+    }
+});
+
+// ==========================================
+// Job Detail Modal (Feature 7)
+// ==========================================
+function openJobModal(job) {
+    document.getElementById("modal-job").textContent = job.job;
+    document.getElementById("modal-company").textContent = job.company;
+    document.getElementById("modal-city").textContent = job.city;
+    document.getElementById("modal-date").textContent = job.is_featured ? "精選職缺" : job.date;
+    document.getElementById("modal-experience").textContent = job.experience;
+    document.getElementById("modal-education").textContent = job.education;
+    document.getElementById("modal-salary").textContent = job.salary;
+    document.getElementById("modal-link").href = job.link;
+    jobModal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+}
+
+function closeJobModal() {
+    jobModal.classList.add("hidden");
+    document.body.style.overflow = "";
+}
+
+modalClose.addEventListener("click", closeJobModal);
+
+jobModal.addEventListener("click", (e) => {
+    if (e.target === jobModal) closeJobModal();
+});
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !jobModal.classList.contains("hidden")) closeJobModal();
 });
 
 // ==========================================
@@ -376,12 +464,16 @@ exportCsvBtn.addEventListener("click", () => {
 // ==========================================
 // UI State Helpers
 // ==========================================
-function showLoading() {
+function showLoading(keywords = []) {
     loadingEl.classList.remove("hidden");
     resultsEl.classList.add("hidden");
     errorEl.classList.add("hidden");
     searchBtn.disabled = true;
     searchBtn.querySelector(".btn-search__text").textContent = "搜尋中...";
+    const text = keywords.length > 1
+        ? `正在搜尋「${keywords.join("」、「")}」...`
+        : "正在搜尋職缺中...";
+    loadingEl.querySelector(".loading__text").textContent = text;
 }
 
 function hideLoading() {
