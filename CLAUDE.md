@@ -8,8 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 cd backend
-uv sync                                           # Install dependencies
+uv sync --group dev                               # Install dependencies (incl. dev)
 uv run uvicorn app.main:app --reload --port 8000  # Start API server (dev)
+uv run pytest                                     # Run all tests
+uv run pytest tests/test_scraper.py -v            # Run a single test file
 ```
 
 Settings can be overridden via a `backend/.env` file (uses `pydantic-settings`).
@@ -45,4 +47,4 @@ static/           # Served at /static by FastAPI
 
 **104 API:** The scraper targets `https://www.104.com.tw/jobs/search/api/jobs` with a `Referer` header and SSL cert verification disabled (104 cert quirk). Area and experience codes are URL-encoded comma-joined lists.
 
-**No test suite exists** in this project currently.
+**Tests** live in `backend/tests/`. Pure-function unit tests need no network; API tests use `TestClient` with `scrape_jobs` mocked and `ALERTS_FILE` redirected to a tmp path via `monkeypatch`.
