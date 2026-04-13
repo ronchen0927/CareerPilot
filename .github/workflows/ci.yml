@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint & Format (Ruff)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dev dependencies
+        working-directory: backend
+        run: uv sync --group dev
+
+      - name: Ruff — lint check
+        working-directory: backend
+        run: uv run ruff check .
+
+      - name: Ruff — format check
+        working-directory: backend
+        run: uv run ruff format --check .
+
+  import-check:
+    name: Import Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        working-directory: backend
+        run: uv sync
+
+      - name: Verify app imports correctly
+        working-directory: backend
+        run: uv run python -c "from app.main import app; print('OK')"
