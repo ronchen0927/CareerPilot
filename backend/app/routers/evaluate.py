@@ -23,22 +23,26 @@ async def evaluate_job(request: JobEvaluateRequest):
     job = request.job
     cv_section = f"\n\n## 求職者背景\n{request.user_cv.strip()}" if request.user_cv.strip() else ""
 
-    prompt = f"""你是一個專業的求職顧問，請評估以下職缺的匹配程度並以 JSON 格式回應。
+    prompt = f"""You are a professional career advisor. Evaluate the fit between the candidate and the job listing below, then respond in strict JSON format.
 
-## 職缺資訊
-- 職位：{job.job}
-- 公司：{job.company}
-- 城市：{job.city}
-- 經歷要求：{job.experience}
-- 最低學歷：{job.education}
-- 薪水：{job.salary}{cv_section}
+## Job Listing
+- Title: {job.job}
+- Company: {job.company}
+- City: {job.city}
+- Experience required: {job.experience}
+- Education required: {job.education}
+- Salary: {job.salary}{cv_section}
 
-請用繁體中文，以 JSON 格式回應以下欄位：
-- "score": 評分字串，格式為字母加減號（如 "A", "B+", "C-", "D"）
-- "summary": 一句話總結，25 字以內
-- "match_points": 優勢或符合點，字串陣列，最多 3 點，每點 20 字以內
-- "gap_points": 落差或風險，字串陣列，最多 3 點，每點 20 字以內（若無明顯落差可為空陣列）
-- "recommendation": 投遞建議，50 字以內
+## Response format (JSON only, no extra text)
+{{
+  "score": "Letter grade with optional +/- (e.g. A, B+, C-)",
+  "summary": "One-sentence verdict in Traditional Chinese, max 25 characters",
+  "match_points": ["Up to 3 strengths in Traditional Chinese, max 20 chars each"],
+  "gap_points": ["Up to 3 risks or gaps in Traditional Chinese, max 20 chars each — empty array if none"],
+  "recommendation": "Application advice in Traditional Chinese, max 50 characters"
+}}
+
+All text values must be written in Traditional Chinese (繁體中文).
 """
 
     try:
