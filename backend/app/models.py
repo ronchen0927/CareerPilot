@@ -49,3 +49,20 @@ class JobSearchResponse(BaseModel):
     results: list[JobListing] = Field(default=[], description="職缺列表")
     count: int = Field(default=0, description="搜尋結果數量")
     elapsed_time: float = Field(default=0.0, description="搜尋耗時（秒）")
+
+
+class JobEvaluateRequest(BaseModel):
+    """AI 評分請求"""
+
+    job: JobListing = Field(description="要評分的職缺")
+    user_cv: str = Field(default="", description="求職者履歷或背景描述（選填）")
+
+
+class JobEvaluateResponse(BaseModel):
+    """AI 評分結果"""
+
+    score: str = Field(description="評分（A/B+/C- 等）")
+    summary: str = Field(description="一句話總結")
+    match_points: list[str] = Field(default=[], description="優勢/符合點")
+    gap_points: list[str] = Field(default=[], description="落差或風險")
+    recommendation: str = Field(description="投遞建議")

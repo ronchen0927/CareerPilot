@@ -24,6 +24,7 @@
   <nav class="quick-nav">
     <a href="alerts.html" class="quick-nav__link" title="職缺提醒">🔔</a>
     <a href="dashboard.html" class="quick-nav__link" title="投遞看板">📋</a>
+    <button id="cv-modal-open" class="quick-nav__link" title="設定履歷（AI 評分用）">👤</button>
   </nav>
 
   <!-- Background glow effects -->
@@ -224,6 +225,22 @@
       <a id="modal-link" href="#" target="_blank" rel="noopener" class="btn-goto">
         前往查看完整詳情 →
       </a>
+      <!-- AI Evaluate -->
+      <div class="modal__ai-section">
+        <button id="modal-evaluate-btn" class="btn-evaluate">✨ AI 評分</button>
+        <div id="modal-ai-result" class="ai-result hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CV Profile Modal -->
+  <div id="cv-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="cv-modal-title">
+    <div class="modal">
+      <button id="cv-modal-close" class="modal__close" aria-label="關閉">✕</button>
+      <h3 id="cv-modal-title" class="modal__title">設定履歷背景</h3>
+      <p class="cv-modal__hint">貼入你的履歷或個人背景，AI 評分時將用於比對職缺適合度。留空則僅依職缺資訊評分。</p>
+      <textarea id="cv-textarea" class="cv-textarea" placeholder="例：5年 Python 後端開發經驗，熟悉 FastAPI、Django，有 AWS 使用經驗，曾帶領 3 人小團隊..."></textarea>
+      <button id="cv-save-btn" class="btn-goto" style="margin-top: 1rem">儲存履歷</button>
     </div>
   </div>
 

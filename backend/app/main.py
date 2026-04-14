@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .config import settings
-from .routers import alerts, jobs
+from .routers import alerts, evaluate, jobs
 
 # Logging
 logging.basicConfig(
@@ -54,6 +54,7 @@ if static_dir.exists():
 # Routers
 app.include_router(jobs.router)
 app.include_router(alerts.router)
+app.include_router(evaluate.router)
 
 
 @app.get("/")

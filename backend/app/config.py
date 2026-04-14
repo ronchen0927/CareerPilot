@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     # CORS 允許的來源（前端 URL）
     CORS_ORIGINS: list[str] = ["*"]
 
+    # OpenAI API key (for AI job evaluation)
+    OPENAI_API_KEY: str = ""
+
     # Debug mode
     DEBUG: bool = True
 

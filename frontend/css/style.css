@@ -1023,6 +1023,162 @@ body {
 }
 
 /* ========================================
+   AI Evaluate Button
+   ======================================== */
+.modal__ai-section {
+    margin-top: var(--space-md);
+}
+
+.btn-evaluate {
+    width: 100%;
+    padding: 0.75rem;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.btn-evaluate:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent-light);
+    background: var(--accent-glow);
+}
+
+.btn-evaluate:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ========================================
+   AI Result Panel
+   ======================================== */
+.ai-result {
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background: rgba(99, 102, 241, 0.06);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    animation: fade-in-up 0.3s ease both;
+}
+
+.ai-result__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-sm);
+}
+
+.ai-score {
+    font-size: 1.5rem;
+    font-weight: 700;
+    min-width: 2.5rem;
+    text-align: center;
+    line-height: 1;
+}
+
+.score--a { color: var(--success); }
+.score--b { color: #34d399; }
+.score--c { color: var(--warning); }
+.score--d { color: #f97316; }
+.score--f { color: var(--danger); }
+
+.ai-result__summary {
+    color: var(--text-primary);
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.ai-result__body {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.ai-result__section {
+    flex: 1;
+    min-width: 120px;
+}
+
+.ai-result__label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.3rem;
+}
+
+.ai-result__label--match { color: var(--success); }
+.ai-result__label--gap   { color: var(--warning); }
+
+.ai-result__list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.ai-result__list--match li::before { content: "✓ "; color: var(--success); }
+.ai-result__list--gap   li::before { content: "△ "; color: var(--warning); }
+
+.ai-result__list li {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.ai-result__rec {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    border-top: 1px solid var(--border-color);
+    padding-top: var(--space-sm);
+    margin-top: var(--space-sm);
+}
+
+.ai-result__error {
+    color: var(--danger);
+    font-size: 0.9rem;
+}
+
+/* ========================================
+   CV Profile Modal
+   ======================================== */
+.cv-modal__hint {
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    margin-bottom: var(--space-md);
+    line-height: 1.5;
+}
+
+.cv-textarea {
+    width: 100%;
+    min-height: 160px;
+    padding: var(--space-md);
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+
+.cv-textarea:focus {
+    border-color: var(--border-focus);
+}
+
+/* ========================================
    Utilities
    ======================================== */
 .hidden {
