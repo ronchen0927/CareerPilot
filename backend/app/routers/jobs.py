@@ -1,10 +1,12 @@
+import asyncio
 import time
 
 from fastapi import APIRouter
 
 from ..config import AREA_OPTIONS, EXPERIENCE_OPTIONS
 from ..models import JobSearchRequest, JobSearchResponse
-from ..scraper import scrape_jobs
+from ..scraper import scrape_jobs as scrape_104
+from ..scraper_cake import scrape_jobs as scrape_cake
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 
@@ -20,13 +22,31 @@ async def get_options():
 
 @router.post("/search", response_model=JobSearchResponse)
 async def search_jobs(request: JobSearchRequest):
-    """搜尋 104 職缺"""
+    """搜尋職缺（支援 104 人力銀行 & CakeResume）"""
     start = time.perf_counter()
-    results = await scrape_jobs(request)
+
+    tasks = []
+    if "104" in request.sources:
+        tasks.append(scrape_104(request))
+    if "CakeResume" in request.sources:
+        tasks.append(scrape_cake(request))
+
+    results_per_source = await asyncio.gather(*tasks)
+
+    # Merge and deduplicate across sources by link
+    seen_links: set[str] = set()
+    all_jobs = []
+    for job_list in results_per_source:
+        for job in job_list:
+            if job.link not in seen_links:
+                seen_links.add(job.link)
+                all_jobs.append(job)
+
+    all_jobs.sort(key=lambda j: j.date, reverse=True)
     elapsed = time.perf_counter() - start
 
     return JobSearchResponse(
-        results=results,
-        count=len(results),
+        results=all_jobs,
+        count=len(all_jobs),
         elapsed_time=round(elapsed, 2),
     )

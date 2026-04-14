@@ -1,5 +1,5 @@
 /**
- * 104 Job Scraper — Frontend Application
+ * JobRadar — Frontend Application (104 & CakeResume)
  *
  * Handles:
  * - Loading filter options from API
@@ -123,6 +123,12 @@ async function performSearch() {
     const pages = parseInt(document.getElementById("pages").value, 10) || 5;
     const areas = getCheckedValues("#area-options input:checked");
     const experience = getCheckedValues("#experience-options input:checked");
+    const sources = getCheckedValues("#source-options input:checked");
+
+    if (sources.length === 0) {
+        showError("請至少選擇一個搜尋來源");
+        return;
+    }
 
     showLoading(keywords);
 
@@ -133,7 +139,7 @@ async function performSearch() {
                 fetch(`${API_BASE}/api/jobs/search`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ keyword, pages, areas, experience }),
+                    body: JSON.stringify({ keyword, pages, areas, experience, sources }),
                 })
             )
         );
@@ -176,6 +182,13 @@ async function performSearch() {
 
 function getCheckedValues(selector) {
     return Array.from(document.querySelectorAll(selector)).map((cb) => cb.value);
+}
+
+function renderSourceBadge(source) {
+    if (source === "CakeResume") {
+        return '<span class="source-badge source-badge--cake">CakeResume</span>';
+    }
+    return '<span class="source-badge source-badge--104">104</span>';
 }
 
 // ==========================================
@@ -251,6 +264,7 @@ function renderTable(jobs) {
         <td>${escapeHtml(job.experience)}</td>
         <td>${escapeHtml(job.education)}</td>
         <td><span class="salary-text">${escapeHtml(job.salary)}</span></td>
+        <td>${renderSourceBadge(job.source || "104")}</td>
         <td>
           <button class="btn-bookmark ${starred ? "btn-bookmark--active" : ""}"
                   data-link="${escapeHtml(job.link)}"
@@ -436,7 +450,7 @@ bookmarksBody.addEventListener("click", (e) => {
 exportCsvBtn.addEventListener("click", () => {
     if (displayedResults.length === 0) return;
 
-    const headers = ["刊登日期", "職位", "公司名稱", "城市", "經歷", "最低學歷", "薪水", "連結"];
+    const headers = ["刊登日期", "職位", "公司名稱", "城市", "經歷", "最低學歷", "薪水", "來源", "連結"];
     const rows = displayedResults.map(job => [
         job.date,
         job.job,
@@ -445,6 +459,7 @@ exportCsvBtn.addEventListener("click", () => {
         job.experience,
         job.education,
         job.salary,
+        job.source || "104",
         job.link,
     ]);
 

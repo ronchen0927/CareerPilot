@@ -110,6 +110,7 @@ def _parse_job(item: dict) -> JobListing | None:
             salary_low=salary_low_val,
             salary_high=salary_high_val,
             is_featured=is_featured,
+            source="104",
         )
     except Exception as e:
         logger.warning("解析職缺時發生錯誤，跳過: %s", e)

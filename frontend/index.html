@@ -37,7 +37,7 @@
         <span class="header__icon">📡</span>
         <h1 class="header__title">JobRadar</h1>
       </div>
-      <p class="header__subtitle">104 人力銀行職缺快速搜尋</p>
+      <p class="header__subtitle">104 & CakeResume 職缺快速搜尋</p>
     </header>
 
     <!-- Search Form -->
@@ -60,6 +60,24 @@
             爬取頁數
           </label>
           <input type="number" id="pages" class="form-input" value="5" min="1" max="20">
+        </div>
+
+        <!-- Source checkboxes -->
+        <div class="form-group">
+          <label class="form-label">
+            <span class="form-label__icon">🔍</span>
+            搜尋來源
+          </label>
+          <div id="source-options" class="checkbox-grid">
+            <div class="checkbox-chip">
+              <input type="checkbox" id="source-104" value="104" checked>
+              <label for="source-104">104 人力銀行</label>
+            </div>
+            <div class="checkbox-chip">
+              <input type="checkbox" id="source-cake" value="CakeResume">
+              <label for="source-cake">CakeResume</label>
+            </div>
+          </div>
         </div>
 
         <!-- Area checkboxes (dynamically loaded) -->
@@ -129,6 +147,7 @@
               <th>經歷</th>
               <th>最低學歷</th>
               <th>薪水</th>
+              <th>來源</th>
               <th>收藏</th>
             </tr>
           </thead>
@@ -203,7 +222,7 @@
         </div>
       </div>
       <a id="modal-link" href="#" target="_blank" rel="noopener" class="btn-goto">
-        前往 104 查看完整詳情 →
+        前往查看完整詳情 →
       </a>
     </div>
   </div>
