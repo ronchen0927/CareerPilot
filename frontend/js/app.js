@@ -534,6 +534,125 @@ function toggleTheme() {
 themeToggle.addEventListener("click", toggleTheme);
 
 // ==========================================
+// CV Profile (localStorage)
+// ==========================================
+const cvModalEl = document.getElementById("cv-modal");
+const cvModalOpen = document.getElementById("cv-modal-open");
+const cvModalClose = document.getElementById("cv-modal-close");
+const cvTextarea = document.getElementById("cv-textarea");
+const cvSaveBtn = document.getElementById("cv-save-btn");
+
+function loadCV() {
+    return localStorage.getItem("jobradar_cv") || "";
+}
+
+function saveCV(text) {
+    localStorage.setItem("jobradar_cv", text);
+}
+
+function openCVModal() {
+    cvTextarea.value = loadCV();
+    cvModalEl.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    cvTextarea.focus();
+}
+
+function closeCVModal() {
+    cvModalEl.classList.add("hidden");
+    document.body.style.overflow = "";
+}
+
+cvModalOpen.addEventListener("click", openCVModal);
+cvModalClose.addEventListener("click", closeCVModal);
+cvModalEl.addEventListener("click", (e) => { if (e.target === cvModalEl) closeCVModal(); });
+
+cvSaveBtn.addEventListener("click", () => {
+    saveCV(cvTextarea.value.trim());
+    closeCVModal();
+});
+
+// ==========================================
+// AI Job Evaluation
+// ==========================================
+const evaluateBtn = document.getElementById("modal-evaluate-btn");
+const aiResultEl = document.getElementById("modal-ai-result");
+
+const SCORE_CLASS = {
+    A: "score--a", B: "score--b", C: "score--c", D: "score--d", F: "score--f",
+};
+
+function getScoreClass(score) {
+    const letter = score?.[0]?.toUpperCase();
+    return SCORE_CLASS[letter] || "";
+}
+
+let currentModalJob = null;
+
+const _openJobModal = openJobModal;
+openJobModal = function(job) {
+    currentModalJob = job;
+    aiResultEl.classList.add("hidden");
+    aiResultEl.innerHTML = "";
+    evaluateBtn.disabled = false;
+    evaluateBtn.textContent = "✨ AI 評分";
+    _openJobModal(job);
+};
+
+evaluateBtn.addEventListener("click", async () => {
+    if (!currentModalJob) return;
+
+    evaluateBtn.disabled = true;
+    evaluateBtn.textContent = "評分中...";
+    aiResultEl.classList.add("hidden");
+
+    try {
+        const res = await fetch(`${API_BASE}/api/jobs/evaluate`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ job: currentModalJob, user_cv: loadCV() }),
+        });
+
+        if (!res.ok) {
+            const detail = await res.json().catch(() => ({}));
+            throw new Error(detail.detail || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        renderAIResult(data);
+    } catch (err) {
+        aiResultEl.innerHTML = `<p class="ai-result__error">評分失敗：${escapeHtml(err.message)}</p>`;
+        aiResultEl.classList.remove("hidden");
+        evaluateBtn.disabled = false;
+        evaluateBtn.textContent = "✨ AI 評分";
+    }
+});
+
+function renderAIResult(data) {
+    const matchHtml = data.match_points.length
+        ? `<ul class="ai-result__list ai-result__list--match">${data.match_points.map(p => `<li>${escapeHtml(p)}</li>`).join("")}</ul>`
+        : "";
+    const gapHtml = data.gap_points.length
+        ? `<ul class="ai-result__list ai-result__list--gap">${data.gap_points.map(p => `<li>${escapeHtml(p)}</li>`).join("")}</ul>`
+        : "";
+
+    aiResultEl.innerHTML = `
+        <div class="ai-result__header">
+            <span class="ai-score ${getScoreClass(data.score)}">${escapeHtml(data.score)}</span>
+            <span class="ai-result__summary">${escapeHtml(data.summary)}</span>
+        </div>
+        ${matchHtml || gapHtml ? `
+        <div class="ai-result__body">
+            ${matchHtml ? `<div class="ai-result__section"><span class="ai-result__label ai-result__label--match">優勢</span>${matchHtml}</div>` : ""}
+            ${gapHtml ? `<div class="ai-result__section"><span class="ai-result__label ai-result__label--gap">落差</span>${gapHtml}</div>` : ""}
+        </div>` : ""}
+        <p class="ai-result__rec">${escapeHtml(data.recommendation)}</p>
+    `;
+    aiResultEl.classList.remove("hidden");
+    evaluateBtn.textContent = "✨ 重新評分";
+    evaluateBtn.disabled = false;
+}
+
+// ==========================================
 // Boot
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
