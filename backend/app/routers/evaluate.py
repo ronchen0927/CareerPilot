@@ -25,7 +25,7 @@ async def _call_openai(client: AsyncOpenAI, prompt: str) -> JobEvaluateResponse:
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"},
             temperature=0.3,
-            max_tokens=600,
+            max_completion_tokens=600,
         )
         data = json.loads(response.choices[0].message.content)
     except Exception as e:
