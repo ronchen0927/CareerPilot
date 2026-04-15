@@ -120,7 +120,7 @@ async def _send_notification(alert: dict, new_jobs: list) -> None:
         job_lines.append(f"• {job.job} — {job.company} ({job.salary})\n  {job.link}")
     suffix = f"\n\n... 還有 {len(new_jobs) - 5} 筆" if len(new_jobs) > 5 else ""
     message = (
-        f"\n🔍 JobRadar 職缺提醒\n"
+        f"\n🧭 CareerPilot 職缺提醒\n"
         f"關鍵字：{keyword}\n"
         f"找到 {len(new_jobs)} 筆新職缺\n\n" + "\n\n".join(job_lines) + suffix
     )

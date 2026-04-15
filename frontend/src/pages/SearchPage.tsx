@@ -122,7 +122,7 @@ export default function SearchPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `jobradar_${new Date().toISOString().slice(0, 10)}.csv`
+    a.download = `careerpilot_${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -133,8 +133,8 @@ export default function SearchPage() {
     <div className="container">
       <header className="header">
         <div className="header__logo">
-          <span className="header__icon">📡</span>
-          <h1 className="header__title">JobRadar</h1>
+          <span className="header__icon">🧭</span>
+          <h1 className="header__title">CareerPilot</h1>
         </div>
         <p className="header__subtitle">104 &amp; CakeResume 職缺快速搜尋</p>
       </header>

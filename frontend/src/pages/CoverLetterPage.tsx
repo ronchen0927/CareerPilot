@@ -5,7 +5,7 @@ import { fetchJobUrl, generateCoverLetter, parseCvPdf } from '../api/client'
 export default function CoverLetterPage() {
   const [jobUrl, setJobUrl] = useState('')
   const [jobText, setJobText] = useState('')
-  const [cv, setCv] = useState(() => localStorage.getItem('jobradar_cv') ?? '')
+  const [cv, setCv] = useState(() => localStorage.getItem('careerpilot_cv') ?? '')
   const [letter, setLetter] = useState<string | null>(null)
 
   const [fetchLoading, setFetchLoading] = useState(false)
@@ -21,7 +21,7 @@ export default function CoverLetterPage() {
 
   function handleCvChange(value: string) {
     setCv(value)
-    localStorage.setItem('jobradar_cv', value)
+    localStorage.setItem('careerpilot_cv', value)
   }
 
   async function handleFetchUrl() {

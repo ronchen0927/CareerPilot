@@ -33,8 +33,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="JobRadar API",
-    description="104 人力銀行職缺搜尋 API",
+    title="CareerPilot API",
+    description="AI 求職助理平台 API",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -66,7 +66,7 @@ app.include_router(cover_letter.router)
 @app.get("/")
 async def root():
     return {
-        "message": "JobRadar API",
+        "message": "CareerPilot API",
         "docs": "/docs",
         "version": "1.0.0",
     }

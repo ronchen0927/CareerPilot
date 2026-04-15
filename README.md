@@ -1,8 +1,8 @@
-# 📡 JobRadar
+# 🧭 CareerPilot
 
-[![CI](https://github.com/ronchen0927/JobRadar/actions/workflows/ci.yml/badge.svg)](https://github.com/ronchen0927/JobRadar/actions/workflows/ci.yml)
+[![CI](https://github.com/ronchen0927/CareerPilot/actions/workflows/ci.yml/badge.svg)](https://github.com/ronchen0927/CareerPilot/actions/workflows/ci.yml)
 
-> 快速搜尋 104 人力銀行、CakeResume 職缺，並透過 AI 評估職缺與個人的匹配程度。
+> AI 求職助理平台：搜尋職缺、AI 評估匹配度、自動生成求職信，全流程一站搞定。
 
 ## ✨ 功能特色
 

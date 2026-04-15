@@ -6,7 +6,7 @@ interface Props {
 }
 
 export default function CVModal({ onClose }: Props) {
-  const [savedCV, setSavedCV] = useLocalStorage('jobradar_cv', '')
+  const [savedCV, setSavedCV] = useLocalStorage('careerpilot_cv', '')
   const [draft, setDraft] = useState(savedCV)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 

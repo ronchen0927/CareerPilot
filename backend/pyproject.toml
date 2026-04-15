@@ -1,7 +1,7 @@
 [project]
-name = "jobradar"
+name = "careerpilot"
 version = "1.0.0"
-description = "104 人力銀行職缺搜尋工具"
+description = "AI 求職助理平台"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

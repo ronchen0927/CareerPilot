@@ -2,7 +2,7 @@ import type { BookmarkStatus, Bookmarks, JobListing } from '../types'
 import { useLocalStorage } from './useLocalStorage'
 
 export function useBookmarks() {
-  const [bookmarks, setBookmarks] = useLocalStorage<Bookmarks>('jobradar_bookmarks', {})
+  const [bookmarks, setBookmarks] = useLocalStorage<Bookmarks>('careerpilot_bookmarks', {})
 
   function add(job: JobListing) {
     setBookmarks({

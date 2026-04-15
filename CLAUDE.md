@@ -97,7 +97,7 @@ static/                 # Served at /static by FastAPI
 
 **Scheduler:** Runs as an asyncio task inside the FastAPI `lifespan` context manager (no external dependency). Wakes every 60 seconds, checks each alert's `interval_minutes` against `last_run`, scrapes if due, sends Line Notify or Webhook, updates `seen_links` and `last_run` in `alerts.json`.
 
-**Frontend state:** Bookmarks and kanban status stored in `localStorage`. CV text stored under key `jobradar_cv`.
+**Frontend state:** Bookmarks and kanban status stored in `localStorage`. CV text stored under key `careerpilot_cv`.
 
 ## Testing approach
 

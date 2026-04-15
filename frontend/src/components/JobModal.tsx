@@ -41,7 +41,7 @@ export default function JobModal({ job, onClose }: Props) {
     setEvalError(null)
     try {
       // Read CV directly from localStorage at evaluation time so we always get the latest value
-      const cv = localStorage.getItem('jobradar_cv') ?? ''
+      const cv = localStorage.getItem('careerpilot_cv') ?? ''
       const result = await evaluateJob({ job, user_cv: cv })
       setEvalResult(result)
     } catch (err) {

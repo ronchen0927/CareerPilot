@@ -17,7 +17,7 @@ function getScoreClass(score: string): string {
 export default function EvaluatePage() {
   const [jobUrl, setJobUrl] = useState('')
   const [jobText, setJobText] = useState('')
-  const [cv, setCv] = useState(() => localStorage.getItem('jobradar_cv') ?? '')
+  const [cv, setCv] = useState(() => localStorage.getItem('careerpilot_cv') ?? '')
   const [result, setResult] = useState<JobEvaluateResponse | null>(null)
 
   const [fetchLoading, setFetchLoading] = useState(false)
@@ -31,7 +31,7 @@ export default function EvaluatePage() {
 
   function handleCvChange(value: string) {
     setCv(value)
-    localStorage.setItem('jobradar_cv', value)
+    localStorage.setItem('careerpilot_cv', value)
   }
 
   async function handleFetchUrl() {
