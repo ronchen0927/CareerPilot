@@ -89,6 +89,10 @@ export function fetchEvaluations(): Promise<EvaluationRecord[]> {
   return apiFetch<EvaluationRecord[]>('/api/evaluations')
 }
 
+export function fetchEvaluation(id: number): Promise<EvaluationRecord> {
+  return apiFetch<EvaluationRecord>(`/api/evaluations/${id}`)
+}
+
 export function deleteEvaluation(id: number): Promise<void> {
   return apiFetch<void>(`/api/evaluations/${id}`, { method: 'DELETE' })
 }

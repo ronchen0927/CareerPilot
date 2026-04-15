@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { deleteEvaluation, fetchEvaluations } from '../api/client'
 import type { EvaluationRecord } from '../types'
 
@@ -18,7 +19,7 @@ export default function HistoryPage() {
   const [records, setRecords] = useState<EvaluationRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [expanded, setExpanded] = useState<Set<number>>(new Set())
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchEvaluations()
@@ -27,20 +28,13 @@ export default function HistoryPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  function toggleExpand(id: number) {
-    setExpanded(prev => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
-  }
-
-  async function handleDelete(id: number) {
+  async function handleDelete(e: React.MouseEvent, id: number) {
+    e.stopPropagation()
     try {
       await deleteEvaluation(id)
       setRecords(prev => prev.filter(r => r.id !== id))
-    } catch (e) {
-      alert(e instanceof Error ? e.message : '刪除失敗')
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '刪除失敗')
     }
   }
 
@@ -70,22 +64,24 @@ export default function HistoryPage() {
 
       {!loading && !error && records.length === 0 && (
         <section className="search-card" style={{ textAlign: 'center', color: 'var(--color-muted)' }}>
-          <p style={{ padding: '2rem 0' }}>還沒有評分紀錄，去 <a href="/evaluate">AI 職缺評分</a> 頁面評估看看吧！</p>
+          <p style={{ padding: '2rem 0' }}>
+            還沒有評分紀錄，去 <a href="/evaluate">AI 職缺評分</a> 頁面評估看看吧！
+          </p>
         </section>
       )}
 
       {records.map(r => (
-        <section key={r.id} className="search-card" style={{ marginBottom: '0.75rem' }}>
+        <section
+          key={r.id}
+          className="search-card"
+          style={{ marginBottom: '0.75rem', cursor: 'pointer' }}
+          onClick={() => navigate(`/history/${r.id}`, { state: r })}
+        >
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-            {/* Score badge */}
-            <span
-              className={`ai-score ${getScoreClass(r.score)}`}
-              style={{ flexShrink: 0, cursor: 'default' }}
-            >
+            <span className={`ai-score ${getScoreClass(r.score)}`} style={{ flexShrink: 0 }}>
               {r.score}
             </span>
 
-            {/* Main content */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <span className="ai-result__summary" style={{ fontWeight: 500 }}>{r.summary}</span>
@@ -101,72 +97,18 @@ export default function HistoryPage() {
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
               }}>
-                {r.job_url
-                  ? <a href={r.job_url} target="_blank" rel="noopener noreferrer">{r.job_text_snippet}</a>
-                  : r.job_text_snippet
-                }
+                {r.job_text_snippet}
               </p>
             </div>
 
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-              <button
-                className="btn-export"
-                style={{ padding: '0.3rem 0.7rem', fontSize: '0.8rem' }}
-                onClick={() => toggleExpand(r.id)}
-              >
-                {expanded.has(r.id) ? '收起' : '展開'}
-              </button>
-              <button
-                className="btn-export"
-                style={{ padding: '0.3rem 0.7rem', fontSize: '0.8rem', color: 'var(--color-error, #f87171)' }}
-                onClick={() => handleDelete(r.id)}
-              >
-                刪除
-              </button>
-            </div>
+            <button
+              className="btn-export"
+              style={{ padding: '0.3rem 0.7rem', fontSize: '0.8rem', color: 'var(--color-error, #f87171)', flexShrink: 0 }}
+              onClick={e => handleDelete(e, r.id)}
+            >
+              刪除
+            </button>
           </div>
-
-          {/* Expanded detail */}
-          {expanded.has(r.id) && (
-            <div className="ai-result__body" style={{ marginTop: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem' }}>
-              <div className="ai-result__section">
-                <span className="ai-result__label" style={{ background: 'var(--color-tag-bg, rgba(99,102,241,0.15))', color: 'var(--color-tag-text, #818cf8)' }}>職缺描述</span>
-                <pre style={{
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  fontSize: '0.82rem',
-                  opacity: 0.8,
-                  margin: '0.4rem 0 0.75rem',
-                  fontFamily: 'inherit',
-                  maxHeight: '12rem',
-                  overflowY: 'auto',
-                  background: 'var(--color-card-bg, rgba(255,255,255,0.03))',
-                  padding: '0.6rem',
-                  borderRadius: '0.4rem',
-                }}>
-                  {r.job_text}
-                </pre>
-              </div>
-              {r.match_points.length > 0 && (
-                <div className="ai-result__section">
-                  <span className="ai-result__label ai-result__label--match">優勢</span>
-                  <ul className="ai-result__list ai-result__list--match">
-                    {r.match_points.map((p, i) => <li key={i}>{p}</li>)}
-                  </ul>
-                </div>
-              )}
-              {r.gap_points.length > 0 && (
-                <div className="ai-result__section">
-                  <span className="ai-result__label ai-result__label--gap">落差</span>
-                  <ul className="ai-result__list ai-result__list--gap">
-                    {r.gap_points.map((p, i) => <li key={i}>{p}</li>)}
-                  </ul>
-                </div>
-              )}
-              <p className="ai-result__rec">{r.recommendation}</p>
-            </div>
-          )}
         </section>
       ))}
     </div>
