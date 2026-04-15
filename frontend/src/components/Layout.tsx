@@ -24,6 +24,9 @@ export default function Layout() {
         <NavLink to="/evaluate" className="quick-nav__link" title="AI 職缺評分">
           ✨
         </NavLink>
+        <NavLink to="/history" className="quick-nav__link" title="評分歷史">
+          📜
+        </NavLink>
         {pathname === '/' && (
           <button
             className="quick-nav__link"

@@ -8,7 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .config import settings
-from .routers import alerts, cv, evaluate, fetch_url, jobs
+from .db import init_db
+from .routers import alerts, cv, evaluate, fetch_url, history, jobs
 
 # Logging
 logging.basicConfig(
@@ -21,6 +22,7 @@ logging.basicConfig(
 async def lifespan(app: FastAPI):
     from .scheduler import run_scheduler
 
+    await init_db()
     task = asyncio.create_task(run_scheduler())
     yield
     task.cancel()
@@ -57,6 +59,7 @@ app.include_router(alerts.router)
 app.include_router(evaluate.router)
 app.include_router(cv.router)
 app.include_router(fetch_url.router)
+app.include_router(history.router)
 
 
 @app.get("/")

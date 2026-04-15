@@ -2,6 +2,7 @@ import type {
   Alert,
   AlertCreateRequest,
   AlertsListResponse,
+  EvaluationRecord,
   JobEvaluateRequest,
   JobEvaluateResponse,
   JobEvaluateTextRequest,
@@ -82,4 +83,12 @@ export function fetchJobUrl(url: string): Promise<{ text: string }> {
     method: 'POST',
     body: JSON.stringify({ url }),
   })
+}
+
+export function fetchEvaluations(): Promise<EvaluationRecord[]> {
+  return apiFetch<EvaluationRecord[]>('/api/evaluations')
+}
+
+export function deleteEvaluation(id: number): Promise<void> {
+  return apiFetch<void>(`/api/evaluations/${id}`, { method: 'DELETE' })
 }

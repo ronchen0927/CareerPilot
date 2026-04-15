@@ -73,3 +73,18 @@ class JobEvaluateResponse(BaseModel):
     match_points: list[str] = Field(default=[], description="優勢/符合點")
     gap_points: list[str] = Field(default=[], description="落差或風險")
     recommendation: str = Field(description="投遞建議")
+    from_cache: bool = Field(default=False, description="是否來自快取（未重新呼叫 AI）")
+
+
+class EvaluationRecord(BaseModel):
+    """評分歷史紀錄（單筆）"""
+
+    id: int = Field(description="記錄 ID")
+    job_text_snippet: str = Field(description="職缺描述前 80 字")
+    job_url: str | None = Field(default=None, description="職缺網址（若有）")
+    score: str = Field(description="評分")
+    summary: str = Field(description="一句話總結")
+    match_points: list[str] = Field(default=[], description="優勢/符合點")
+    gap_points: list[str] = Field(default=[], description="落差或風險")
+    recommendation: str = Field(description="投遞建議")
+    created_at: str = Field(description="評分時間")

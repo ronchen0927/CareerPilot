@@ -3,6 +3,7 @@ import Layout from './components/Layout'
 import AlertsPage from './pages/AlertsPage'
 import DashboardPage from './pages/DashboardPage'
 import EvaluatePage from './pages/EvaluatePage'
+import HistoryPage from './pages/HistoryPage'
 import SearchPage from './pages/SearchPage'
 
 export default function App() {
@@ -13,6 +14,7 @@ export default function App() {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="alerts" element={<AlertsPage />} />
         <Route path="evaluate" element={<EvaluatePage />} />
+        <Route path="history" element={<HistoryPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

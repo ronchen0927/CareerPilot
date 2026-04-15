@@ -222,6 +222,19 @@ export default function EvaluatePage() {
             <div className="ai-result__header">
               <span className={`ai-score ${getScoreClass(result.score)}`}>{result.score}</span>
               <span className="ai-result__summary">{result.summary}</span>
+              {result.from_cache && (
+                <span style={{
+                  fontSize: '0.72rem',
+                  padding: '0.15rem 0.5rem',
+                  borderRadius: '999px',
+                  background: 'var(--color-tag-bg, rgba(99,102,241,0.15))',
+                  color: 'var(--color-tag-text, #818cf8)',
+                  marginLeft: 'auto',
+                  whiteSpace: 'nowrap',
+                }}>
+                  已快取
+                </span>
+              )}
             </div>
             {(result.match_points.length > 0 || result.gap_points.length > 0) && (
               <div className="ai-result__body">
