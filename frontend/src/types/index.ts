@@ -105,6 +105,7 @@ export interface JobEvaluateResponse {
 export interface EvaluationRecord {
   id: number
   job_text_snippet: string
+  job_text: string
   job_url: string | null
   score: string
   summary: string

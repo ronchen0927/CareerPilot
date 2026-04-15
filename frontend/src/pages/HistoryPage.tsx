@@ -130,6 +130,24 @@ export default function HistoryPage() {
           {/* Expanded detail */}
           {expanded.has(r.id) && (
             <div className="ai-result__body" style={{ marginTop: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem' }}>
+              <div className="ai-result__section">
+                <span className="ai-result__label" style={{ background: 'var(--color-tag-bg, rgba(99,102,241,0.15))', color: 'var(--color-tag-text, #818cf8)' }}>職缺描述</span>
+                <pre style={{
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  fontSize: '0.82rem',
+                  opacity: 0.8,
+                  margin: '0.4rem 0 0.75rem',
+                  fontFamily: 'inherit',
+                  maxHeight: '12rem',
+                  overflowY: 'auto',
+                  background: 'var(--color-card-bg, rgba(255,255,255,0.03))',
+                  padding: '0.6rem',
+                  borderRadius: '0.4rem',
+                }}>
+                  {r.job_text}
+                </pre>
+              </div>
               {r.match_points.length > 0 && (
                 <div className="ai-result__section">
                   <span className="ai-result__label ai-result__label--match">優勢</span>

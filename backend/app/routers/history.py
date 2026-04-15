@@ -16,6 +16,7 @@ async def get_evaluations():
         EvaluationRecord(
             id=r["id"],
             job_text_snippet=r["job_text"][:80],
+            job_text=r["job_text"],
             job_url=r["job_url"],
             score=r["score"],
             summary=r["summary"],

@@ -81,6 +81,7 @@ class EvaluationRecord(BaseModel):
 
     id: int = Field(description="記錄 ID")
     job_text_snippet: str = Field(description="職缺描述前 80 字")
+    job_text: str = Field(description="職缺描述全文")
     job_url: str | None = Field(default=None, description="職缺網址（若有）")
     score: str = Field(description="評分")
     summary: str = Field(description="一句話總結")
