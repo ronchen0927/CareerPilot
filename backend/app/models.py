@@ -58,6 +58,13 @@ class JobEvaluateRequest(BaseModel):
     user_cv: str = Field(default="", description="求職者履歷或背景描述（選填）")
 
 
+class JobEvaluateTextRequest(BaseModel):
+    """AI 評分請求（純文字模式）"""
+
+    job_text: str = Field(min_length=10, description="貼上的職缺描述文字")
+    user_cv: str = Field(default="", description="求職者履歷或背景描述（選填）")
+
+
 class JobEvaluateResponse(BaseModel):
     """AI 評分結果"""
 

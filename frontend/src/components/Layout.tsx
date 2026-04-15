@@ -21,6 +21,9 @@ export default function Layout() {
         <NavLink to="/dashboard" className="quick-nav__link" title="投遞看板">
           📋
         </NavLink>
+        <NavLink to="/evaluate" className="quick-nav__link" title="AI 職缺評分">
+          ✨
+        </NavLink>
         {pathname === '/' && (
           <button
             className="quick-nav__link"

@@ -88,6 +88,11 @@ export interface JobEvaluateRequest {
   user_cv: string
 }
 
+export interface JobEvaluateTextRequest {
+  job_text: string
+  user_cv: string
+}
+
 export interface JobEvaluateResponse {
   score: string
   summary: string

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import AlertsPage from './pages/AlertsPage'
 import DashboardPage from './pages/DashboardPage'
+import EvaluatePage from './pages/EvaluatePage'
 import SearchPage from './pages/SearchPage'
 
 export default function App() {
@@ -11,6 +12,7 @@ export default function App() {
         <Route index element={<SearchPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="alerts" element={<AlertsPage />} />
+        <Route path="evaluate" element={<EvaluatePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

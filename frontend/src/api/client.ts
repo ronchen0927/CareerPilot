@@ -4,6 +4,7 @@ import type {
   AlertsListResponse,
   JobEvaluateRequest,
   JobEvaluateResponse,
+  JobEvaluateTextRequest,
   JobOptions,
   JobSearchRequest,
   JobSearchResponse,
@@ -42,6 +43,13 @@ export function evaluateJob(req: JobEvaluateRequest): Promise<JobEvaluateRespons
   })
 }
 
+export function evaluateJobText(req: JobEvaluateTextRequest): Promise<JobEvaluateResponse> {
+  return apiFetch<JobEvaluateResponse>('/api/jobs/evaluate-text', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  })
+}
+
 export function fetchAlerts(): Promise<AlertsListResponse> {
   return apiFetch<AlertsListResponse>('/api/alerts')
 }
@@ -56,4 +64,22 @@ export function deleteAlert(id: string): Promise<void> {
 
 export function triggerAlert(id: string): Promise<TriggerAlertResponse> {
   return apiFetch<TriggerAlertResponse>(`/api/alerts/${id}/trigger`, { method: 'POST' })
+}
+
+export async function parseCvPdf(file: File): Promise<{ text: string }> {
+  const form = new FormData()
+  form.append('file', file)
+  const res = await fetch(`${API_BASE}/api/cv/parse`, { method: 'POST', body: form })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { detail?: string }
+    throw new Error(body.detail ?? `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<{ text: string }>
+}
+
+export function fetchJobUrl(url: string): Promise<{ text: string }> {
+  return apiFetch<{ text: string }>('/api/jobs/fetch-url', {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  })
 }
