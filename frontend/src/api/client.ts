@@ -2,6 +2,9 @@ import type {
   Alert,
   AlertCreateRequest,
   AlertsListResponse,
+  CoverLetterRecord,
+  CoverLetterRequest,
+  CoverLetterResponse,
   EvaluationRecord,
   JobEvaluateRequest,
   JobEvaluateResponse,
@@ -95,4 +98,23 @@ export function fetchEvaluation(id: number): Promise<EvaluationRecord> {
 
 export function deleteEvaluation(id: number): Promise<void> {
   return apiFetch<void>(`/api/evaluations/${id}`, { method: 'DELETE' })
+}
+
+export function generateCoverLetter(req: CoverLetterRequest): Promise<CoverLetterResponse> {
+  return apiFetch<CoverLetterResponse>('/api/jobs/cover-letter', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  })
+}
+
+export function fetchCoverLetters(): Promise<CoverLetterRecord[]> {
+  return apiFetch<CoverLetterRecord[]>('/api/cover-letters')
+}
+
+export function fetchCoverLetter(id: number): Promise<CoverLetterRecord> {
+  return apiFetch<CoverLetterRecord>(`/api/cover-letters/${id}`)
+}
+
+export function deleteCoverLetter(id: number): Promise<void> {
+  return apiFetch<void>(`/api/cover-letters/${id}`, { method: 'DELETE' })
 }

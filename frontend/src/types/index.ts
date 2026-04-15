@@ -102,6 +102,24 @@ export interface JobEvaluateResponse {
   from_cache?: boolean
 }
 
+export interface CoverLetterRequest {
+  job_text: string
+  user_cv: string
+}
+
+export interface CoverLetterResponse {
+  id: number
+  letter: string
+}
+
+export interface CoverLetterRecord {
+  id: number
+  job_text_snippet: string
+  job_text: string
+  letter: string
+  created_at: string
+}
+
 export interface EvaluationRecord {
   id: number
   job_text_snippet: string
