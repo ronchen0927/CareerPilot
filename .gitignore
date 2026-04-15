@@ -24,6 +24,7 @@ build/
 
 # Database
 db.sqlite3
+backend/evaluations.db
 
 # Logs
 *.log

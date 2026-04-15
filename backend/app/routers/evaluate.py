@@ -1,9 +1,11 @@
+import hashlib
 import json
 
 from fastapi import APIRouter, HTTPException
 from openai import AsyncOpenAI
 
 from ..config import settings
+from ..db import get_cached, save_evaluation
 from ..models import JobEvaluateRequest, JobEvaluateResponse, JobEvaluateTextRequest
 
 router = APIRouter(prefix="/api/jobs", tags=["evaluate"])
@@ -16,6 +18,11 @@ def _make_openai_client() -> AsyncOpenAI:
             detail="尚未設定 OPENAI_API_KEY，請在 backend/.env 加入 OPENAI_API_KEY=sk-...",
         )
     return AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+
+
+def _compute_hash(*parts: str) -> str:
+    combined = "\n".join(parts)
+    return hashlib.sha256(combined.encode()).hexdigest()
 
 
 async def _call_openai(client: AsyncOpenAI, prompt: str) -> JobEvaluateResponse:
@@ -40,11 +47,30 @@ async def _call_openai(client: AsyncOpenAI, prompt: str) -> JobEvaluateResponse:
     )
 
 
+def _row_to_response(row: dict) -> JobEvaluateResponse:
+    return JobEvaluateResponse(
+        score=row["score"],
+        summary=row["summary"],
+        match_points=json.loads(row["match_points"]),
+        gap_points=json.loads(row["gap_points"]),
+        recommendation=row["recommendation"],
+        from_cache=True,
+    )
+
+
 @router.post("/evaluate", response_model=JobEvaluateResponse)
 async def evaluate_job(request: JobEvaluateRequest):
     """使用 GPT 評估職缺與求職者的匹配程度（結構化職缺資料）"""
-    client = _make_openai_client()
     job = request.job
+    # Use structured fields as the canonical text for hashing
+    job_repr = f"{job.job}|{job.company}|{job.city}|{job.experience}|{job.education}|{job.salary}"
+    job_hash = _compute_hash(job_repr, request.user_cv.strip())
+
+    cached = await get_cached(job_hash)
+    if cached:
+        return _row_to_response(cached)
+
+    client = _make_openai_client()
     cv_section = f"\n\n## 求職者背景\n{request.user_cv.strip()}" if request.user_cv.strip() else ""
 
     prompt = f"""You are a professional career advisor. Evaluate the fit between the candidate and the job listing below, then respond in strict JSON format.
@@ -68,12 +94,29 @@ async def evaluate_job(request: JobEvaluateRequest):
 
 All text values must be written in Traditional Chinese (繁體中文).
 """
-    return await _call_openai(client, prompt)
+    result = await _call_openai(client, prompt)
+    await save_evaluation(
+        job_hash=job_hash,
+        job_text=job_repr,
+        job_url=job.link or None,
+        score=result.score,
+        summary=result.summary,
+        match_points=result.match_points,
+        gap_points=result.gap_points,
+        recommendation=result.recommendation,
+    )
+    return result
 
 
 @router.post("/evaluate-text", response_model=JobEvaluateResponse)
 async def evaluate_job_text(request: JobEvaluateTextRequest):
     """使用 GPT 評估職缺與求職者的匹配程度（純文字職缺描述）"""
+    job_hash = _compute_hash(request.job_text.strip(), request.user_cv.strip())
+
+    cached = await get_cached(job_hash)
+    if cached:
+        return _row_to_response(cached)
+
     client = _make_openai_client()
     cv_section = f"\n\n## 求職者背景\n{request.user_cv.strip()}" if request.user_cv.strip() else ""
 
@@ -93,4 +136,15 @@ async def evaluate_job_text(request: JobEvaluateTextRequest):
 
 All text values must be written in Traditional Chinese (繁體中文).
 """
-    return await _call_openai(client, prompt)
+    result = await _call_openai(client, prompt)
+    await save_evaluation(
+        job_hash=job_hash,
+        job_text=request.job_text.strip(),
+        job_url=None,
+        score=result.score,
+        summary=result.summary,
+        match_points=result.match_points,
+        gap_points=result.gap_points,
+        recommendation=result.recommendation,
+    )
+    return result

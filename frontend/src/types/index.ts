@@ -99,4 +99,17 @@ export interface JobEvaluateResponse {
   match_points: string[]
   gap_points: string[]
   recommendation: string
+  from_cache?: boolean
+}
+
+export interface EvaluationRecord {
+  id: number
+  job_text_snippet: string
+  job_url: string | null
+  score: string
+  summary: string
+  match_points: string[]
+  gap_points: string[]
+  recommendation: string
+  created_at: string
 }

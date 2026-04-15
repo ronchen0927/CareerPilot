@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     # Debug mode
     DEBUG: bool = True
 
+    # SQLite database path (relative to working directory when server starts)
+    DB_PATH: str = "evaluations.db"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
