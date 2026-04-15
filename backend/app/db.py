@@ -36,6 +36,14 @@ async def init_db() -> None:
         await db.commit()
 
 
+async def get_evaluation(record_id: int) -> dict | None:
+    async with aiosqlite.connect(_db_path()) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("SELECT * FROM evaluations WHERE id = ?", (record_id,)) as cur:
+            row = await cur.fetchone()
+    return dict(row) if row else None
+
+
 async def get_cached(job_hash: str) -> dict | None:
     async with aiosqlite.connect(_db_path()) as db:
         db.row_factory = aiosqlite.Row
