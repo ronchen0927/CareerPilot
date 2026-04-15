@@ -1,0 +1,100 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { deleteCoverLetter, fetchCoverLetters } from '../api/client'
+import type { CoverLetterRecord } from '../types'
+
+export default function CoverLetterHistoryPage() {
+  const [records, setRecords] = useState<CoverLetterRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    fetchCoverLetters()
+      .then(setRecords)
+      .catch(e => setError(e instanceof Error ? e.message : '載入失敗'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  async function handleDelete(e: React.MouseEvent, id: number) {
+    e.stopPropagation()
+    try {
+      await deleteCoverLetter(id)
+      setRecords(prev => prev.filter(r => r.id !== id))
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '刪除失敗')
+    }
+  }
+
+  return (
+    <div className="container">
+      <header className="header">
+        <div className="header__logo">
+          <span className="header__icon">📂</span>
+          <h1 className="header__title">推薦信歷史</h1>
+        </div>
+        <p className="header__subtitle">過去產生的所有推薦信</p>
+      </header>
+
+      {loading && (
+        <section className="loading">
+          <div className="loading__spinner" />
+          <p className="loading__text">載入中...</p>
+        </section>
+      )}
+
+      {error && (
+        <section className="error-card">
+          <span className="error-card__icon">⚠️</span>
+          <p className="error-card__text">{error}</p>
+        </section>
+      )}
+
+      {!loading && !error && records.length === 0 && (
+        <section className="search-card" style={{ textAlign: 'center', color: 'var(--color-muted)' }}>
+          <p style={{ padding: '2rem 0' }}>
+            還沒有推薦信，去 <a href="/cover-letter">AI 推薦信</a> 頁面產生看看吧！
+          </p>
+        </section>
+      )}
+
+      {records.map(r => (
+        <section
+          key={r.id}
+          className="search-card"
+          style={{ marginBottom: '0.75rem', cursor: 'pointer' }}
+          onClick={() => navigate(`/cover-letters/${r.id}`, { state: r })}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <span style={{ fontSize: '1.4rem', flexShrink: 0 }}>✉️</span>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 500 }}>{r.job_text_snippet}…</span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.5, whiteSpace: 'nowrap' }}>{r.created_at}</span>
+              </div>
+              <p style={{
+                fontSize: '0.82rem',
+                opacity: 0.6,
+                marginTop: '0.25rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {r.letter.slice(0, 60)}…
+              </p>
+            </div>
+
+            <button
+              className="btn-export"
+              style={{ padding: '0.3rem 0.7rem', fontSize: '0.8rem', color: 'var(--color-error, #f87171)', flexShrink: 0 }}
+              onClick={e => handleDelete(e, r.id)}
+            >
+              刪除
+            </button>
+          </div>
+        </section>
+      ))}
+    </div>
+  )
+}

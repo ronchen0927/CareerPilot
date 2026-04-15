@@ -76,6 +76,30 @@ class JobEvaluateResponse(BaseModel):
     from_cache: bool = Field(default=False, description="是否來自快取（未重新呼叫 AI）")
 
 
+class CoverLetterRequest(BaseModel):
+    """AI 推薦信請求"""
+
+    job_text: str = Field(min_length=10, description="職缺描述文字")
+    user_cv: str = Field(default="", description="求職者履歷或背景描述")
+
+
+class CoverLetterResponse(BaseModel):
+    """AI 推薦信結果"""
+
+    id: int = Field(description="資料庫記錄 ID")
+    letter: str = Field(description="推薦信內文")
+
+
+class CoverLetterRecord(BaseModel):
+    """推薦信歷史紀錄（單筆）"""
+
+    id: int = Field(description="記錄 ID")
+    job_text_snippet: str = Field(description="職缺描述前 80 字")
+    job_text: str = Field(description="職缺描述全文")
+    letter: str = Field(description="推薦信內文")
+    created_at: str = Field(description="生成時間")
+
+
 class EvaluationRecord(BaseModel):
     """評分歷史紀錄（單筆）"""
 
