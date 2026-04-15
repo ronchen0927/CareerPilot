@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 cd backend
 uv sync --group dev                               # Install dependencies (incl. dev tools)
+uv run playwright install chromium                # Install Chromium for Playwright (first time)
 uv run uvicorn app.main:app --reload --port 8000  # Start API server (dev)
 uv run pytest                                     # Run all tests
 uv run pytest tests/test_scraper.py -v            # Run a single test file
@@ -25,51 +26,78 @@ Settings can be overridden via a `backend/.env` file (uses `pydantic-settings`).
 
 ```bash
 cd frontend
-python -m http.server 3000   # Serve at http://localhost:3000
+npm install   # Install dependencies (first time)
+npm run dev   # Start dev server at http://localhost:5173
+npm run build # Build for production
 ```
 
-The frontend hardcodes `API_BASE = "http://localhost:8000"` in `frontend/js/app.js`.
+`API_BASE` is hardcoded to `http://localhost:8000` in `frontend/src/api/client.ts`.
 
 ## Architecture
 
 ```
 backend/
   app/
-    main.py         # FastAPI app: CORS, static files, lifespan (starts scheduler task)
-    config.py       # Settings (pydantic-settings), AREA_OPTIONS, EXPERIENCE_OPTIONS constants
-    models.py       # Pydantic models: JobSearchRequest, JobListing, AlertCreateRequest, etc.
-    scraper.py      # Async scraper hitting 104's internal JSON API via aiohttp
-    alerts.py       # load_alerts() / save_alerts() — persists to backend/alerts.json
-    scheduler.py    # Background asyncio loop: checks due alerts, scrapes, notifies
+    main.py           # FastAPI app: CORS, static files, lifespan (starts scheduler task)
+    config.py         # Settings (pydantic-settings), AREA_OPTIONS, EXPERIENCE_OPTIONS constants
+    models.py         # Pydantic models: JobSearchRequest, JobListing, AlertCreateRequest, etc.
+    scraper.py        # Async scraper hitting 104's internal JSON API via aiohttp
+    scraper_cake.py   # Async scraper for CakeResume via aiohttp + BeautifulSoup
+    alerts.py         # load_alerts() / save_alerts() — persists to backend/alerts.json
+    scheduler.py      # Background asyncio loop: checks due alerts, scrapes, notifies
     routers/
-      jobs.py       # POST /api/jobs/search, GET /api/jobs/options
-      alerts.py     # GET/POST /api/alerts, DELETE /api/alerts/{id}, POST /{id}/trigger
+      jobs.py         # POST /api/jobs/search, GET /api/jobs/options
+      alerts.py       # GET/POST /api/alerts, DELETE /api/alerts/{id}, POST /{id}/trigger
+      evaluate.py     # POST /api/jobs/evaluate (structured), POST /api/jobs/evaluate-text (free text)
+      cv.py           # POST /api/cv/parse — extract text from uploaded PDF via pdfplumber
+      fetch_url.py    # POST /api/jobs/fetch-url — fetch job page via Playwright (headless Chromium)
   tests/
-    conftest.py     # Fixtures: tmp_alerts_file (monkeypatches ALERTS_FILE), client (TestClient)
+    conftest.py         # Fixtures: tmp_alerts_file (monkeypatches ALERTS_FILE), client (TestClient)
     test_scraper.py
     test_scheduler.py
     test_alerts_storage.py
     test_api_jobs.py
     test_api_alerts.py
 frontend/
-  index.html        # Main search page + bookmarks list
-  dashboard.html    # Kanban board (drag-and-drop job status tracking)
-  alerts.html       # Scheduled alert management UI
-  js/
-    utils.js        # Shared helper: escapeHtml()
-    app.js          # Search, salary filter, job modal, bookmarks, CSV export
-    dashboard.js    # Kanban board with HTML5 Drag and Drop API
-    alerts.js       # Alert CRUD UI, Line Notify / Webhook toggle
-static/             # Served at /static by FastAPI
+  src/
+    main.tsx            # React entry point
+    App.tsx             # Routes: / | /dashboard | /alerts | /evaluate
+    api/
+      client.ts         # All fetch calls to the backend API
+    components/
+      Layout.tsx        # Nav bar (🔔 alerts, 📋 dashboard, ✨ evaluate), theme toggle
+      JobModal.tsx      # Job detail modal with AI evaluation
+      CVModal.tsx       # CV input modal (used on search page)
+      CheckboxGroup.tsx # Reusable checkbox filter group
+    pages/
+      SearchPage.tsx    # Main search page + bookmarks list
+      DashboardPage.tsx # Kanban board (drag-and-drop job status tracking)
+      AlertsPage.tsx    # Scheduled alert management UI
+      EvaluatePage.tsx  # AI job evaluation: URL fetch or paste JD + PDF CV upload
+    hooks/
+      useBookmarks.ts   # Bookmark CRUD backed by localStorage
+      useLocalStorage.ts
+      useTheme.ts
+    types/
+      index.ts          # Shared TypeScript interfaces
+static/                 # Served at /static by FastAPI
 ```
 
-**Data flow:** Frontend form → `POST /api/jobs/search` → `scraper.scrape_jobs()` fetches all pages concurrently via `asyncio.gather` → deduplicates by job link → sorts by date descending → returns `JobSearchResponse`.
+**Data flow:** Frontend form → `POST /api/jobs/search` → `scraper.scrape_jobs()` / `scraper_cake.scrape_cake_jobs()` fetch concurrently via `asyncio.gather` → deduplicates by job link → sorts by date descending → returns `JobSearchResponse`.
 
 **104 API:** Targets `https://www.104.com.tw/jobs/search/api/jobs` with a `Referer` header and SSL cert verification disabled (104 cert quirk). Area and experience codes are URL-encoded comma-joined lists.
 
+**CakeResume scraper:** Hits `https://www.cakeresume.com/jobs` HTML pages via aiohttp + BeautifulSoup. Parses job cards from the rendered HTML.
+
+**AI Evaluation:** Two modes — structured (`/evaluate`, takes a `JobListing` object) and free-text (`/evaluate-text`, takes raw JD string). Both share `_make_openai_client` / `_call_openai` helpers. The free-text endpoint is used by `EvaluatePage`. Requires `OPENAI_API_KEY` in `.env`.
+
+**PDF CV parse:** `POST /api/cv/parse` accepts multipart PDF upload (max 5 MB), extracts text via `pdfplumber`, returns `{ text }`. Frontend populates the CV textarea and persists to `localStorage`.
+
+**Playwright URL fetch:** `POST /api/jobs/fetch-url` launches headless Chromium, navigates to the URL with a browser-like User-Agent, waits for `networkidle`, returns `innerText` (capped at 8000 chars). Returns 422 if content is too short (likely blocked), prompting the user to paste manually.
+
 **Scheduler:** Runs as an asyncio task inside the FastAPI `lifespan` context manager (no external dependency). Wakes every 60 seconds, checks each alert's `interval_minutes` against `last_run`, scrapes if due, sends Line Notify or Webhook, updates `seen_links` and `last_run` in `alerts.json`.
 
-**Frontend state:** Bookmarks and kanban status stored in `localStorage`. `utils.js` is loaded before each page's own script and provides the shared `escapeHtml()` function.
+**Frontend state:** Bookmarks and kanban status stored in `localStorage`. CV text stored under key `jobradar_cv`.
 
 ## Testing approach
 
