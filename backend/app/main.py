@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import settings
 from .db import init_db
-from .routers import alerts, cover_letter, cv, evaluate, fetch_url, history, jobs, resume
+from .routers import alerts, cover_letter, cv, evaluate, fetch_url, history, jobs, liveness, resume
 
 # Logging
 logging.basicConfig(
@@ -20,16 +20,19 @@ logging.basicConfig(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from .liveness import run_liveness_loop
     from .scheduler import run_scheduler
 
     await init_db()
-    task = asyncio.create_task(run_scheduler())
+    alert_task = asyncio.create_task(run_scheduler())
+    liveness_task = asyncio.create_task(run_liveness_loop())
     yield
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        pass
+    for task in (alert_task, liveness_task):
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(
@@ -62,6 +65,7 @@ app.include_router(fetch_url.router)
 app.include_router(history.router)
 app.include_router(cover_letter.router)
 app.include_router(resume.router)
+app.include_router(liveness.router)
 
 
 @app.get("/")

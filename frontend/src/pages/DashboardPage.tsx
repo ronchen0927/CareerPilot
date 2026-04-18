@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useBookmarks } from '../hooks/useBookmarks'
+import { useLiveness } from '../hooks/useLiveness'
 import type { BookmarkEntry, BookmarkStatus } from '../types'
 
 const STATUSES: BookmarkStatus[] = ['想投', '已投', '面試中', '錄取', '不適合']
@@ -19,6 +20,8 @@ export default function DashboardPage() {
   const [dragOverStatus, setDragOverStatus] = useState<BookmarkStatus | null>(null)
 
   const entries = Object.entries(bookmarks)
+  const bookmarkUrls = useMemo(() => Object.keys(bookmarks), [bookmarks])
+  const { statusMap, recheckLoading, recheck } = useLiveness(bookmarkUrls)
   const groups = Object.fromEntries(
     STATUSES.map(s => [
       s,
@@ -107,6 +110,14 @@ export default function DashboardPage() {
               </span>
             )
           })}
+          <button
+            className="btn-export"
+            style={{ padding: '0.2rem 0.7rem', fontSize: '0.78rem', marginLeft: 'auto' }}
+            disabled={recheckLoading}
+            onClick={recheck}
+          >
+            {recheckLoading ? '檢查中...' : '🔄 重新檢查職缺'}
+          </button>
         </div>
       </header>
 
@@ -139,6 +150,7 @@ export default function DashboardPage() {
                     key={link}
                     link={link}
                     bm={bm}
+                    liveness={statusMap[link] ?? null}
                     onDragStart={() => handleDragStart(link)}
                     onRemove={() => remove(link)}
                   />
@@ -156,11 +168,12 @@ export default function DashboardPage() {
 interface CardProps {
   link: string
   bm: BookmarkEntry
+  liveness: import('../types').LivenessInfo | null
   onDragStart: () => void
   onRemove: () => void
 }
 
-function KanbanCard({ link, bm, onDragStart, onRemove }: CardProps) {
+function KanbanCard({ link, bm, liveness, onDragStart, onRemove }: CardProps) {
   const [isDragging, setIsDragging] = useState(false)
 
   return (
@@ -197,6 +210,34 @@ function KanbanCard({ link, bm, onDragStart, onRemove }: CardProps) {
         <span className="kanban-card__city">{bm.city}</span>
       </div>
       <span className="kanban-card__salary">{bm.salary}</span>
+      {liveness?.status === 'dead' && (
+        <span style={{
+          display: 'inline-block',
+          marginTop: '0.35rem',
+          fontSize: '0.72rem',
+          padding: '0.1rem 0.45rem',
+          borderRadius: '999px',
+          background: 'rgba(239,68,68,0.12)',
+          color: '#ef4444',
+          border: '1px solid rgba(239,68,68,0.3)',
+        }}>
+          職缺已關閉
+        </span>
+      )}
+      {liveness?.status === 'unknown' && (
+        <span style={{
+          display: 'inline-block',
+          marginTop: '0.35rem',
+          fontSize: '0.72rem',
+          padding: '0.1rem 0.45rem',
+          borderRadius: '999px',
+          background: 'rgba(156,163,175,0.12)',
+          color: '#9ca3af',
+          border: '1px solid rgba(156,163,175,0.2)',
+        }}>
+          狀態未知
+        </span>
+      )}
     </div>
   )
 }
