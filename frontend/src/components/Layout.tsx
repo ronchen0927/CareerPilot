@@ -33,6 +33,12 @@ export default function Layout() {
         <NavLink to="/cover-letters" className="quick-nav__link" title="推薦信歷史">
           📂
         </NavLink>
+        <NavLink to="/resume-rewrite" className="quick-nav__link" title="AI 履歷改寫">
+          📝
+        </NavLink>
+        <NavLink to="/resume-rewrites" className="quick-nav__link" title="履歷改寫歷史">
+          🗂️
+        </NavLink>
         {pathname === '/' && (
           <button
             className="quick-nav__link"

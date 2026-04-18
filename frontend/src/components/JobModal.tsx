@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { evaluateJob } from '../api/client'
 import type { JobEvaluateResponse, JobListing } from '../types'
 
@@ -23,6 +24,20 @@ export default function JobModal({ job, onClose }: Props) {
   const [evalResult, setEvalResult] = useState<JobEvaluateResponse | null>(null)
   const [evalLoading, setEvalLoading] = useState(false)
   const [evalError, setEvalError] = useState<string | null>(null)
+  const navigate = useNavigate()
+
+  function handleRewriteResume() {
+    const jobText = [
+      `職位：${job.job}`,
+      `公司：${job.company}`,
+      `城市：${job.city}`,
+      `經歷要求：${job.experience}`,
+      `最低學歷：${job.education}`,
+      `薪水：${job.salary}`,
+    ].join('\n')
+    navigate('/resume-rewrite', { state: { job_text: jobText, job_url: job.link } })
+    onClose()
+  }
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -104,6 +119,15 @@ export default function JobModal({ job, onClose }: Props) {
         >
           前往查看完整詳情 →
         </a>
+
+        <button
+          type="button"
+          className="btn-export"
+          style={{ marginTop: '0.6rem', width: '100%' }}
+          onClick={handleRewriteResume}
+        >
+          ✍️ 針對此職缺改寫履歷
+        </button>
 
         <div className="modal__ai-section">
           <button className="btn-evaluate" disabled={evalLoading} onClick={handleEvaluate}>

@@ -80,6 +80,17 @@ export default function HistoryDetailPage() {
                   開啟原始連結 ↗
                 </a>
               )}
+              <button
+                className="btn-export"
+                style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', marginLeft: 'auto' }}
+                onClick={() =>
+                  navigate('/resume-rewrite', {
+                    state: { job_text: record.job_text, job_url: record.job_url },
+                  })
+                }
+              >
+                ✍️ 改寫履歷
+              </button>
             </div>
             <pre style={{
               whiteSpace: 'pre-wrap',

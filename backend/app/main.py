@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import settings
 from .db import init_db
-from .routers import alerts, cover_letter, cv, evaluate, fetch_url, history, jobs
+from .routers import alerts, cover_letter, cv, evaluate, fetch_url, history, jobs, resume
 
 # Logging
 logging.basicConfig(
@@ -61,6 +61,7 @@ app.include_router(cv.router)
 app.include_router(fetch_url.router)
 app.include_router(history.router)
 app.include_router(cover_letter.router)
+app.include_router(resume.router)
 
 
 @app.get("/")
