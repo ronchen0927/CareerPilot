@@ -15,8 +15,7 @@ export default function ResumeRewritePage() {
   const [jobUrl, setJobUrl] = useState(state?.job_url ?? '')
   const [jobText, setJobText] = useState(state?.job_text ?? '')
   const [cv, setCv] = useState(() => localStorage.getItem('careerpilot_cv') ?? '')
-  const [plainResult, setPlainResult] = useState<ResumeRewriteResponse | null>(null)
-  const [structuredResult, setStructuredResult] = useState<ResumeRewriteResponse | null>(null)
+  const [result, setResult] = useState<ResumeRewriteResponse | null>(null)
 
   const [fetchLoading, setFetchLoading] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -24,7 +23,7 @@ export default function ResumeRewritePage() {
   const [cvError, setCvError] = useState<string | null>(null)
   const [genLoading, setGenLoading] = useState(false)
   const [genError, setGenError] = useState<string | null>(null)
-  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const cvFileRef = useRef<HTMLInputElement>(null)
 
@@ -68,20 +67,14 @@ export default function ResumeRewritePage() {
     if (jobText.trim().length < 10 || cv.trim().length < 1) return
     setGenLoading(true)
     setGenError(null)
-    setPlainResult(null)
-    setStructuredResult(null)
+    setResult(null)
     try {
-      const common = {
+      const data = await rewriteResume({
         job_text: jobText,
         user_cv: cv,
         job_url: jobUrl.trim() || null,
-      }
-      const [plain, structured] = await Promise.all([
-        rewriteResume({ ...common, mode: 'plain' }),
-        rewriteResume({ ...common, mode: 'structured' }),
-      ])
-      setPlainResult(plain)
-      setStructuredResult(structured)
+      })
+      setResult(data)
     } catch (err) {
       setGenError(err instanceof Error ? err.message : '生成失敗，請稍後再試')
     } finally {
@@ -89,23 +82,12 @@ export default function ResumeRewritePage() {
     }
   }
 
-  async function handleCopy(key: string, text: string) {
-    await navigator.clipboard.writeText(text)
-    setCopiedKey(key)
-    setTimeout(() => setCopiedKey(null), 2000)
+  async function handleCopy() {
+    if (!result) return
+    await navigator.clipboard.writeText(result.result)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
-
-  const structuredText = structuredResult?.structured_result
-    ? [
-        structuredResult.structured_result.summary,
-        '',
-        '【工作經歷】',
-        ...structuredResult.structured_result.experience.map(e => `• ${e}`),
-        '',
-        '【技能】',
-        structuredResult.structured_result.skills.join('、'),
-      ].join('\n')
-    : ''
 
   return (
     <div className="container">
@@ -115,7 +97,7 @@ export default function ResumeRewritePage() {
           <h1 className="header__title">AI 履歷改寫</h1>
         </div>
         <p className="header__subtitle">
-          針對職缺需求，同時產出「整份純文字」與「分段結構化」兩個版本供你比較
+          針對職缺需求改寫履歷；輸出語言會跟著原始履歷（中文→中文、英文→英文）
         </p>
       </header>
 
@@ -206,7 +188,7 @@ export default function ResumeRewritePage() {
 
           <button type="submit" className="btn-search" disabled={genLoading}>
             <span className="btn-search__text">
-              {genLoading ? '生成中（兩版同時跑）...' : '📝 產生改寫履歷'}
+              {genLoading ? '生成中...' : '📝 產生改寫履歷'}
             </span>
             <span className="btn-search__icon">→</span>
           </button>
@@ -228,105 +210,33 @@ export default function ResumeRewritePage() {
         </section>
       )}
 
-      {(plainResult || structuredResult) && (
-        <>
-          {/* Plain result */}
-          {plainResult?.plain_result && (
-            <section className="search-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span className="ai-result__label" style={{ background: 'var(--color-tag-bg, rgba(99,102,241,0.15))', color: 'var(--color-tag-text, #818cf8)' }}>
-                    版本 A｜整份純文字
-                  </span>
-                  <button
-                    className="btn-export"
-                    style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
-                    onClick={() => navigate(`/resume-rewrites/${plainResult.id}`)}
-                  >
-                    詳情 →
-                  </button>
-                </div>
-                <button
-                  className="btn-export"
-                  style={{ padding: '0.3rem 0.8rem', fontSize: '0.85rem' }}
-                  onClick={() => handleCopy('plain', plainResult.plain_result ?? '')}
-                >
-                  {copiedKey === 'plain' ? '已複製 ✓' : '複製'}
-                </button>
-              </div>
-              <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '0.9rem', lineHeight: 1.75, fontFamily: 'inherit', margin: 0 }}>
-                {plainResult.plain_result}
-              </pre>
-            </section>
-          )}
-
-          {/* Structured result */}
-          {structuredResult?.structured_result && (
-            <section className="search-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span className="ai-result__label" style={{ background: 'var(--color-tag-bg, rgba(99,102,241,0.15))', color: 'var(--color-tag-text, #818cf8)' }}>
-                    版本 B｜分段結構化
-                  </span>
-                  <button
-                    className="btn-export"
-                    style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
-                    onClick={() => navigate(`/resume-rewrites/${structuredResult.id}`)}
-                  >
-                    詳情 →
-                  </button>
-                </div>
-                <button
-                  className="btn-export"
-                  style={{ padding: '0.3rem 0.8rem', fontSize: '0.85rem' }}
-                  onClick={() => handleCopy('structured', structuredText)}
-                >
-                  {copiedKey === 'structured' ? '已複製 ✓' : '複製全部'}
-                </button>
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <h4 style={{ fontSize: '0.85rem', opacity: 0.7, margin: '0 0 0.4rem 0' }}>自我介紹</h4>
-                <p style={{ fontSize: '0.9rem', lineHeight: 1.75, margin: 0 }}>
-                  {structuredResult.structured_result.summary}
-                </p>
-              </div>
-
-              {structuredResult.structured_result.experience.length > 0 && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <h4 style={{ fontSize: '0.85rem', opacity: 0.7, margin: '0 0 0.4rem 0' }}>工作經歷</h4>
-                  <ul style={{ fontSize: '0.9rem', lineHeight: 1.7, margin: 0, paddingLeft: '1.2rem' }}>
-                    {structuredResult.structured_result.experience.map((e, i) => (
-                      <li key={i}>{e}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {structuredResult.structured_result.skills.length > 0 && (
-                <div>
-                  <h4 style={{ fontSize: '0.85rem', opacity: 0.7, margin: '0 0 0.4rem 0' }}>技能</h4>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                    {structuredResult.structured_result.skills.map((s, i) => (
-                      <span
-                        key={i}
-                        style={{
-                          fontSize: '0.82rem',
-                          padding: '0.2rem 0.6rem',
-                          borderRadius: '999px',
-                          background: 'var(--color-tag-bg, rgba(99,102,241,0.15))',
-                          color: 'var(--color-tag-text, #818cf8)',
-                        }}
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </section>
-          )}
-        </>
+      {result && (
+        <section className="search-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span className="ai-result__label" style={{ background: 'var(--color-tag-bg, rgba(99,102,241,0.15))', color: 'var(--color-tag-text, #818cf8)' }}>
+                改寫結果
+              </span>
+              <button
+                className="btn-export"
+                style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+                onClick={() => navigate(`/resume-rewrites/${result.id}`)}
+              >
+                詳情 →
+              </button>
+            </div>
+            <button
+              className="btn-export"
+              style={{ padding: '0.3rem 0.8rem', fontSize: '0.85rem' }}
+              onClick={handleCopy}
+            >
+              {copied ? '已複製 ✓' : '複製'}
+            </button>
+          </div>
+          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '0.95rem', lineHeight: 1.75, fontFamily: 'inherit', margin: 0 }}>
+            {result.result}
+          </pre>
+        </section>
       )}
     </div>
   )

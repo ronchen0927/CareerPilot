@@ -168,7 +168,6 @@ async def save_resume_rewrite(
     job_text: str,
     job_url: str | None,
     original_cv: str,
-    mode: str,
     result: str,
 ) -> int:
     async with aiosqlite.connect(_db_path()) as db:
@@ -176,9 +175,9 @@ async def save_resume_rewrite(
             """
             INSERT INTO resume_rewrites
                 (job_text, job_url, original_cv, mode, result)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, 'plain', ?)
             """,
-            (job_text, job_url, original_cv, mode, result),
+            (job_text, job_url, original_cv, result),
         )
         await db.commit()
         return cur.lastrowid  # type: ignore[return-value]
