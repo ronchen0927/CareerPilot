@@ -8,9 +8,7 @@ class JobSearchRequest(BaseModel):
     pages: int = Field(default=5, ge=1, le=20, description="爬取頁數")
     areas: list[str] = Field(default_factory=list, description="地區代碼清單")
     experience: list[str] = Field(default_factory=list, description="經歷要求代碼清單")
-    sources: list[str] = Field(
-        default_factory=lambda: ["104"], description="搜尋來源：104 | CakeResume"
-    )
+    sources: list[str] = Field(default_factory=lambda: ["104"], description="搜尋來源")
 
 
 class JobListing(BaseModel):
@@ -27,7 +25,7 @@ class JobListing(BaseModel):
     salary_low: int = Field(default=0, description="薪水下限（元/月）")
     salary_high: int = Field(default=0, description="薪水上限（元/月）")
     is_featured: bool = Field(default=False, description="是否為精選職缺")
-    source: str = Field(default="104", description="職缺來源：104 | CakeResume")
+    source: str = Field(default="104", description="職缺來源")
 
 
 class AlertCreateRequest(BaseModel):

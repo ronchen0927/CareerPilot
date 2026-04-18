@@ -40,7 +40,6 @@ export default function SearchPage() {
   const [pages, setPages] = useState(5)
   const [areas, setAreas] = useState<string[]>([])
   const [experience, setExperience] = useState<string[]>([])
-  const [sources, setSources] = useState<string[]>(['104'])
   const [minSalary, setMinSalary] = useState(0)
   const [options, setOptions] = useState<JobOptions>(FALLBACK_OPTIONS)
   const [allResults, setAllResults] = useState<JobListing[]>([])
@@ -71,8 +70,6 @@ export default function SearchPage() {
     const kws = [...new Set(keyword.split(',').map(k => k.trim()).filter(Boolean))]
     if (kws.length === 0) return
     if (kws.length > 5) { setError('最多支援 5 個關鍵字，請減少後再搜尋'); return }
-    if (sources.length === 0) { setError('請至少選擇一個搜尋來源'); return }
-
     setLoading(true)
     setError(null)
     setAllResults([])
@@ -80,7 +77,7 @@ export default function SearchPage() {
 
     try {
       const responses = await Promise.all(
-        kws.map(kw => searchJobs({ keyword: kw, pages, areas, experience, sources })),
+        kws.map(kw => searchJobs({ keyword: kw, pages, areas, experience })),
       )
       const seen = new Set<string>()
       const merged: JobListing[] = []
@@ -103,10 +100,6 @@ export default function SearchPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  function handleSourceChange(value: string, checked: boolean) {
-    setSources(prev => (checked ? [...prev, value] : prev.filter(s => s !== value)))
   }
 
   function exportCSV() {
@@ -136,7 +129,7 @@ export default function SearchPage() {
           <span className="header__icon">🧭</span>
           <h1 className="header__title">CareerPilot</h1>
         </div>
-        <p className="header__subtitle">104 &amp; CakeResume 職缺快速搜尋</p>
+        <p className="header__subtitle">104 人力銀行職缺快速搜尋</p>
       </header>
 
       {/* Search Form */}
@@ -173,29 +166,6 @@ export default function SearchPage() {
               max={20}
               onChange={e => setPages(parseInt(e.target.value, 10) || 5)}
             />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              <span className="form-label__icon">🔍</span>
-              搜尋來源
-            </label>
-            <div className="checkbox-grid">
-              {(['104', 'CakeResume'] as const).map(src => (
-                <div className="checkbox-chip" key={src}>
-                  <input
-                    type="checkbox"
-                    id={`source-${src}`}
-                    value={src}
-                    checked={sources.includes(src)}
-                    onChange={e => handleSourceChange(src, e.target.checked)}
-                  />
-                  <label htmlFor={`source-${src}`}>
-                    {src === '104' ? '104 人力銀行' : src}
-                  </label>
-                </div>
-              ))}
-            </div>
           </div>
 
           <div className="form-group">
@@ -346,11 +316,7 @@ export default function SearchPage() {
                       <span className="salary-text">{job.salary}</span>
                     </td>
                     <td>
-                      {job.source === 'CakeResume' ? (
-                        <span className="source-badge source-badge--cake">CakeResume</span>
-                      ) : (
-                        <span className="source-badge source-badge--104">104</span>
-                      )}
+                      <span className="source-badge source-badge--104">104</span>
                     </td>
                     <td>
                       <button

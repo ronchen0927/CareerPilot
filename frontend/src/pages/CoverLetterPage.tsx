@@ -102,7 +102,7 @@ export default function CoverLetterPage() {
                 type="url"
                 id="job-url"
                 className="form-input"
-                placeholder="https://www.cakeresume.com/jobs/..."
+                placeholder="https://www.104.com.tw/job/..."
                 value={jobUrl}
                 onChange={e => setJobUrl(e.target.value)}
                 style={{ flex: 1 }}

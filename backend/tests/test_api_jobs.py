@@ -82,20 +82,3 @@ class TestSearchJobs:
         assert result["job"] == job.job
         assert result["company"] == job.company
         assert result["salary_low"] == job.salary_low
-
-    def test_both_sources_merged(self, client):
-        job_104 = _make_job(source="104")
-        job_cake = _make_job(link="https://www.cake.me/jobs/abc", source="CakeResume")
-        with (
-            patch("app.routers.jobs.scrape_104", new=AsyncMock(return_value=[job_104])),
-            patch("app.routers.jobs.scrape_cake", new=AsyncMock(return_value=[job_cake])),
-        ):
-            resp = client.post(
-                "/api/jobs/search",
-                json={"keyword": "Python", "pages": 1, "sources": ["104", "CakeResume"]},
-            )
-        assert resp.status_code == 200
-        body = resp.json()
-        assert body["count"] == 2
-        sources_in_results = {r["source"] for r in body["results"]}
-        assert sources_in_results == {"104", "CakeResume"}
