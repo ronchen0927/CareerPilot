@@ -106,7 +106,7 @@ export default function EvaluatePage() {
                 type="url"
                 id="job-url"
                 className="form-input"
-                placeholder="https://www.cakeresume.com/jobs/..."
+                placeholder="https://www.104.com.tw/job/..."
                 value={jobUrl}
                 onChange={e => setJobUrl(e.target.value)}
                 style={{ flex: 1 }}
@@ -133,7 +133,7 @@ export default function EvaluatePage() {
             <label className="form-label" htmlFor="job-text">
               <span className="form-label__icon">📋</span>
               職缺描述
-              <span className="form-label__hint">從 CakeResume、Yourator、104 等平台複製貼上，或由上方自動擷取</span>
+              <span className="form-label__hint">從 104、Yourator 等平台複製貼上，或由上方自動擷取</span>
             </label>
             <textarea
               id="job-text"
