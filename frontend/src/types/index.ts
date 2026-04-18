@@ -92,6 +92,16 @@ export interface JobEvaluateTextRequest {
   user_cv: string
 }
 
+export interface EvaluationDimensions {
+  job_category: string
+  level_move: string
+  skill_match: number
+  salary_fairness: number
+  growth_potential: number
+  location_flexibility: number
+  overall_score: number
+}
+
 export interface JobEvaluateResponse {
   score: string
   summary: string
@@ -99,6 +109,7 @@ export interface JobEvaluateResponse {
   gap_points: string[]
   recommendation: string
   from_cache?: boolean
+  dimensions?: EvaluationDimensions | null
 }
 
 export interface CoverLetterRequest {
@@ -151,4 +162,15 @@ export interface EvaluationRecord {
   gap_points: string[]
   recommendation: string
   created_at: string
+  dimensions?: EvaluationDimensions | null
 }
+
+export type LivenessStatus = 'alive' | 'dead' | 'unknown'
+
+export interface LivenessInfo {
+  status: LivenessStatus
+  last_checked: string
+  reason: string | null
+}
+
+export type LivenessMap = Record<string, LivenessInfo>

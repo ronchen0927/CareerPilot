@@ -12,6 +12,7 @@ import type {
   JobOptions,
   JobSearchRequest,
   JobSearchResponse,
+  LivenessMap,
   ResumeRewriteRecord,
   ResumeRewriteRequest,
   ResumeRewriteResponse,
@@ -139,4 +140,18 @@ export function fetchResumeRewrite(id: number): Promise<ResumeRewriteRecord> {
 
 export function deleteResumeRewrite(id: number): Promise<void> {
   return apiFetch<void>(`/api/resume-rewrites/${id}`, { method: 'DELETE' })
+}
+
+export function fetchLivenessStatus(urls: string[]): Promise<LivenessMap> {
+  return apiFetch<LivenessMap>('/api/liveness/status', {
+    method: 'POST',
+    body: JSON.stringify({ urls }),
+  })
+}
+
+export function triggerLivenessCheck(urls: string[]): Promise<{ checked: number }> {
+  return apiFetch<{ checked: number }>('/api/liveness/check', {
+    method: 'POST',
+    body: JSON.stringify({ urls }),
+  })
 }

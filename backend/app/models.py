@@ -63,6 +63,18 @@ class JobEvaluateTextRequest(BaseModel):
     user_cv: str = Field(default="", description="求職者履歷或背景描述（選填）")
 
 
+class EvaluationDimensions(BaseModel):
+    """AI 評分多維度細項"""
+
+    job_category: str = Field(description="職位分類")
+    level_move: str = Field(description="職級策略：升遷 | 平調 | 後退")
+    skill_match: float = Field(ge=1, le=5, description="技能匹配度 (1-5)")
+    salary_fairness: float = Field(ge=1, le=5, description="薪資合理性 (1-5)")
+    growth_potential: float = Field(ge=1, le=5, description="成長空間 (1-5)")
+    location_flexibility: float = Field(ge=1, le=5, description="地理/遠端彈性 (1-5)")
+    overall_score: float = Field(ge=1, le=5, description="綜合推薦度 (1-5)")
+
+
 class JobEvaluateResponse(BaseModel):
     """AI 評分結果"""
 
@@ -72,6 +84,7 @@ class JobEvaluateResponse(BaseModel):
     gap_points: list[str] = Field(default=[], description="落差或風險")
     recommendation: str = Field(description="投遞建議")
     from_cache: bool = Field(default=False, description="是否來自快取（未重新呼叫 AI）")
+    dimensions: EvaluationDimensions | None = Field(default=None, description="多維度評分細項")
 
 
 class CoverLetterRequest(BaseModel):
@@ -138,3 +151,4 @@ class EvaluationRecord(BaseModel):
     gap_points: list[str] = Field(default=[], description="落差或風險")
     recommendation: str = Field(description="投遞建議")
     created_at: str = Field(description="評分時間")
+    dimensions: EvaluationDimensions | None = Field(default=None, description="多維度評分細項")

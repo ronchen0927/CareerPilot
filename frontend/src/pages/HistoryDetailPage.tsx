@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams, useLocation } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { fetchEvaluation } from '../api/client'
+import DimensionsPanel from '../components/DimensionsPanel'
 import type { EvaluationRecord } from '../types'
 
 const SCORE_CLASS: Record<string, string> = {
@@ -137,6 +138,10 @@ export default function HistoryDetailPage() {
               )}
 
               <p className="ai-result__rec">{record.recommendation}</p>
+              {record.dimensions
+                ? <DimensionsPanel dimensions={record.dimensions} />
+                : <p style={{ fontSize: '0.78rem', opacity: 0.45, marginTop: '0.5rem' }}>舊版評分（無多維度資料）</p>
+              }
             </div>
           </section>
         </>

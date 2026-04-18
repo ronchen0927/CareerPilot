@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { evaluateJob } from '../api/client'
+import DimensionsPanel from './DimensionsPanel'
 import type { JobEvaluateResponse, JobListing } from '../types'
 
 interface Props {
@@ -173,6 +174,7 @@ export default function JobModal({ job, onClose }: Props) {
                 </div>
               )}
               <p className="ai-result__rec">{evalResult.recommendation}</p>
+              {evalResult.dimensions && <DimensionsPanel dimensions={evalResult.dimensions} />}
             </div>
           )}
         </div>

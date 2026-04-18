@@ -3,12 +3,18 @@ import json
 from fastapi import APIRouter, HTTPException
 
 from ..db import delete_evaluation, get_evaluation, list_evaluations
-from ..models import EvaluationRecord
+from ..models import EvaluationDimensions, EvaluationRecord
 
 router = APIRouter(prefix="/api/evaluations", tags=["history"])
 
 
 def _to_record(r: dict) -> EvaluationRecord:
+    dimensions: EvaluationDimensions | None = None
+    if r.get("dimensions"):
+        try:
+            dimensions = EvaluationDimensions(**json.loads(r["dimensions"]))
+        except Exception:
+            pass
     return EvaluationRecord(
         id=r["id"],
         job_text_snippet=r["job_text"][:80],
@@ -20,6 +26,7 @@ def _to_record(r: dict) -> EvaluationRecord:
         gap_points=json.loads(r["gap_points"]),
         recommendation=r["recommendation"],
         created_at=r["created_at"],
+        dimensions=dimensions,
     )
 
 

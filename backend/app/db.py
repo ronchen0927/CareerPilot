@@ -33,6 +33,12 @@ async def init_db() -> None:
             )
             """
         )
+        # Idempotent migration: add dimensions column for multi-dimensional scoring
+        async with db.execute("PRAGMA table_info(evaluations)") as cur:
+            cols = {row[1] for row in await cur.fetchall()}
+        if "dimensions" not in cols:
+            await db.execute("ALTER TABLE evaluations ADD COLUMN dimensions TEXT")
+
         await db.execute(
             """
             CREATE TABLE IF NOT EXISTS cover_letters (
@@ -53,6 +59,17 @@ async def init_db() -> None:
                 mode        TEXT    NOT NULL,
                 result      TEXT    NOT NULL,
                 created_at  TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+            )
+            """
+        )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS job_liveness (
+                job_url      TEXT    PRIMARY KEY,
+                status       TEXT    NOT NULL DEFAULT 'unknown',
+                last_checked TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
+                last_reason  TEXT,
+                fail_count   INTEGER NOT NULL DEFAULT 0
             )
             """
         )
@@ -86,14 +103,15 @@ async def save_evaluation(
     match_points: list[str],
     gap_points: list[str],
     recommendation: str,
+    dimensions: dict | None = None,
 ) -> int:
     async with aiosqlite.connect(_db_path()) as db:
         cur = await db.execute(
             """
             INSERT INTO evaluations
                 (job_hash, job_text, job_url, score, summary,
-                 match_points, gap_points, recommendation)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 match_points, gap_points, recommendation, dimensions)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 job_hash,
@@ -104,6 +122,7 @@ async def save_evaluation(
                 json.dumps(match_points, ensure_ascii=False),
                 json.dumps(gap_points, ensure_ascii=False),
                 recommendation,
+                json.dumps(dimensions, ensure_ascii=False) if dimensions else None,
             ),
         )
         await db.commit()
@@ -204,3 +223,58 @@ async def delete_resume_rewrite(record_id: int) -> bool:
         cur = await db.execute("DELETE FROM resume_rewrites WHERE id = ?", (record_id,))
         await db.commit()
         return cur.rowcount > 0
+
+
+# ── Job liveness ──────────────────────────────────────────────────────────────
+
+
+async def upsert_liveness(job_url: str, status: str, reason: str | None, fail_count: int) -> None:
+    async with aiosqlite.connect(_db_path()) as db:
+        await db.execute(
+            """
+            INSERT INTO job_liveness (job_url, status, last_reason, fail_count)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(job_url) DO UPDATE SET
+                status       = excluded.status,
+                last_checked = datetime('now','localtime'),
+                last_reason  = excluded.last_reason,
+                fail_count   = excluded.fail_count
+            """,
+            (job_url, status, reason, fail_count),
+        )
+        await db.commit()
+
+
+async def get_liveness_map(urls: list[str]) -> dict[str, dict]:
+    if not urls:
+        return {}
+    placeholders = ",".join("?" * len(urls))
+    async with aiosqlite.connect(_db_path()) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            f"SELECT * FROM job_liveness WHERE job_url IN ({placeholders})",
+            urls,  # noqa: S608
+        ) as cur:
+            rows = await cur.fetchall()
+    return {r["job_url"]: dict(r) for r in rows}
+
+
+async def get_liveness_fail_count(job_url: str) -> int:
+    async with aiosqlite.connect(_db_path()) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT fail_count FROM job_liveness WHERE job_url = ?", (job_url,)
+        ) as cur:
+            row = await cur.fetchone()
+    return row["fail_count"] if row else 0
+
+
+async def list_liveness_targets() -> list[str]:
+    """Return distinct job_url values from evaluated jobs."""
+    async with aiosqlite.connect(_db_path()) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT DISTINCT job_url FROM evaluations WHERE job_url IS NOT NULL"
+        ) as cur:
+            rows = await cur.fetchall()
+    return [r["job_url"] for r in rows]

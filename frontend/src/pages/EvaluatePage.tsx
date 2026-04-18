@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { evaluateJobText, fetchJobUrl, parseCvPdf } from '../api/client'
+import DimensionsPanel from '../components/DimensionsPanel'
 import type { JobEvaluateResponse } from '../types'
 
 const SCORE_CLASS: Record<string, string> = {
@@ -261,6 +262,7 @@ export default function EvaluatePage() {
               </div>
             )}
             <p className="ai-result__rec">{result.recommendation}</p>
+            {result.dimensions && <DimensionsPanel dimensions={result.dimensions} />}
           </div>
         </section>
       )}

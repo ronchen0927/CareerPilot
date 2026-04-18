@@ -6,9 +6,25 @@ from openai import AsyncOpenAI
 
 from ..config import settings
 from ..db import get_cached, save_evaluation
-from ..models import JobEvaluateRequest, JobEvaluateResponse, JobEvaluateTextRequest
+from ..models import (
+    EvaluationDimensions,
+    JobEvaluateRequest,
+    JobEvaluateResponse,
+    JobEvaluateTextRequest,
+)
 
 router = APIRouter(prefix="/api/jobs", tags=["evaluate"])
+
+_DIMENSIONS_SPEC = """\
+  "dimensions": {
+    "job_category": "自由分類（例：後端工程師、前端、PM、資料工程、AI/ML、全端、其他）",
+    "level_move": "升遷 | 平調 | 後退（與求職者目前職級比較）",
+    "skill_match": <1~5的數字，一位小數，技能匹配程度>,
+    "salary_fairness": <1~5的數字，一位小數，薪資相對市場的合理程度>,
+    "growth_potential": <1~5的數字，一位小數，此職缺的成長空間>,
+    "location_flexibility": <1~5的數字，一位小數，地理或遠端彈性>,
+    "overall_score": <1~5的數字，一位小數，對以上各項的綜合評分>
+  }"""
 
 
 def _make_openai_client() -> AsyncOpenAI:
@@ -32,11 +48,18 @@ async def _call_openai(client: AsyncOpenAI, prompt: str) -> JobEvaluateResponse:
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"},
             temperature=0.3,
-            max_completion_tokens=600,
+            max_completion_tokens=900,
         )
         data = json.loads(response.choices[0].message.content)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"OpenAI API 錯誤：{e}") from e
+
+    dimensions: EvaluationDimensions | None = None
+    if raw_dims := data.get("dimensions"):
+        try:
+            dimensions = EvaluationDimensions(**raw_dims)
+        except Exception:
+            pass
 
     return JobEvaluateResponse(
         score=data.get("score", "N/A"),
@@ -44,10 +67,17 @@ async def _call_openai(client: AsyncOpenAI, prompt: str) -> JobEvaluateResponse:
         match_points=data.get("match_points", []),
         gap_points=data.get("gap_points", []),
         recommendation=data.get("recommendation", ""),
+        dimensions=dimensions,
     )
 
 
 def _row_to_response(row: dict) -> JobEvaluateResponse:
+    dimensions: EvaluationDimensions | None = None
+    if row.get("dimensions"):
+        try:
+            dimensions = EvaluationDimensions(**json.loads(row["dimensions"]))
+        except Exception:
+            pass
     return JobEvaluateResponse(
         score=row["score"],
         summary=row["summary"],
@@ -55,6 +85,7 @@ def _row_to_response(row: dict) -> JobEvaluateResponse:
         gap_points=json.loads(row["gap_points"]),
         recommendation=row["recommendation"],
         from_cache=True,
+        dimensions=dimensions,
     )
 
 
@@ -89,7 +120,8 @@ async def evaluate_job(request: JobEvaluateRequest):
   "summary": "One-sentence verdict in Traditional Chinese, max 25 characters",
   "match_points": ["Up to 3 strengths in Traditional Chinese, max 20 chars each"],
   "gap_points": ["Up to 3 risks or gaps in Traditional Chinese, max 20 chars each — empty array if none"],
-  "recommendation": "Application advice in Traditional Chinese, max 50 characters"
+  "recommendation": "Application advice in Traditional Chinese, max 50 characters",
+{_DIMENSIONS_SPEC}
 }}
 
 All text values must be written in Traditional Chinese (繁體中文).
@@ -104,6 +136,7 @@ All text values must be written in Traditional Chinese (繁體中文).
         match_points=result.match_points,
         gap_points=result.gap_points,
         recommendation=result.recommendation,
+        dimensions=result.dimensions.model_dump() if result.dimensions else None,
     )
     return result
 
@@ -131,7 +164,8 @@ async def evaluate_job_text(request: JobEvaluateTextRequest):
   "summary": "One-sentence verdict in Traditional Chinese, max 25 characters",
   "match_points": ["Up to 3 strengths in Traditional Chinese, max 20 chars each"],
   "gap_points": ["Up to 3 risks or gaps in Traditional Chinese, max 20 chars each — empty array if none"],
-  "recommendation": "Application advice in Traditional Chinese, max 50 characters"
+  "recommendation": "Application advice in Traditional Chinese, max 50 characters",
+{_DIMENSIONS_SPEC}
 }}
 
 All text values must be written in Traditional Chinese (繁體中文).
@@ -146,5 +180,6 @@ All text values must be written in Traditional Chinese (繁體中文).
         match_points=result.match_points,
         gap_points=result.gap_points,
         recommendation=result.recommendation,
+        dimensions=result.dimensions.model_dump() if result.dimensions else None,
     )
     return result
