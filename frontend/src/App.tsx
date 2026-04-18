@@ -12,6 +12,7 @@ import ResumeRewriteDetailPage from './pages/ResumeRewriteDetailPage'
 import ResumeRewriteHistoryPage from './pages/ResumeRewriteHistoryPage'
 import ResumeRewritePage from './pages/ResumeRewritePage'
 import SearchPage from './pages/SearchPage'
+import SettingsPage from './pages/SettingsPage'
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="resume-rewrite" element={<ResumeRewritePage />} />
         <Route path="resume-rewrites" element={<ResumeRewriteHistoryPage />} />
         <Route path="resume-rewrites/:id" element={<ResumeRewriteDetailPage />} />
+        <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

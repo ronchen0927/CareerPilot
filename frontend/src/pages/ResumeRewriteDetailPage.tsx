@@ -28,6 +28,30 @@ export default function ResumeRewriteDetailPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  function handleDownloadPdf() {
+    if (!record) return
+    const win = window.open('', '_blank')
+    if (!win) return
+    const escaped = record.result.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>履歷改寫結果</title>
+  <style>
+    body { font-family: 'Noto Serif TC', 'Noto Serif', serif; line-height: 1.85; padding: 2.5cm 3cm; color: #1a1a1a; font-size: 12pt; }
+    pre { white-space: pre-wrap; word-break: break-word; font-family: inherit; margin: 0; }
+    @media print { body { padding: 1.5cm 2cm; } }
+  </style>
+</head>
+<body>
+  <pre>${escaped}</pre>
+  <script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`)
+    win.document.close()
+  }
+
   return (
     <div className="container">
       <header className="header">
@@ -98,9 +122,14 @@ export default function ResumeRewriteDetailPage() {
                 </span>
                 <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>{record.created_at}</span>
               </div>
-              <button className="btn-export" style={{ padding: '0.3rem 0.8rem', fontSize: '0.85rem' }} onClick={handleCopy}>
-                {copied ? '已複製 ✓' : '複製'}
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn-export" style={{ padding: '0.3rem 0.8rem', fontSize: '0.85rem' }} onClick={handleCopy}>
+                  {copied ? '已複製 ✓' : '複製'}
+                </button>
+                <button className="btn-export" style={{ padding: '0.3rem 0.8rem', fontSize: '0.85rem' }} onClick={handleDownloadPdf}>
+                  📥 下載 PDF
+                </button>
+              </div>
             </div>
             <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '0.95rem', lineHeight: 1.75, fontFamily: 'inherit', margin: 0 }}>
               {record.result}
