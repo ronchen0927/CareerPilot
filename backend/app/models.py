@@ -105,27 +105,14 @@ class ResumeRewriteRequest(BaseModel):
 
     job_text: str = Field(min_length=10, description="職缺描述文字")
     user_cv: str = Field(min_length=1, description="原始履歷內容")
-    mode: str = Field(description="改寫模式：plain（整份純文字）| structured（分段 JSON）")
     job_url: str | None = Field(default=None, description="職缺原始網址（選填）")
-
-
-class ResumeStructured(BaseModel):
-    """分段結構化履歷"""
-
-    summary: str = Field(description="自我介紹 / 求職摘要")
-    experience: list[str] = Field(default=[], description="工作經歷條列")
-    skills: list[str] = Field(default=[], description="技能清單")
 
 
 class ResumeRewriteResponse(BaseModel):
     """AI 履歷改寫結果"""
 
     id: int = Field(description="資料庫記錄 ID")
-    mode: str = Field(description="改寫模式")
-    plain_result: str | None = Field(default=None, description="整份純文字結果（plain 模式）")
-    structured_result: ResumeStructured | None = Field(
-        default=None, description="分段結構化結果（structured 模式）"
-    )
+    result: str = Field(description="改寫後的履歷全文（語言與原始履歷一致）")
 
 
 class ResumeRewriteRecord(BaseModel):
@@ -136,9 +123,7 @@ class ResumeRewriteRecord(BaseModel):
     job_text: str = Field(description="職缺描述全文")
     job_url: str | None = Field(default=None, description="職缺網址（若有）")
     original_cv: str = Field(description="原始履歷內容")
-    mode: str = Field(description="改寫模式：plain | structured")
-    plain_result: str | None = Field(default=None, description="純文字結果")
-    structured_result: ResumeStructured | None = Field(default=None, description="結構化結果")
+    result: str = Field(description="改寫後的履歷全文")
     created_at: str = Field(description="建立時間")
 
 

@@ -3,11 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { deleteResumeRewrite, fetchResumeRewrites } from '../api/client'
 import type { ResumeRewriteRecord } from '../types'
 
-const MODE_LABEL: Record<string, string> = {
-  plain: '整份純文字',
-  structured: '分段結構化',
-}
-
 export default function ResumeRewriteHistoryPage() {
   const [records, setRecords] = useState<ResumeRewriteRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,12 +24,6 @@ export default function ResumeRewriteHistoryPage() {
     } catch (err) {
       alert(err instanceof Error ? err.message : '刪除失敗')
     }
-  }
-
-  function preview(r: ResumeRewriteRecord): string {
-    if (r.plain_result) return r.plain_result.slice(0, 60)
-    if (r.structured_result) return r.structured_result.summary.slice(0, 60)
-    return ''
   }
 
   return (
@@ -82,17 +71,6 @@ export default function ResumeRewriteHistoryPage() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <span style={{ fontWeight: 500 }}>{r.job_text_snippet}…</span>
-                <span
-                  style={{
-                    fontSize: '0.7rem',
-                    padding: '0.1rem 0.5rem',
-                    borderRadius: '999px',
-                    background: 'var(--color-tag-bg, rgba(99,102,241,0.15))',
-                    color: 'var(--color-tag-text, #818cf8)',
-                  }}
-                >
-                  {MODE_LABEL[r.mode] ?? r.mode}
-                </span>
                 <span style={{ fontSize: '0.75rem', opacity: 0.5, whiteSpace: 'nowrap' }}>{r.created_at}</span>
               </div>
               <p
@@ -105,7 +83,7 @@ export default function ResumeRewriteHistoryPage() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {preview(r)}…
+                {r.result.slice(0, 60)}…
               </p>
             </div>
 

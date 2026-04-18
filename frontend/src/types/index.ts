@@ -120,26 +120,15 @@ export interface CoverLetterRecord {
   created_at: string
 }
 
-export type ResumeRewriteMode = 'plain' | 'structured'
-
-export interface ResumeStructured {
-  summary: string
-  experience: string[]
-  skills: string[]
-}
-
 export interface ResumeRewriteRequest {
   job_text: string
   user_cv: string
-  mode: ResumeRewriteMode
   job_url?: string | null
 }
 
 export interface ResumeRewriteResponse {
   id: number
-  mode: ResumeRewriteMode
-  plain_result?: string | null
-  structured_result?: ResumeStructured | null
+  result: string
 }
 
 export interface ResumeRewriteRecord {
@@ -148,9 +137,7 @@ export interface ResumeRewriteRecord {
   job_text: string
   job_url: string | null
   original_cv: string
-  mode: ResumeRewriteMode
-  plain_result: string | null
-  structured_result: ResumeStructured | null
+  result: string
   created_at: string
 }
 
