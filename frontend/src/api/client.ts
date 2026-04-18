@@ -12,6 +12,9 @@ import type {
   JobOptions,
   JobSearchRequest,
   JobSearchResponse,
+  ResumeRewriteRecord,
+  ResumeRewriteRequest,
+  ResumeRewriteResponse,
   TriggerAlertResponse,
 } from '../types'
 
@@ -117,4 +120,23 @@ export function fetchCoverLetter(id: number): Promise<CoverLetterRecord> {
 
 export function deleteCoverLetter(id: number): Promise<void> {
   return apiFetch<void>(`/api/cover-letters/${id}`, { method: 'DELETE' })
+}
+
+export function rewriteResume(req: ResumeRewriteRequest): Promise<ResumeRewriteResponse> {
+  return apiFetch<ResumeRewriteResponse>('/api/jobs/resume-rewrite', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  })
+}
+
+export function fetchResumeRewrites(): Promise<ResumeRewriteRecord[]> {
+  return apiFetch<ResumeRewriteRecord[]>('/api/resume-rewrites')
+}
+
+export function fetchResumeRewrite(id: number): Promise<ResumeRewriteRecord> {
+  return apiFetch<ResumeRewriteRecord>(`/api/resume-rewrites/${id}`)
+}
+
+export function deleteResumeRewrite(id: number): Promise<void> {
+  return apiFetch<void>(`/api/resume-rewrites/${id}`, { method: 'DELETE' })
 }

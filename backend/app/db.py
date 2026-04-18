@@ -43,6 +43,19 @@ async def init_db() -> None:
             )
             """
         )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS resume_rewrites (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_text    TEXT    NOT NULL,
+                job_url     TEXT,
+                original_cv TEXT    NOT NULL,
+                mode        TEXT    NOT NULL,
+                result      TEXT    NOT NULL,
+                created_at  TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+            )
+            """
+        )
         await db.commit()
 
 
@@ -144,5 +157,51 @@ async def get_cover_letter(record_id: int) -> dict | None:
 async def delete_cover_letter(record_id: int) -> bool:
     async with aiosqlite.connect(_db_path()) as db:
         cur = await db.execute("DELETE FROM cover_letters WHERE id = ?", (record_id,))
+        await db.commit()
+        return cur.rowcount > 0
+
+
+# ── Resume rewrites ───────────────────────────────────────────────────────────
+
+
+async def save_resume_rewrite(
+    job_text: str,
+    job_url: str | None,
+    original_cv: str,
+    mode: str,
+    result: str,
+) -> int:
+    async with aiosqlite.connect(_db_path()) as db:
+        cur = await db.execute(
+            """
+            INSERT INTO resume_rewrites
+                (job_text, job_url, original_cv, mode, result)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (job_text, job_url, original_cv, mode, result),
+        )
+        await db.commit()
+        return cur.lastrowid  # type: ignore[return-value]
+
+
+async def list_resume_rewrites() -> list[dict]:
+    async with aiosqlite.connect(_db_path()) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("SELECT * FROM resume_rewrites ORDER BY created_at DESC") as cur:
+            rows = await cur.fetchall()
+    return [dict(r) for r in rows]
+
+
+async def get_resume_rewrite(record_id: int) -> dict | None:
+    async with aiosqlite.connect(_db_path()) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("SELECT * FROM resume_rewrites WHERE id = ?", (record_id,)) as cur:
+            row = await cur.fetchone()
+    return dict(row) if row else None
+
+
+async def delete_resume_rewrite(record_id: int) -> bool:
+    async with aiosqlite.connect(_db_path()) as db:
+        cur = await db.execute("DELETE FROM resume_rewrites WHERE id = ?", (record_id,))
         await db.commit()
         return cur.rowcount > 0

@@ -8,6 +8,9 @@ import DashboardPage from './pages/DashboardPage'
 import EvaluatePage from './pages/EvaluatePage'
 import HistoryDetailPage from './pages/HistoryDetailPage'
 import HistoryPage from './pages/HistoryPage'
+import ResumeRewriteDetailPage from './pages/ResumeRewriteDetailPage'
+import ResumeRewriteHistoryPage from './pages/ResumeRewriteHistoryPage'
+import ResumeRewritePage from './pages/ResumeRewritePage'
 import SearchPage from './pages/SearchPage'
 
 export default function App() {
@@ -23,6 +26,9 @@ export default function App() {
         <Route path="cover-letter" element={<CoverLetterPage />} />
         <Route path="cover-letters" element={<CoverLetterHistoryPage />} />
         <Route path="cover-letters/:id" element={<CoverLetterDetailPage />} />
+        <Route path="resume-rewrite" element={<ResumeRewritePage />} />
+        <Route path="resume-rewrites" element={<ResumeRewriteHistoryPage />} />
+        <Route path="resume-rewrites/:id" element={<ResumeRewriteDetailPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
