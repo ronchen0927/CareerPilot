@@ -39,7 +39,11 @@ def _make_fake_stream(contents: list[str]):
 
 class TestChat:
     def test_streams_text_response(self, client):
-        with patch("app.routers.chat.AsyncOpenAI") as MockAI:
+        with (
+            patch("app.routers.chat.settings") as mock_settings,
+            patch("app.routers.chat.AsyncOpenAI") as MockAI,
+        ):
+            mock_settings.OPENAI_API_KEY = "sk-test"
             inst = MagicMock()
             MockAI.return_value = inst
             inst.chat.completions.create = AsyncMock(return_value=_make_fake_stream(["你好", "！"]))
@@ -56,7 +60,11 @@ class TestChat:
         assert "！" in resp.text
 
     def test_empty_messages_still_returns_200(self, client):
-        with patch("app.routers.chat.AsyncOpenAI") as MockAI:
+        with (
+            patch("app.routers.chat.settings") as mock_settings,
+            patch("app.routers.chat.AsyncOpenAI") as MockAI,
+        ):
+            mock_settings.OPENAI_API_KEY = "sk-test"
             inst = MagicMock()
             MockAI.return_value = inst
             inst.chat.completions.create = AsyncMock(return_value=_make_fake_stream(["開始吧"]))
@@ -94,7 +102,11 @@ class TestChat:
         assert resp.status_code == 422
 
     def test_openai_error_yields_warning_marker(self, client):
-        with patch("app.routers.chat.AsyncOpenAI") as MockAI:
+        with (
+            patch("app.routers.chat.settings") as mock_settings,
+            patch("app.routers.chat.AsyncOpenAI") as MockAI,
+        ):
+            mock_settings.OPENAI_API_KEY = "sk-test"
             inst = MagicMock()
             MockAI.return_value = inst
             inst.chat.completions.create = AsyncMock(side_effect=openai.OpenAIError("rate limit"))
