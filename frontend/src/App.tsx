@@ -13,6 +13,7 @@ import ResumeRewriteHistoryPage from './pages/ResumeRewriteHistoryPage'
 import ResumeRewritePage from './pages/ResumeRewritePage'
 import SearchPage from './pages/SearchPage'
 import SettingsPage from './pages/SettingsPage'
+import SmartMatchPage from './pages/SmartMatchPage'
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="resume-rewrites" element={<ResumeRewriteHistoryPage />} />
         <Route path="resume-rewrites/:id" element={<ResumeRewriteDetailPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="smart-match" element={<SmartMatchPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -4,6 +4,7 @@ import type {
   AlertsListResponse,
   ChatMessage,
   ChatRequest,
+  CVSuggestKeywordsResponse,
   CoverLetterRecord,
   CoverLetterRequest,
   CoverLetterResponse,
@@ -178,4 +179,11 @@ export async function chatStream(
     if (done) break
     onChunk(decoder.decode(value, { stream: true }))
   }
+}
+
+export function suggestKeywords(cvText: string): Promise<CVSuggestKeywordsResponse> {
+  return apiFetch<CVSuggestKeywordsResponse>('/api/cv/suggest-keywords', {
+    method: 'POST',
+    body: JSON.stringify({ cv_text: cvText }),
+  })
 }

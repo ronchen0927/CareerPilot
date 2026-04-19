@@ -152,3 +152,15 @@ class EvaluationRecord(BaseModel):
     recommendation: str = Field(description="投遞建議")
     created_at: str = Field(description="評分時間")
     dimensions: EvaluationDimensions | None = Field(default=None, description="多維度評分細項")
+
+
+class CVSuggestKeywordsRequest(BaseModel):
+    """AI 關鍵字建議請求"""
+
+    cv_text: str = Field(min_length=10, max_length=20000, description="履歷純文字")
+
+
+class CVSuggestKeywordsResponse(BaseModel):
+    """AI 關鍵字建議結果"""
+
+    keywords: list[str] = Field(description="3-5 組建議職位關鍵字")
