@@ -53,11 +53,9 @@ export default function JobChat({ job }: Props) {
 
     const userMsg: ChatMessage = { role: 'user', content: input.trim() }
     const nextMessages = [...messages, userMsg]
-    setMessages(nextMessages)
+    setMessages([...nextMessages, { role: 'assistant', content: '' }])
     setInput('')
     setIsStreaming(true)
-
-    setMessages(prev => [...prev, { role: 'assistant', content: '' }])
 
     try {
       const userCv = localStorage.getItem('careerpilot_cv') ?? ''
@@ -75,9 +73,10 @@ export default function JobChat({ job }: Props) {
       setMessages(prev => {
         const updated = [...prev]
         const last = updated[updated.length - 1]
+        const separator = last.content ? '\n\n' : ''
         updated[updated.length - 1] = {
           ...last,
-          content: last.content || '⚠ 回應中斷，請再試一次',
+          content: last.content + separator + '⚠ 回應中斷，請再試一次',
         }
         return updated
       })
@@ -113,7 +112,7 @@ export default function JobChat({ job }: Props) {
           {GREETING}
         </div>
         {messages.map((msg, i) => (
-          <div key={i} className={`job-chat__bubble job-chat__bubble--${msg.role}`}>
+          <div key={`${i}-${msg.role}`} className={`job-chat__bubble job-chat__bubble--${msg.role}`}>
             {msg.content}
             {isStreaming && i === messages.length - 1 && msg.role === 'assistant' && (
               <span className="job-chat__cursor">▌</span>
