@@ -7,8 +7,17 @@ from ..config import AREA_OPTIONS, EXPERIENCE_OPTIONS
 from ..models import JobSearchRequest, JobSearchResponse
 from ..scraper import scrape_jobs as scrape_104
 from ..scraper_cake import scrape_jobs as scrape_cake
+from ..scraper_meetjob import scrape_jobs as scrape_meetjob
+from ..scraper_yourator import scrape_jobs as scrape_yourator
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
+
+_SCRAPERS = {
+    "104": scrape_104,
+    "cake": scrape_cake,
+    "yourator": scrape_yourator,
+    "meetjob": scrape_meetjob,
+}
 
 
 @router.get("/options")
@@ -22,17 +31,13 @@ async def get_options():
 
 @router.post("/search", response_model=JobSearchResponse)
 async def search_jobs(request: JobSearchRequest):
-    """搜尋職缺（支援 104 / CakeResume）"""
-    sources = request.sources or ["104"]
+    """搜尋職缺（支援 104 / CakeResume / Yourator / MeetJob）"""
+    sources = [s for s in (request.sources or ["104"]) if s in _SCRAPERS]
+    if not sources:
+        sources = ["104"]
+
     start = time.perf_counter()
-
-    tasks = []
-    if "104" in sources:
-        tasks.append(scrape_104(request))
-    if "cake" in sources:
-        tasks.append(scrape_cake(request))
-
-    results = await asyncio.gather(*tasks)
+    results = await asyncio.gather(*[_SCRAPERS[s](request) for s in sources])
 
     seen: set[str] = set()
     all_jobs = []

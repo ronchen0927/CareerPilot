@@ -35,6 +35,20 @@ const FALLBACK_OPTIONS: JobOptions = {
   ],
 }
 
+const SOURCE_BADGE_KEY: Record<string, string> = {
+  '104': '104',
+  CakeResume: 'cake',
+  Yourator: 'yourator',
+  MeetJob: 'meetjob',
+}
+
+const SOURCE_BADGE_LABEL: Record<string, string> = {
+  '104': '104',
+  CakeResume: 'Cake',
+  Yourator: 'Yourator',
+  MeetJob: 'Meet',
+}
+
 export default function SearchPage() {
   const [keyword, setKeyword] = useState('Python')
   const [pages, setPages] = useState(5)
@@ -218,7 +232,12 @@ export default function SearchPage() {
               搜尋來源
             </label>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              {[{ value: '104', label: '104 人力銀行' }, { value: 'cake', label: 'CakeResume' }].map(opt => (
+              {[
+                { value: '104', label: '104 人力銀行' },
+                { value: 'cake', label: 'CakeResume' },
+                { value: 'yourator', label: 'Yourator' },
+                { value: 'meetjob', label: 'MeetJob' },
+              ].map(opt => (
                 <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.9rem' }}>
                   <input
                     type="checkbox"
@@ -339,8 +358,8 @@ export default function SearchPage() {
                       <span className="salary-text">{job.salary}</span>
                     </td>
                     <td>
-                      <span className={`source-badge source-badge--${job.source === 'CakeResume' ? 'cake' : '104'}`}>
-                        {job.source === 'CakeResume' ? 'Cake' : '104'}
+                      <span className={`source-badge source-badge--${SOURCE_BADGE_KEY[job.source] ?? '104'}`}>
+                        {SOURCE_BADGE_LABEL[job.source] ?? job.source}
                       </span>
                     </td>
                     <td>
