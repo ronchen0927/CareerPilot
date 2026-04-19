@@ -39,6 +39,9 @@ export default function Layout() {
             <NavLink to="/alerts" className="sidebar__link" onClick={closeSidebar}>
               職缺提醒
             </NavLink>
+            <NavLink to="/smart-match" className="sidebar__link" onClick={closeSidebar}>
+              智慧推薦
+            </NavLink>
           </div>
 
           <div className="sidebar__group">
