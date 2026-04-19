@@ -2,6 +2,8 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import openai
+
 
 def _job_payload(**kwargs) -> dict:
     base = {
@@ -90,3 +92,19 @@ class TestChat:
             json={"messages": [], "user_cv": ""},
         )
         assert resp.status_code == 422
+
+    def test_openai_error_yields_warning_marker(self, client):
+        with patch("app.routers.chat.AsyncOpenAI") as MockAI:
+            inst = MagicMock()
+            MockAI.return_value = inst
+            inst.chat.completions.create = AsyncMock(side_effect=openai.OpenAIError("rate limit"))
+            resp = client.post(
+                "/api/chat",
+                json={
+                    "messages": [{"role": "user", "content": "我適合嗎？"}],
+                    "job": _job_payload(),
+                    "user_cv": "Python 工程師，3 年經驗",
+                },
+            )
+        assert resp.status_code == 200
+        assert "⚠" in resp.text

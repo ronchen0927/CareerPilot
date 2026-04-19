@@ -78,6 +78,11 @@ async def chat(request: ChatRequest):
                 if delta:
                     yield delta
         except Exception as e:
-            yield f"\n\n⚠ 回應失敗：{e}"
+            from openai import OpenAIError
+
+            if isinstance(e, OpenAIError):
+                yield "\n\n⚠ 服務暫時無法使用，請稍後再試。"
+            else:
+                yield "\n\n⚠ 發生未預期的錯誤，請稍後再試。"
 
     return StreamingResponse(generate(), media_type="text/plain; charset=utf-8")
