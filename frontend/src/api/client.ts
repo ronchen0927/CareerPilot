@@ -2,6 +2,8 @@ import type {
   Alert,
   AlertCreateRequest,
   AlertsListResponse,
+  ChatMessage,
+  ChatRequest,
   CoverLetterRecord,
   CoverLetterRequest,
   CoverLetterResponse,
@@ -9,6 +11,7 @@ import type {
   JobEvaluateRequest,
   JobEvaluateResponse,
   JobEvaluateTextRequest,
+  JobListing,
   JobOptions,
   JobSearchRequest,
   JobSearchResponse,
@@ -154,4 +157,25 @@ export function triggerLivenessCheck(urls: string[]): Promise<{ checked: number 
     method: 'POST',
     body: JSON.stringify({ urls }),
   })
+}
+
+export async function chatStream(
+  messages: ChatMessage[],
+  job: JobListing,
+  userCv: string,
+  onChunk: (chunk: string) => void,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, job, user_cv: userCv } satisfies ChatRequest),
+  })
+  if (!res.ok) throw new Error(`Chat failed: ${res.status}`)
+  const reader = res.body!.getReader()
+  const decoder = new TextDecoder()
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    onChunk(decoder.decode(value, { stream: true }))
+  }
 }

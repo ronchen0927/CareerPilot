@@ -175,3 +175,14 @@ export interface LivenessInfo {
 }
 
 export type LivenessMap = Record<string, LivenessInfo>
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface ChatRequest {
+  messages: ChatMessage[]
+  job: JobListing
+  user_cv: string
+}

@@ -9,7 +9,18 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import settings
 from .db import init_db
-from .routers import alerts, cover_letter, cv, evaluate, fetch_url, history, jobs, liveness, resume
+from .routers import (
+    alerts,
+    chat,
+    cover_letter,
+    cv,
+    evaluate,
+    fetch_url,
+    history,
+    jobs,
+    liveness,
+    resume,
+)
 
 # Logging
 logging.basicConfig(
@@ -66,6 +77,7 @@ app.include_router(history.router)
 app.include_router(cover_letter.router)
 app.include_router(resume.router)
 app.include_router(liveness.router)
+app.include_router(chat.router)
 
 
 @app.get("/")

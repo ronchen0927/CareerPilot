@@ -1320,3 +1320,126 @@ body {
     padding: 0.55rem 0.65rem;
   }
 }
+
+/* ==========================================================
+   Job Chat
+   ========================================================== */
+.job-chat {
+  margin-top: var(--space-md);
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-md);
+}
+
+.job-chat__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.job-chat__title {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+
+.job-chat__messages {
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: var(--space-sm);
+  padding: 0.25rem 0;
+}
+
+.job-chat__messages::-webkit-scrollbar { width: 3px; }
+.job-chat__messages::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.job-chat__bubble {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.845rem;
+  line-height: 1.65;
+  max-width: 88%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.job-chat__bubble--user {
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  color: var(--text-1);
+  align-self: flex-end;
+}
+
+.job-chat__bubble--assistant {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  align-self: flex-start;
+}
+
+.job-chat__bubble--greeting {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  align-self: flex-start;
+  font-style: italic;
+}
+
+.job-chat__cursor {
+  display: inline-block;
+  color: var(--accent);
+  animation: pulse 0.8s ease-in-out infinite;
+  font-size: 0.72rem;
+  margin-left: 2px;
+}
+
+.job-chat__input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.job-chat__input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: inherit;
+  font-size: 0.845rem;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  transition: border-color var(--t-fast);
+}
+
+.job-chat__input:focus  { border-color: var(--border-focus); }
+.job-chat__input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.job-chat__send-btn {
+  padding: 0.5rem 0.9rem;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.845rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter var(--t-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.job-chat__send-btn:hover:not(:disabled) { filter: brightness(1.1); }
+.job-chat__send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
