@@ -63,16 +63,15 @@ export default function SmartMatchPage() {
   async function handleProceedToKeywords(text: string) {
     setLoadingKeywords(true)
     setError(null)
-    let suggested: string[] = []
     try {
       const res = await suggestKeywords(text)
-      suggested = res.keywords
+      setKeywords(res.keywords)
     } catch {
-      // fall through with empty keywords — user can add manually
+      setKeywords([])
+    } finally {
+      setPhase('keywords')
+      setLoadingKeywords(false)
     }
-    setKeywords(suggested)
-    setPhase('keywords')
-    setLoadingKeywords(false)
   }
 
   function handleAddKeyword() {
@@ -198,7 +197,10 @@ export default function SmartMatchPage() {
       {/* Phase 2: Confirm keywords */}
       {phase === 'keywords' && (
         <section className="search-card">
-          <h2 style={{ marginBottom: '1rem', fontSize: '1rem' }}>AI 建議的搜尋關鍵字</h2>
+          <h2 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>AI 建議的搜尋關鍵字</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '1rem' }}>
+            搜尋時將使用第一個關鍵字，可刪除或調整順序。
+          </p>
           {keywords.length === 0 && (
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
               AI 未能產生建議，請手動輸入關鍵字。
