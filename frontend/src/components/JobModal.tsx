@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { evaluateJob } from '../api/client'
 import DimensionsPanel from './DimensionsPanel'
+import JobChat from './JobChat'
 import { formatPrefsForPrompt, usePreferences } from '../hooks/usePreferences'
 import type { JobEvaluateResponse, JobListing } from '../types'
 
@@ -180,6 +181,8 @@ export default function JobModal({ job, onClose }: Props) {
             </div>
           )}
         </div>
+
+        <JobChat job={job} />
       </div>
     </div>
   )
