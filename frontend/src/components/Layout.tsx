@@ -39,6 +39,9 @@ export default function Layout() {
         <NavLink to="/resume-rewrites" className="quick-nav__link" title="履歷改寫歷史">
           🗂️
         </NavLink>
+        <NavLink to="/settings" className="quick-nav__link" title="個人偏好設定">
+          ⚙️
+        </NavLink>
         {pathname === '/' && (
           <button
             className="quick-nav__link"

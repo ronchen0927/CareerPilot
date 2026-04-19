@@ -35,11 +35,26 @@ const FALLBACK_OPTIONS: JobOptions = {
   ],
 }
 
+const SOURCE_BADGE_KEY: Record<string, string> = {
+  '104': '104',
+  CakeResume: 'cake',
+  Yourator: 'yourator',
+  MeetJob: 'meetjob',
+}
+
+const SOURCE_BADGE_LABEL: Record<string, string> = {
+  '104': '104',
+  CakeResume: 'Cake',
+  Yourator: 'Yourator',
+  MeetJob: 'Meet',
+}
+
 export default function SearchPage() {
   const [keyword, setKeyword] = useState('Python')
   const [pages, setPages] = useState(5)
   const [areas, setAreas] = useState<string[]>([])
   const [experience, setExperience] = useState<string[]>([])
+  const [sources, setSources] = useState<string[]>(['104'])
   const [minSalary, setMinSalary] = useState(0)
   const [options, setOptions] = useState<JobOptions>(FALLBACK_OPTIONS)
   const [allResults, setAllResults] = useState<JobListing[]>([])
@@ -77,7 +92,7 @@ export default function SearchPage() {
 
     try {
       const responses = await Promise.all(
-        kws.map(kw => searchJobs({ keyword: kw, pages, areas, experience })),
+        kws.map(kw => searchJobs({ keyword: kw, pages, areas, experience, sources })),
       )
       const seen = new Set<string>()
       const merged: JobListing[] = []
@@ -129,7 +144,7 @@ export default function SearchPage() {
           <span className="header__icon">🧭</span>
           <h1 className="header__title">CareerPilot</h1>
         </div>
-        <p className="header__subtitle">104 人力銀行職缺快速搜尋</p>
+        <p className="header__subtitle">104 人力銀行 / CakeResume 職缺快速搜尋</p>
       </header>
 
       {/* Search Form */}
@@ -211,7 +226,34 @@ export default function SearchPage() {
             />
           </div>
 
-          <button type="submit" className="btn-search" disabled={loading}>
+          <div className="form-group">
+            <label className="form-label">
+              <span className="form-label__icon">🌐</span>
+              搜尋來源
+            </label>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              {[
+                { value: '104', label: '104 人力銀行' },
+                { value: 'cake', label: 'CakeResume' },
+                { value: 'yourator', label: 'Yourator' },
+                { value: 'meetjob', label: 'MeetJob' },
+              ].map(opt => (
+                <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={sources.includes(opt.value)}
+                    onChange={e => {
+                      if (e.target.checked) setSources(prev => [...prev, opt.value])
+                      else setSources(prev => prev.filter(s => s !== opt.value))
+                    }}
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <button type="submit" className="btn-search" disabled={loading || sources.length === 0}>
             <span className="btn-search__text">{loading ? '搜尋中...' : '開始搜尋'}</span>
             <span className="btn-search__icon">→</span>
           </button>
@@ -316,7 +358,9 @@ export default function SearchPage() {
                       <span className="salary-text">{job.salary}</span>
                     </td>
                     <td>
-                      <span className="source-badge source-badge--104">104</span>
+                      <span className={`source-badge source-badge--${SOURCE_BADGE_KEY[job.source] ?? '104'}`}>
+                        {SOURCE_BADGE_LABEL[job.source] ?? job.source}
+                      </span>
                     </td>
                     <td>
                       <button

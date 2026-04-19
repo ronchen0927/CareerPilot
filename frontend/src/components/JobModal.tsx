@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { evaluateJob } from '../api/client'
 import DimensionsPanel from './DimensionsPanel'
+import { formatPrefsForPrompt, usePreferences } from '../hooks/usePreferences'
 import type { JobEvaluateResponse, JobListing } from '../types'
 
 interface Props {
@@ -26,6 +27,7 @@ export default function JobModal({ job, onClose }: Props) {
   const [evalLoading, setEvalLoading] = useState(false)
   const [evalError, setEvalError] = useState<string | null>(null)
   const navigate = useNavigate()
+  const [prefs] = usePreferences()
 
   function handleRewriteResume() {
     const jobText = [
@@ -58,7 +60,7 @@ export default function JobModal({ job, onClose }: Props) {
     try {
       // Read CV directly from localStorage at evaluation time so we always get the latest value
       const cv = localStorage.getItem('careerpilot_cv') ?? ''
-      const result = await evaluateJob({ job, user_cv: cv })
+      const result = await evaluateJob({ job, user_cv: cv + formatPrefsForPrompt(prefs) })
       setEvalResult(result)
     } catch (err) {
       setEvalError(err instanceof Error ? err.message : '評分失敗')

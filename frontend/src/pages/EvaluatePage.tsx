@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { evaluateJobText, fetchJobUrl, parseCvPdf } from '../api/client'
 import DimensionsPanel from '../components/DimensionsPanel'
+import { formatPrefsForPrompt, usePreferences } from '../hooks/usePreferences'
 import type { JobEvaluateResponse } from '../types'
 
 const SCORE_CLASS: Record<string, string> = {
@@ -20,6 +21,8 @@ export default function EvaluatePage() {
   const [jobText, setJobText] = useState('')
   const [cv, setCv] = useState(() => localStorage.getItem('careerpilot_cv') ?? '')
   const [result, setResult] = useState<JobEvaluateResponse | null>(null)
+
+  const [prefs] = usePreferences()
 
   const [fetchLoading, setFetchLoading] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -73,7 +76,7 @@ export default function EvaluatePage() {
     setEvalError(null)
     setResult(null)
     try {
-      const data = await evaluateJobText({ job_text: jobText, user_cv: cv })
+      const data = await evaluateJobText({ job_text: jobText, user_cv: cv + formatPrefsForPrompt(prefs) })
       setResult(data)
     } catch (err) {
       setEvalError(err instanceof Error ? err.message : '評分失敗，請稍後再試')

@@ -3,6 +3,7 @@ export interface JobSearchRequest {
   pages: number
   areas: string[]
   experience: string[]
+  sources: string[]
 }
 
 export interface JobListing {
