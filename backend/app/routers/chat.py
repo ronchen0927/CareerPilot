@@ -1,5 +1,7 @@
 """Streaming job Q&A chat endpoint."""
 
+from typing import Literal
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from openai import AsyncOpenAI
@@ -12,7 +14,7 @@ router = APIRouter(tags=["chat"])
 
 
 class ChatMessage(BaseModel):
-    role: str
+    role: Literal["user", "assistant"]
     content: str
 
 
