@@ -186,3 +186,7 @@ export interface ChatRequest {
   job: JobListing
   user_cv: string
 }
+
+export interface CVSuggestKeywordsResponse {
+  keywords: string[]
+}
