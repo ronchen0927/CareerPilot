@@ -76,5 +76,7 @@ Rules:
     keywords = data.get("keywords", [])
     if not isinstance(keywords, list):
         keywords = []
+    else:
+        keywords = [k for k in keywords if isinstance(k, str)]
 
     return CVSuggestKeywordsResponse(keywords=keywords)

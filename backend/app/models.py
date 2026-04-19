@@ -157,7 +157,7 @@ class EvaluationRecord(BaseModel):
 class CVSuggestKeywordsRequest(BaseModel):
     """AI 關鍵字建議請求"""
 
-    cv_text: str = Field(min_length=10, description="履歷純文字")
+    cv_text: str = Field(min_length=10, max_length=20000, description="履歷純文字")
 
 
 class CVSuggestKeywordsResponse(BaseModel):
