@@ -64,8 +64,18 @@ def _format_104_data(data: dict) -> str:
         lines.append(loc)
 
     # Work conditions
+    remote = job_detail.get("remoteWork")
+    if isinstance(remote, dict):
+        desc = (remote.get("description") or "").strip()
+        if not desc:
+            _REMOTE_TYPE = {1: "可遠端", 2: "完全遠端"}
+            desc = _REMOTE_TYPE.get(remote.get("type", 0), "")
+        if desc:
+            lines.append(f"遠端工作：{desc}")
+    elif remote:
+        lines.append(f"遠端工作：{remote}")
+
     for label, key in [
-        ("遠端工作", "remoteWork"),
         ("出差外派", "businessTrip"),
         ("管理職責", "manageResp"),
         ("假期制度", "vacationPolicy"),

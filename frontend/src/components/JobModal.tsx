@@ -32,7 +32,7 @@ export default function JobModal({ job, onClose }: Props) {
   const [prefs] = usePreferences()
 
   function handleRewriteResume() {
-    const jobText = [
+    const metadataText = [
       `職位：${job.job}`,
       `公司：${job.company}`,
       `城市：${job.city}`,
@@ -40,7 +40,7 @@ export default function JobModal({ job, onClose }: Props) {
       `最低學歷：${job.education}`,
       `薪水：${job.salary}`,
     ].join('\n')
-    navigate('/resume-rewrite', { state: { job_text: jobText, job_url: job.link } })
+    navigate('/resume-rewrite', { state: { job_text: jobContent ?? metadataText, job_url: job.link } })
     onClose()
   }
 
