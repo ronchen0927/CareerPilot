@@ -55,8 +55,7 @@ export default function HistoryDetailPage() {
 
       {error && (
         <section className="error-card">
-          <span className="error-card__icon">⚠️</span>
-          <p className="error-card__text">{error}</p>
+<p className="error-card__text">{error}</p>
         </section>
       )}
 
