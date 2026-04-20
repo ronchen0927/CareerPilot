@@ -32,7 +32,7 @@ export default function JobModal({ job, onClose, bookmarkStatus }: Props) {
   const navigate = useNavigate()
   const [prefs] = usePreferences()
 
-  function handleRewriteResume() {
+  function navigateWithJobContent(route: string) {
     const metadataText = [
       `職位：${job.job}`,
       `公司：${job.company}`,
@@ -41,21 +41,16 @@ export default function JobModal({ job, onClose, bookmarkStatus }: Props) {
       `最低學歷：${job.education}`,
       `薪水：${job.salary}`,
     ].join('\n')
-    navigate('/resume-rewrite', { state: { job_text: jobContent ?? metadataText, job_url: job.link } })
+    navigate(route, { state: { job_text: jobContent ?? metadataText, job_url: job.link } })
     onClose()
   }
 
+  function handleRewriteResume() {
+    navigateWithJobContent('/resume-rewrite')
+  }
+
   function handleCoverLetter() {
-    const metadataText = [
-      `職位：${job.job}`,
-      `公司：${job.company}`,
-      `城市：${job.city}`,
-      `經歷要求：${job.experience}`,
-      `最低學歷：${job.education}`,
-      `薪水：${job.salary}`,
-    ].join('\n')
-    navigate('/cover-letter', { state: { job_text: jobContent ?? metadataText, job_url: job.link } })
-    onClose()
+    navigateWithJobContent('/cover-letter')
   }
 
   useEffect(() => {
