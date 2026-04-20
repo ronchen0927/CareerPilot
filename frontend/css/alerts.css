@@ -17,7 +17,7 @@
 }
 
 .alerts-title {
-  font-family: 'Fraunces', serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.65rem;
   font-weight: 600;
   color: var(--text-1);
@@ -140,7 +140,7 @@
 }
 
 .alert-card__keyword {
-  font-family: 'Fraunces', serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-1);

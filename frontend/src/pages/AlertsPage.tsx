@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { createAlert, deleteAlert, fetchAlerts, fetchOptions, triggerAlert } from '../api/client'
 import CheckboxGroup from '../components/CheckboxGroup'
 import type { Alert, JobOptions } from '../types'
@@ -142,17 +141,10 @@ export default function AlertsPage() {
 
   return (
     <div className="container">
-      <header className="alerts-header">
-        <div className="alerts-header__left">
-          <Link to="/" className="btn-back">
-            ← 回主頁
-          </Link>
-          <div>
-            <h1 className="alerts-title">職缺提醒</h1>
-            <p className="alerts-subtitle">設定條件，有新職缺時自動通知</p>
-          </div>
-        </div>
-      </header>
+      <div className="page-intro">
+        <h1 className="page-intro__title">職缺提醒</h1>
+        <p className="page-intro__sub">設定條件，有新職缺時自動通知</p>
+      </div>
 
       {/* Create Alert Form */}
       <section className="search-card" style={{ animation: 'fade-in-up 0.5s ease 0.1s both' }}>
@@ -160,7 +152,6 @@ export default function AlertsPage() {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label" htmlFor="alert-keyword">
-              <span className="form-label__icon">💼</span>
               搜尋關鍵字
             </label>
             <input
@@ -177,7 +168,6 @@ export default function AlertsPage() {
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">
-                <span className="form-label__icon">📍</span>
                 地區
               </label>
               <CheckboxGroup
@@ -189,7 +179,6 @@ export default function AlertsPage() {
             </div>
             <div className="form-group">
               <label className="form-label">
-                <span className="form-label__icon">⏳</span>
                 經歷
               </label>
               <CheckboxGroup
@@ -204,7 +193,6 @@ export default function AlertsPage() {
           <div className="form-row">
             <div className="form-group">
               <label className="form-label" htmlFor="alert-pages">
-                <span className="form-label__icon">📄</span>
                 爬取頁數
               </label>
               <input
@@ -219,7 +207,6 @@ export default function AlertsPage() {
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="alert-min-salary">
-                <span className="form-label__icon">💰</span>
                 最低月薪（元，0 不限）
               </label>
               <input
@@ -236,7 +223,6 @@ export default function AlertsPage() {
 
           <div className="form-group">
             <label className="form-label" htmlFor="alert-interval">
-              <span className="form-label__icon">⏰</span>
               檢查頻率
             </label>
             <select
@@ -256,7 +242,6 @@ export default function AlertsPage() {
 
           <div className="form-group">
             <label className="form-label">
-              <span className="form-label__icon">🔔</span>
               通知方式
             </label>
             <div className="notify-type-grid">
@@ -277,7 +262,6 @@ export default function AlertsPage() {
 
           <div className="form-group">
             <label className="form-label" htmlFor="alert-target">
-              <span className="form-label__icon">{notifyType === 'line' ? '🔑' : '🌐'}</span>
               {notifyType === 'line' ? 'Line Notify Token' : 'Webhook URL'}
               {notifyType === 'line' && (
                 <a
@@ -339,12 +323,12 @@ export default function AlertsPage() {
                     </span>
                   )}
                   {alert.areas.length > 0 && (
-                    <span className="alert-chip">📍 {alert.areas.length} 個地區</span>
+                    <span className="alert-chip">{alert.areas.length} 個地區</span>
                   )}
                   {alert.experience.length > 0 && (
-                    <span className="alert-chip">⏳ {alert.experience.length} 個經歷</span>
+                    <span className="alert-chip">{alert.experience.length} 個經歷</span>
                   )}
-                  <span className="alert-chip">📄 {alert.pages} 頁</span>
+                  <span className="alert-chip">{alert.pages} 頁</span>
                 </div>
                 <div className="alert-card__footer">
                   <span
@@ -372,7 +356,6 @@ export default function AlertsPage() {
       {/* Error */}
       {error && (
         <section className="error-card">
-          <span className="error-card__icon">⚠️</span>
           <p className="error-card__text">{error}</p>
           <button className="btn-dismiss" onClick={() => setError(null)}>
             關閉

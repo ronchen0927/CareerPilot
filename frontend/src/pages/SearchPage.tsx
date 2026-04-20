@@ -139,20 +139,16 @@ export default function SearchPage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <div className="header__logo">
-          <span className="header__icon">🧭</span>
-          <h1 className="header__title">CareerPilot</h1>
-        </div>
-        <p className="header__subtitle">104 人力銀行 / CakeResume 職缺快速搜尋</p>
-      </header>
+      <div className="page-intro">
+        <h1 className="page-intro__title">職缺搜尋</h1>
+        <p className="page-intro__subtitle">104 人力銀行 / CakeResume 職缺快速搜尋</p>
+      </div>
 
       {/* Search Form */}
       <section className="search-card">
         <form onSubmit={handleSearch}>
           <div className="form-group">
             <label className="form-label" htmlFor="keyword">
-              <span className="form-label__icon">💼</span>
               搜尋關鍵字
               <span className="form-label__hint">多個關鍵字用逗號分隔，最多 5 個</span>
             </label>
@@ -169,7 +165,6 @@ export default function SearchPage() {
 
           <div className="form-group">
             <label className="form-label" htmlFor="pages">
-              <span className="form-label__icon">📄</span>
               爬取頁數
             </label>
             <input
@@ -185,7 +180,6 @@ export default function SearchPage() {
 
           <div className="form-group">
             <label className="form-label">
-              <span className="form-label__icon">📍</span>
               選擇地區
             </label>
             <CheckboxGroup
@@ -198,7 +192,6 @@ export default function SearchPage() {
 
           <div className="form-group">
             <label className="form-label">
-              <span className="form-label__icon">⏳</span>
               經歷要求
             </label>
             <CheckboxGroup
@@ -211,7 +204,6 @@ export default function SearchPage() {
 
           <div className="form-group">
             <label className="form-label" htmlFor="min-salary">
-              <span className="form-label__icon">💰</span>
               最低月薪（元，0 為不限）
             </label>
             <input
@@ -228,7 +220,6 @@ export default function SearchPage() {
 
           <div className="form-group">
             <label className="form-label">
-              <span className="form-label__icon">🌐</span>
               搜尋來源
             </label>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -275,7 +266,6 @@ export default function SearchPage() {
       {/* Error */}
       {error && (
         <section className="error-card">
-          <span className="error-card__icon">⚠️</span>
           <p className="error-card__text">{error}</p>
           <button className="btn-dismiss" onClick={() => setError(null)}>
             關閉

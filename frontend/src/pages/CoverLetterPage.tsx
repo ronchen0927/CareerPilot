@@ -79,13 +79,10 @@ export default function CoverLetterPage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <div className="header__logo">
-          <span className="header__icon">✉️</span>
-          <h1 className="header__title">AI 推薦信</h1>
-        </div>
-        <p className="header__subtitle">輸入職缺與履歷，產出一封自然不像 AI 的推薦信</p>
-      </header>
+      <div className="page-intro">
+        <h1 className="page-intro__title">AI 推薦信</h1>
+        <p className="page-intro__sub">根據職缺描述與你的背景，自動生成個人化推薦信</p>
+      </div>
 
       <section className="search-card">
         <form onSubmit={handleGenerate}>
@@ -93,7 +90,6 @@ export default function CoverLetterPage() {
           {/* URL fetch */}
           <div className="form-group">
             <label className="form-label" htmlFor="job-url">
-              <span className="form-label__icon">🔗</span>
               職缺網址（選填）
               <span className="form-label__hint">自動擷取頁面內容，失敗時請改用手動貼上</span>
             </label>
@@ -119,7 +115,7 @@ export default function CoverLetterPage() {
             </div>
             {fetchError && (
               <p style={{ color: 'var(--color-error, #f87171)', fontSize: '0.85rem', marginTop: '0.4rem' }}>
-                ⚠️ {fetchError}，請直接貼上職缺描述
+                {fetchError}，請直接貼上職缺描述
               </p>
             )}
           </div>
@@ -127,7 +123,6 @@ export default function CoverLetterPage() {
           {/* Job text */}
           <div className="form-group">
             <label className="form-label" htmlFor="job-text">
-              <span className="form-label__icon">📋</span>
               職缺描述
             </label>
             <textarea
@@ -145,7 +140,6 @@ export default function CoverLetterPage() {
           {/* CV */}
           <div className="form-group">
             <label className="form-label" htmlFor="user-cv">
-              <span className="form-label__icon">👤</span>
               我的背景（選填）
               <span className="form-label__hint">資料儲存在本機；可上傳 PDF 自動填入</span>
             </label>
@@ -158,7 +152,7 @@ export default function CoverLetterPage() {
             </div>
             {cvError && (
               <p style={{ color: 'var(--color-error, #f87171)', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
-                ⚠️ {cvError}
+                {cvError}
               </p>
             )}
             <textarea
@@ -173,7 +167,7 @@ export default function CoverLetterPage() {
           </div>
 
           <button type="submit" className="btn-search" disabled={genLoading}>
-            <span className="btn-search__text">{genLoading ? '生成中...' : '✉️ 產生推薦信'}</span>
+            <span className="btn-search__text">{genLoading ? '生成中...' : '產生推薦信'}</span>
             <span className="btn-search__icon">→</span>
           </button>
         </form>
@@ -188,7 +182,6 @@ export default function CoverLetterPage() {
 
       {genError && (
         <section className="error-card">
-          <span className="error-card__icon">⚠️</span>
           <p className="error-card__text">{genError}</p>
           <button className="btn-dismiss" onClick={() => setGenError(null)}>關閉</button>
         </section>

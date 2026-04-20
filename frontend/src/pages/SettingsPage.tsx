@@ -9,18 +9,14 @@ export default function SettingsPage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <div className="header__logo">
-          <span className="header__icon">⚙️</span>
-          <h1 className="header__title">個人偏好設定</h1>
-        </div>
-        <p className="header__subtitle">設定將自動注入 AI 評分提示詞，資料僅存於本機</p>
-      </header>
+      <div className="page-intro">
+        <h1 className="page-intro__title">個人偏好設定</h1>
+        <p className="page-intro__sub">設定將自動注入 AI 評分提示詞，資料僅存於本機</p>
+      </div>
 
       <section className="search-card">
         <div className="form-group">
           <label className="form-label" htmlFor="target-salary">
-            <span className="form-label__icon">💰</span>
             目標月薪（元，0 為不設定）
           </label>
           <input
@@ -36,7 +32,6 @@ export default function SettingsPage() {
 
         <div className="form-group">
           <label className="form-label" htmlFor="preferred-tech">
-            <span className="form-label__icon">🛠️</span>
             偏好技術 / 產業
             <span className="form-label__hint">例：Python、FastAPI、金融科技</span>
           </label>
@@ -52,7 +47,6 @@ export default function SettingsPage() {
 
         <div className="form-group">
           <label className="form-label" htmlFor="career-goals">
-            <span className="form-label__icon">🎯</span>
             職涯目標
           </label>
           <textarea
@@ -68,7 +62,6 @@ export default function SettingsPage() {
 
         <div className="form-group">
           <label className="form-label" htmlFor="avoided-industries">
-            <span className="form-label__icon">🚫</span>
             避開產業
             <span className="form-label__hint">AI 評分時會列為負面因素</span>
           </label>
@@ -83,7 +76,7 @@ export default function SettingsPage() {
         </div>
 
         <p style={{ fontSize: '0.8rem', opacity: 0.55, marginTop: '0.5rem' }}>
-          ✓ 自動儲存，無需按確認
+          自動儲存，無需按確認
         </p>
       </section>
     </div>

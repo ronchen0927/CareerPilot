@@ -35,19 +35,16 @@ export default function HistoryDetailPage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <div className="header__logo">
-          <button
-            className="btn-export"
-            style={{ marginRight: '0.75rem', padding: '0.3rem 0.8rem' }}
-            onClick={() => navigate('/history')}
-          >
-            ← 返回
-          </button>
-          <span className="header__icon">📜</span>
-          <h1 className="header__title">評分詳情</h1>
-        </div>
-      </header>
+      <button
+        className="btn-export"
+        style={{ marginBottom: '0.75rem', padding: '0.3rem 0.8rem' }}
+        onClick={() => navigate('/history')}
+      >
+        ← 返回
+      </button>
+      <div className="page-intro">
+        <h1 className="page-intro__title">評分詳情</h1>
+      </div>
 
       {loading && (
         <section className="loading">
@@ -58,8 +55,7 @@ export default function HistoryDetailPage() {
 
       {error && (
         <section className="error-card">
-          <span className="error-card__icon">⚠️</span>
-          <p className="error-card__text">{error}</p>
+<p className="error-card__text">{error}</p>
         </section>
       )}
 
