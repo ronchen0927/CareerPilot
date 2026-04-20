@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { evaluateJob } from '../api/client'
+import { evaluateJob, fetchJobUrl } from '../api/client'
 import DimensionsPanel from './DimensionsPanel'
 import JobChat from './JobChat'
 import { formatPrefsForPrompt, usePreferences } from '../hooks/usePreferences'
@@ -27,6 +27,7 @@ export default function JobModal({ job, onClose }: Props) {
   const [evalResult, setEvalResult] = useState<JobEvaluateResponse | null>(null)
   const [evalLoading, setEvalLoading] = useState(false)
   const [evalError, setEvalError] = useState<string | null>(null)
+  const [jobContent, setJobContent] = useState<string | null>(null)
   const navigate = useNavigate()
   const [prefs] = usePreferences()
 
@@ -55,13 +56,23 @@ export default function JobModal({ job, onClose }: Props) {
     }
   }, [onClose])
 
+  useEffect(() => {
+    if (!job.link) return
+    fetchJobUrl(job.link)
+      .then(({ text }) => setJobContent(text))
+      .catch(() => {})
+  }, [job.link])
+
   async function handleEvaluate() {
     setEvalLoading(true)
     setEvalError(null)
     try {
-      // Read CV directly from localStorage at evaluation time so we always get the latest value
       const cv = localStorage.getItem('careerpilot_cv') ?? ''
-      const result = await evaluateJob({ job, user_cv: cv + formatPrefsForPrompt(prefs) })
+      const result = await evaluateJob({
+        job,
+        user_cv: cv + formatPrefsForPrompt(prefs),
+        job_description: jobContent ?? '',
+      })
       setEvalResult(result)
     } catch (err) {
       setEvalError(err instanceof Error ? err.message : '評分失敗')
@@ -182,7 +193,7 @@ export default function JobModal({ job, onClose }: Props) {
           )}
         </div>
 
-        <JobChat job={job} />
+        <JobChat job={job} jobContent={jobContent} />
       </div>
     </div>
   )
