@@ -44,8 +44,68 @@ def parse_html(html: str) -> str:
     return ""
 
 
+def _format_104_data(data: dict) -> str:
+    """Format 104 API response into plain text for AI context."""
+    job_detail = data.get("jobDetail", {})
+    condition = data.get("condition", {})
+    welfare = data.get("welfare", {})
+
+    lines: list[str] = []
+
+    # Location
+    region = job_detail.get("addressRegion") or ""
+    addr_detail = job_detail.get("addressDetail") or ""
+    address = f"{region}{addr_detail}".strip()
+    landmark = job_detail.get("landmark") or ""
+    if address:
+        loc = f"上班地點：{address}"
+        if landmark:
+            loc += f"（{landmark}）"
+        lines.append(loc)
+
+    # Work conditions
+    for label, key in [
+        ("遠端工作", "remoteWork"),
+        ("出差外派", "businessTrip"),
+        ("管理職責", "manageResp"),
+        ("假期制度", "vacationPolicy"),
+        ("招募人數", "needEmp"),
+        ("到職時間", "startWorkingDay"),
+    ]:
+        val = job_detail.get(key)
+        if val:
+            lines.append(f"{label}：{val}")
+
+    # Skills
+    specialties = [s["description"] for s in condition.get("specialty", []) if s.get("description")]
+    if specialties:
+        lines.append(f"技能要求：{', '.join(specialties)}")
+
+    for lang in condition.get("language", []):
+        name = lang.get("language", "")
+        ability = lang.get("ability", {})
+        if name and ability:
+            desc = "、".join(f"{k}{v}" for k, v in ability.items() if v)
+            lines.append(f"{name}能力：{desc}")
+
+    # Job description
+    job_desc = (job_detail.get("jobDescription") or "").strip()
+    if job_desc:
+        lines.append(f"\n【工作內容】\n{job_desc}")
+
+    # Welfare
+    welfare_tags = welfare.get("tag") or []
+    if welfare_tags:
+        lines.append(f"福利標籤：{', '.join(welfare_tags)}")
+    welfare_text = (welfare.get("welfare") or "").strip()
+    if welfare_text:
+        lines.append(f"\n【福利制度】\n{welfare_text}")
+
+    return "\n".join(lines)
+
+
 async def fetch_104_detail(url: str) -> str:
-    """Fetch structured address info from 104's job detail API. Returns formatted text or ''."""
+    """Fetch comprehensive job info from 104's detail API. Returns formatted text or ''."""
     m = _104_JOB_RE.match(url)
     if not m:
         return ""
@@ -59,11 +119,7 @@ async def fetch_104_detail(url: str) -> str:
                 if resp.status != 200:
                     return ""
                 data = await resp.json()
-        job_detail = data.get("data", {}).get("jobDetail", {})
-        region = job_detail.get("addressRegion") or ""
-        detail = job_detail.get("addressDetail") or ""
-        address = f"{region}{detail}".strip()
-        return f"上班地點：{address}" if address else ""
+        return _format_104_data(data.get("data", {}))
     except Exception as e:
         logger.debug("104 detail API failed for %s: %s", url, e)
         return ""
