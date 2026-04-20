@@ -40,13 +40,10 @@ export default function HistoryPage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <div className="header__logo">
-          <span className="header__icon">📜</span>
-          <h1 className="header__title">評分歷史</h1>
-        </div>
-        <p className="header__subtitle">回顧過去的 AI 評分，思考面試策略</p>
-      </header>
+      <div className="page-intro">
+        <h1 className="page-intro__title">評分歷史</h1>
+        <p className="page-intro__sub">回顧過去的 AI 評分記錄</p>
+      </div>
 
       {loading && (
         <section className="loading">
@@ -57,7 +54,6 @@ export default function HistoryPage() {
 
       {error && (
         <section className="error-card">
-          <span className="error-card__icon">⚠️</span>
           <p className="error-card__text">{error}</p>
         </section>
       )}
