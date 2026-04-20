@@ -56,6 +56,7 @@ export default function SearchPage() {
   const [experience, setExperience] = useState<string[]>([])
   const [sources, setSources] = useState<string[]>(['104'])
   const [minSalary, setMinSalary] = useState(0)
+  const [minAnnualSalary, setMinAnnualSalary] = useState(0)
   const [options, setOptions] = useState<JobOptions>(FALLBACK_OPTIONS)
   const [allResults, setAllResults] = useState<JobListing[]>([])
   const [searchedKeywords, setSearchedKeywords] = useState<string[]>([])
@@ -85,9 +86,10 @@ export default function SearchPage() {
     }
   }
 
+  const effectiveMinMonthly = Math.max(minSalary, Math.round(minAnnualSalary / 12))
   const displayedResults = useMemo(
-    () => (minSalary > 0 ? allResults.filter(j => j.salary_low >= minSalary) : allResults),
-    [allResults, minSalary],
+    () => (effectiveMinMonthly > 0 ? allResults.filter(j => j.salary_low >= effectiveMinMonthly) : allResults),
+    [allResults, effectiveMinMonthly],
   )
 
   useEffect(() => {
@@ -230,9 +232,25 @@ export default function SearchPage() {
               className="form-input"
               value={minSalary}
               min={0}
-              step={1000}
+              step={5000}
               placeholder="例：40000"
               onChange={e => setMinSalary(parseInt(e.target.value, 10) || 0)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="min-annual-salary">
+              最低年薪（元，0 為不限）
+            </label>
+            <input
+              type="number"
+              id="min-annual-salary"
+              className="form-input"
+              value={minAnnualSalary}
+              min={0}
+              step={50000}
+              placeholder="例：600000"
+              onChange={e => setMinAnnualSalary(parseInt(e.target.value, 10) || 0)}
             />
           </div>
 
@@ -298,7 +316,7 @@ export default function SearchPage() {
             <h2 className="results__title">搜尋結果</h2>
             <div className="results__meta">
               <span className="results__badge">
-                {minSalary > 0
+                {effectiveMinMonthly > 0
                   ? `${displayedResults.length} 筆（共 ${allResults.length} 筆，已篩選）`
                   : `${allResults.length} 筆結果`}
               </span>
