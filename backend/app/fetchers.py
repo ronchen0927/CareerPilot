@@ -1,10 +1,10 @@
 """Shared HTTP fetch helpers used by the URL-fetch endpoint and the liveness checker."""
 
 import logging
-import re
 
 import aiohttp
-from bs4 import BeautifulSoup
+import trafilatura
+from goose3 import Goose
 from playwright.async_api import TimeoutError as PlaywrightTimeout
 from playwright.async_api import async_playwright
 
@@ -22,55 +22,25 @@ _HEADERS = {
     "Accept-Language": "zh-TW,zh;q=0.9,en;q=0.8",
 }
 
-_NOISE_TAGS = {
-    "script",
-    "style",
-    "nav",
-    "header",
-    "footer",
-    "aside",
-    "form",
-    "iframe",
-    "noscript",
-    "button",
-    "svg",
-}
-
 
 def parse_html(html: str) -> str:
-    """Strip noise from HTML and return the main content as plain text."""
-    soup = BeautifulSoup(html, "lxml")
-
-    for tag in soup.find_all(_NOISE_TAGS):
-        tag.decompose()
-
-    main = (
-        soup.find("main")
-        or soup.find("article")
-        or soup.find(attrs={"id": re.compile(r"job|content|detail", re.I)})
-        or soup.find(attrs={"class": re.compile(r"job|content|detail|description", re.I)})
-        or soup.body
-    )
-
-    raw = main.get_text(separator="\n") if main else soup.get_text(separator="\n")
-
-    lines = [ln.strip() for ln in raw.splitlines()]
-    cleaned: list[str] = []
-    prev_blank = False
-    for ln in lines:
-        if not ln:
-            if not prev_blank:
-                cleaned.append("")
-            prev_blank = True
-        else:
-            cleaned.append(ln)
-            prev_blank = False
-
-    return "\n".join(cleaned).strip()
+    """Extract main content from HTML using trafilatura → Goose3 fallback."""
+    text = trafilatura.extract(html, include_comments=False, include_tables=True)
+    if text and text.strip():
+        return text.strip()
+    try:
+        g = Goose()
+        article = g.extract(raw_html=html)
+        text = article.cleaned_text
+        if text and text.strip():
+            return text.strip()
+    except Exception:
+        pass
+    return ""
 
 
 async def fetch_with_aiohttp(url: str) -> str | None:
-    """Try to fetch the page with aiohttp + BeautifulSoup. Returns None on failure."""
+    """Try to fetch the page with aiohttp + trafilatura/Goose3. Returns None on failure."""
     try:
         timeout = aiohttp.ClientTimeout(total=FETCH_TIMEOUT_S)
         async with aiohttp.ClientSession(headers=_HEADERS, timeout=timeout) as session:
@@ -78,7 +48,7 @@ async def fetch_with_aiohttp(url: str) -> str | None:
                 if resp.status != 200:
                     return None
                 html = await resp.text()
-        return parse_html(html)
+        return parse_html(html) or None
     except Exception as e:
         logger.debug("aiohttp fetch failed for %s: %s", url, e)
         return None

@@ -164,12 +164,18 @@ export async function chatStream(
   messages: ChatMessage[],
   job: JobListing,
   userCv: string,
+  jobDescription: string,
   onChunk: (chunk: string) => void,
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages, job, user_cv: userCv } satisfies ChatRequest),
+    body: JSON.stringify({
+      messages,
+      job,
+      user_cv: userCv,
+      job_description: jobDescription,
+    } satisfies ChatRequest),
   })
   if (!res.ok) throw new Error(`Chat failed: ${res.status}`)
   const reader = res.body!.getReader()

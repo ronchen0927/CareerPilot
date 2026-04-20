@@ -54,6 +54,7 @@ class JobEvaluateRequest(BaseModel):
 
     job: JobListing = Field(description="要評分的職缺")
     user_cv: str = Field(default="", description="求職者履歷或背景描述（選填）")
+    job_description: str = Field(default="", description="職缺內文全文（選填）")
 
 
 class JobEvaluateTextRequest(BaseModel):

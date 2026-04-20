@@ -86,6 +86,7 @@ export interface TriggerAlertResponse {
 export interface JobEvaluateRequest {
   job: JobListing
   user_cv: string
+  job_description?: string
 }
 
 export interface JobEvaluateTextRequest {
@@ -185,6 +186,7 @@ export interface ChatRequest {
   messages: ChatMessage[]
   job: JobListing
   user_cv: string
+  job_description?: string
 }
 
 export interface CVSuggestKeywordsResponse {

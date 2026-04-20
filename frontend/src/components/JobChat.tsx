@@ -5,6 +5,7 @@ import type { ChatMessage, JobListing } from '../types'
 
 interface Props {
   job: JobListing
+  jobContent?: string | null
 }
 
 const GREETING = '有什麼關於這個職缺的問題想問我？'
@@ -29,7 +30,7 @@ function saveHistory(jobLink: string, messages: ChatMessage[]): void {
   }
 }
 
-export default function JobChat({ job }: Props) {
+export default function JobChat({ job, jobContent }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => loadHistory(job.link))
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
@@ -61,7 +62,7 @@ export default function JobChat({ job }: Props) {
       const userCv = localStorage.getItem('careerpilot_cv') ?? ''
       const prefsStr = formatPrefsForPrompt(prefs)
 
-      await chatStream(nextMessages, job, userCv + prefsStr, chunk => {
+      await chatStream(nextMessages, job, userCv + prefsStr, jobContent ?? '', chunk => {
         setMessages(prev => {
           const updated = [...prev]
           const last = updated[updated.length - 1]
