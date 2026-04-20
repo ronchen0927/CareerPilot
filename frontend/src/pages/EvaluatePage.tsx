@@ -87,13 +87,10 @@ export default function EvaluatePage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <div className="header__logo">
-          <span className="header__icon">✨</span>
-          <h1 className="header__title">AI 職缺評分</h1>
-        </div>
-        <p className="header__subtitle">貼上任何平台的職缺描述，立即取得 AI 評估</p>
-      </header>
+      <div className="page-intro">
+        <h1 className="page-intro__title">AI 評分</h1>
+        <p className="page-intro__sub">上傳履歷 + 貼上職缺描述，AI 立即給出契合度分析</p>
+      </div>
 
       <section className="search-card">
         <form onSubmit={handleEvaluate}>
@@ -101,7 +98,6 @@ export default function EvaluatePage() {
           {/* URL fetch */}
           <div className="form-group">
             <label className="form-label" htmlFor="job-url">
-              <span className="form-label__icon">🔗</span>
               職缺網址（選填）
               <span className="form-label__hint">自動擷取頁面內容，失敗時請改用手動貼上</span>
             </label>
@@ -127,7 +123,7 @@ export default function EvaluatePage() {
             </div>
             {fetchError && (
               <p style={{ color: 'var(--color-error, #f87171)', fontSize: '0.85rem', marginTop: '0.4rem' }}>
-                ⚠️ {fetchError}，請直接貼上職缺描述
+                {fetchError}，請直接貼上職缺描述
               </p>
             )}
           </div>
@@ -135,7 +131,6 @@ export default function EvaluatePage() {
           {/* Job text */}
           <div className="form-group">
             <label className="form-label" htmlFor="job-text">
-              <span className="form-label__icon">📋</span>
               職缺描述
               <span className="form-label__hint">從 104、Yourator 等平台複製貼上，或由上方自動擷取</span>
             </label>
@@ -154,7 +149,6 @@ export default function EvaluatePage() {
           {/* CV */}
           <div className="form-group">
             <label className="form-label" htmlFor="user-cv">
-              <span className="form-label__icon">👤</span>
               我的背景（選填）
               <span className="form-label__hint">資料儲存在本機；可上傳 PDF 自動填入</span>
             </label>
@@ -182,7 +176,7 @@ export default function EvaluatePage() {
             </div>
             {cvError && (
               <p style={{ color: 'var(--color-error, #f87171)', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
-                ⚠️ {cvError}
+                {cvError}
               </p>
             )}
             <textarea
@@ -197,7 +191,7 @@ export default function EvaluatePage() {
           </div>
 
           <button type="submit" className="btn-search" disabled={evalLoading}>
-            <span className="btn-search__text">{evalLoading ? '評分中...' : '✨ 開始評分'}</span>
+            <span className="btn-search__text">{evalLoading ? '評分中...' : '開始評分'}</span>
             <span className="btn-search__icon">→</span>
           </button>
         </form>
@@ -212,7 +206,6 @@ export default function EvaluatePage() {
 
       {evalError && (
         <section className="error-card">
-          <span className="error-card__icon">⚠️</span>
           <p className="error-card__text">{evalError}</p>
           <button className="btn-dismiss" onClick={() => setEvalError(null)}>
             關閉
