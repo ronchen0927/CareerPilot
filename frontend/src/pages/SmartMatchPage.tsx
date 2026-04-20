@@ -129,13 +129,10 @@ export default function SmartMatchPage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <div className="header__logo">
-          <span className="header__icon">🎯</span>
-          <h1 className="header__title">智慧推薦</h1>
-        </div>
-        <p className="header__subtitle">上傳履歷，AI 幫你找最符合技能樹的職缺</p>
-      </header>
+      <div className="page-intro">
+        <h1 className="page-intro__title">智慧推薦</h1>
+        <p className="page-intro__sub">上傳履歷，AI 自動建議關鍵字並找出最符合的職缺</p>
+      </div>
 
       {/* Phase 1: CV input */}
       {phase === 'input' && (
