@@ -687,7 +687,7 @@ body {
 }
 
 .results__title {
-  font-family: 'Fraunces', serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--text-1);
@@ -917,7 +917,7 @@ body {
 }
 
 .bookmarks__title {
-  font-family: 'Fraunces', serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--amber);
@@ -1047,7 +1047,7 @@ body {
 }
 
 .modal__title {
-  font-family: 'Fraunces', serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-1);
@@ -1162,7 +1162,7 @@ body {
 }
 
 .ai-score {
-  font-family: 'Fraunces', serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 2rem;
   font-weight: 700;
   min-width: 2rem;
