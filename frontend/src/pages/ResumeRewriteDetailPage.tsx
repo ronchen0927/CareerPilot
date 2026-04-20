@@ -54,19 +54,9 @@ export default function ResumeRewriteDetailPage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <div className="header__logo">
-          <button
-            className="btn-export"
-            style={{ marginRight: '0.75rem', padding: '0.3rem 0.8rem' }}
-            onClick={() => navigate('/resume-rewrites')}
-          >
-            ← 返回
-          </button>
-          <span className="header__icon">📝</span>
-          <h1 className="header__title">履歷改寫詳情</h1>
-        </div>
-      </header>
+      <div className="page-intro">
+        <h1 className="page-intro__title">改寫詳情</h1>
+      </div>
 
       {loading && (
         <section className="loading">
@@ -77,7 +67,6 @@ export default function ResumeRewriteDetailPage() {
 
       {error && (
         <section className="error-card">
-          <span className="error-card__icon">⚠️</span>
           <p className="error-card__text">{error}</p>
         </section>
       )}
@@ -127,7 +116,7 @@ export default function ResumeRewriteDetailPage() {
                   {copied ? '已複製 ✓' : '複製'}
                 </button>
                 <button className="btn-export" style={{ padding: '0.3rem 0.8rem', fontSize: '0.85rem' }} onClick={handleDownloadPdf}>
-                  📥 下載 PDF
+                  下載 PDF
                 </button>
               </div>
             </div>

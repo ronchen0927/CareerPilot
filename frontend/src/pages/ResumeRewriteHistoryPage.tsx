@@ -28,13 +28,10 @@ export default function ResumeRewriteHistoryPage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <div className="header__logo">
-          <span className="header__icon">🗂️</span>
-          <h1 className="header__title">履歷改寫歷史</h1>
-        </div>
-        <p className="header__subtitle">過去針對不同職缺的履歷改寫紀錄</p>
-      </header>
+      <div className="page-intro">
+        <h1 className="page-intro__title">改寫歷史</h1>
+        <p className="page-intro__sub">查看過去的履歷改寫記錄</p>
+      </div>
 
       {loading && (
         <section className="loading">
@@ -45,7 +42,6 @@ export default function ResumeRewriteHistoryPage() {
 
       {error && (
         <section className="error-card">
-          <span className="error-card__icon">⚠️</span>
           <p className="error-card__text">{error}</p>
         </section>
       )}
@@ -66,8 +62,6 @@ export default function ResumeRewriteHistoryPage() {
           onClick={() => navigate(`/resume-rewrites/${r.id}`, { state: r })}
         >
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-            <span style={{ fontSize: '1.4rem', flexShrink: 0 }}>📝</span>
-
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <span style={{ fontWeight: 500 }}>{r.job_text_snippet}…</span>

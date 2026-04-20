@@ -91,22 +91,16 @@ export default function ResumeRewritePage() {
 
   return (
     <div className="container">
-      <header className="header">
-        <div className="header__logo">
-          <span className="header__icon">📝</span>
-          <h1 className="header__title">AI 履歷改寫</h1>
-        </div>
-        <p className="header__subtitle">
-          針對職缺需求改寫履歷；輸出語言會跟著原始履歷（中文→中文、英文→英文）
-        </p>
-      </header>
+      <div className="page-intro">
+        <h1 className="page-intro__title">AI 履歷改寫</h1>
+        <p className="page-intro__sub">針對特定職缺優化你的履歷，提升關鍵字匹配度</p>
+      </div>
 
       <section className="search-card">
         <form onSubmit={handleGenerate}>
           {/* URL fetch */}
           <div className="form-group">
             <label className="form-label" htmlFor="rr-job-url">
-              <span className="form-label__icon">🔗</span>
               職缺網址（選填）
               <span className="form-label__hint">自動擷取頁面內容，失敗時請改用手動貼上</span>
             </label>
@@ -132,7 +126,7 @@ export default function ResumeRewritePage() {
             </div>
             {fetchError && (
               <p style={{ color: 'var(--color-error, #f87171)', fontSize: '0.85rem', marginTop: '0.4rem' }}>
-                ⚠️ {fetchError}，請直接貼上職缺描述
+                {fetchError}，請直接貼上職缺描述
               </p>
             )}
           </div>
@@ -140,7 +134,6 @@ export default function ResumeRewritePage() {
           {/* Job text */}
           <div className="form-group">
             <label className="form-label" htmlFor="rr-job-text">
-              <span className="form-label__icon">📋</span>
               職缺描述
             </label>
             <textarea
@@ -158,7 +151,6 @@ export default function ResumeRewritePage() {
           {/* CV */}
           <div className="form-group">
             <label className="form-label" htmlFor="rr-user-cv">
-              <span className="form-label__icon">👤</span>
               原始履歷
               <span className="form-label__hint">資料儲存在本機；可上傳 PDF 自動填入</span>
             </label>
@@ -171,7 +163,7 @@ export default function ResumeRewritePage() {
             </div>
             {cvError && (
               <p style={{ color: 'var(--color-error, #f87171)', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
-                ⚠️ {cvError}
+                {cvError}
               </p>
             )}
             <textarea
@@ -188,7 +180,7 @@ export default function ResumeRewritePage() {
 
           <button type="submit" className="btn-search" disabled={genLoading}>
             <span className="btn-search__text">
-              {genLoading ? '生成中...' : '📝 產生改寫履歷'}
+              {genLoading ? '生成中...' : '產生改寫履歷'}
             </span>
             <span className="btn-search__icon">→</span>
           </button>
@@ -204,7 +196,6 @@ export default function ResumeRewritePage() {
 
       {genError && (
         <section className="error-card">
-          <span className="error-card__icon">⚠️</span>
           <p className="error-card__text">{genError}</p>
           <button className="btn-dismiss" onClick={() => setGenError(null)}>關閉</button>
         </section>
