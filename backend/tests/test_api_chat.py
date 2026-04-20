@@ -101,6 +101,35 @@ class TestChat:
         )
         assert resp.status_code == 422
 
+    def test_job_description_included_in_system_prompt(self, client):
+        captured = {}
+
+        async def fake_create(**kwargs):
+            captured["messages"] = kwargs["messages"]
+            return _make_fake_stream(["OK"])
+
+        with (
+            patch("app.routers.chat.settings") as mock_settings,
+            patch("app.routers.chat.AsyncOpenAI") as MockAI,
+        ):
+            mock_settings.OPENAI_API_KEY = "sk-test"
+            inst = MagicMock()
+            MockAI.return_value = inst
+            inst.chat.completions.create = AsyncMock(side_effect=fake_create)
+            resp = client.post(
+                "/api/chat",
+                json={
+                    "messages": [{"role": "user", "content": "test"}],
+                    "job": _job_payload(),
+                    "user_cv": "",
+                    "job_description": "需要熟悉 Kubernetes 和 Terraform",
+                },
+            )
+        assert resp.status_code == 200
+        system_content = captured["messages"][0]["content"]
+        assert "Kubernetes" in system_content
+        assert "Terraform" in system_content
+
     def test_openai_error_yields_warning_marker(self, client):
         with (
             patch("app.routers.chat.settings") as mock_settings,

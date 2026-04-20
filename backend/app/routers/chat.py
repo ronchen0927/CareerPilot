@@ -22,6 +22,7 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage]
     job: JobListing
     user_cv: str
+    job_description: str = ""
 
 
 _SYSTEM_PROMPT = """\
@@ -62,6 +63,8 @@ async def chat(request: ChatRequest):
         link=job.link,
         user_cv=request.user_cv.strip() or "（未提供）",
     )
+    if request.job_description.strip():
+        system_content += f"\n\n[Job Description]\n{request.job_description.strip()}"
 
     async def generate():
         try:
