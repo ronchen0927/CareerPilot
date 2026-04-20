@@ -1,6 +1,7 @@
 """Shared HTTP fetch helpers used by the URL-fetch endpoint and the liveness checker."""
 
 import logging
+import re
 
 import aiohttp
 import trafilatura
@@ -12,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 FETCH_TIMEOUT_S = 15
 FETCH_TIMEOUT_MS = 15_000
+
+_NOSCRIPT_RE = re.compile(r"<noscript\b[^>]*>.*?</noscript>", re.DOTALL | re.IGNORECASE)
 
 _HEADERS = {
     "User-Agent": (
@@ -25,6 +28,7 @@ _HEADERS = {
 
 def parse_html(html: str) -> str:
     """Extract main content from HTML using trafilatura → Goose3 fallback."""
+    html = _NOSCRIPT_RE.sub("", html)
     text = trafilatura.extract(html, include_comments=False, include_tables=True)
     if text and text.strip():
         return text.strip()

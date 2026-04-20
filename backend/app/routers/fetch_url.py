@@ -8,7 +8,7 @@ from ..fetchers import fetch_with_aiohttp, fetch_with_playwright
 router = APIRouter(prefix="/api/jobs", tags=["fetch-url"])
 logger = logging.getLogger(__name__)
 
-MIN_LENGTH = 50
+MIN_LENGTH = 500
 MAX_LENGTH = 8000
 
 
