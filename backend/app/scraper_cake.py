@@ -5,16 +5,14 @@ CakeResume 的職缺搜尋為 client-side 渲染（Algolia），SSR 頁面的 __
 僅包含當前頁面的職缺資料。每次請求回傳約 10 筆職缺，
 依照 `pageMap` 中 page 對應的路徑清單順序排列。
 
-注意：SSR 頁面不支援 area / experience 篩選（篩選由前端 JS 執行），
-因此這些參數目前不會影響爬取結果。
-
-TODO: 待使用者提供 CakeResume 特定頁面區塊的結構後，
-      可進一步確認正確的資料路徑與欄位對應，再調整以下實作。
+注意：CakeResume 支援 city[] 與 years_of_experience[] 參數進行篩選，
+但 SSR 渲染的筆數有限，因此最多只抓取 MAX_PAGES 頁。
 """
 
 import asyncio
 import json
 import logging
+from urllib.parse import urlencode
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -24,6 +22,28 @@ from .models import JobListing, JobSearchRequest
 logger = logging.getLogger(__name__)
 
 CAKE_BASE_URL = "https://www.cake.me/jobs"
+
+# Maximum pages to fetch from CakeResume SSR (beyond this, results are typically empty/duplicates)
+MAX_PAGES = 3
+
+# Map 104 area codes → CakeResume city slugs
+_AREA_TO_CAKE_CITY: dict[str, str] = {
+    "6001001000": "taipei-city",
+    "6001002000": "new-taipei-city",
+    "6001006000": "hsinchu-city",
+    "6001008000": "taichung-city",
+    "6001014000": "tainan-city",
+    "6001016000": "kaohsiung-city",
+}
+
+# Map 104 experience codes → CakeResume years_of_experience values
+_EXP_TO_CAKE: dict[str, str] = {
+    "1": "less_than_1",
+    "3": "1_3_years",
+    "5": "3_5_years",
+    "10": "5_10_years",
+    "99": "over_10_years",
+}
 
 # CakeResume seniority level display mapping
 SENIORITY_DISPLAY: dict[str, str] = {
@@ -47,9 +67,30 @@ HEADERS = {
 }
 
 
-def _build_url(keyword: str, page: int) -> str:
-    """Build CakeResume search URL."""
-    return f"{CAKE_BASE_URL}?keywords={keyword}&page={page}&locale=zh-TW"
+def _build_url(
+    keyword: str,
+    page: int,
+    areas: list[str] | None = None,
+    experience: list[str] | None = None,
+) -> str:
+    """Build CakeResume search URL with URL-encoded keyword and optional filters."""
+    params: list[tuple[str, str]] = [
+        ("keywords", keyword),
+        ("page", str(page)),
+        ("locale", "zh-TW"),
+    ]
+
+    for area_code in areas or []:
+        city_slug = _AREA_TO_CAKE_CITY.get(area_code)
+        if city_slug:
+            params.append(("city[]", city_slug))
+
+    for exp_code in experience or []:
+        cake_exp = _EXP_TO_CAKE.get(exp_code)
+        if cake_exp:
+            params.append(("years_of_experience[]", cake_exp))
+
+    return f"{CAKE_BASE_URL}?{urlencode(params, doseq=True)}"
 
 
 def _extract_next_data(html: str) -> dict:
@@ -199,10 +240,13 @@ async def scrape_jobs(request: JobSearchRequest) -> list[JobListing]:
     非同步爬取 CakeResume 職缺。
 
     因 SSR 限制，每個 URL 僅回傳約 10 筆職缺。
-    多頁請求會同時發出，但 CakeResume 通常只在 SSR 中渲染第 1 頁，
-    因此實際去重後可能與單頁結果相近。
+    最多抓取 MAX_PAGES 頁，並支援 area/experience 篩選。
     """
-    urls = [_build_url(request.keyword, page) for page in range(1, request.pages + 1)]
+    pages_to_fetch = min(request.pages, MAX_PAGES)
+    urls = [
+        _build_url(request.keyword, page, request.areas, request.experience)
+        for page in range(1, pages_to_fetch + 1)
+    ]
 
     async with aiohttp.ClientSession(headers=HEADERS) as session:
         results = await asyncio.gather(*[_fetch_page(session, url) for url in urls])
