@@ -472,7 +472,13 @@ export default function SearchPage() {
         </section>
       )}
 
-      {selectedJob && <JobModal job={selectedJob} onClose={() => setSelectedJob(null)} />}
+      {selectedJob && (
+        <JobModal
+          job={selectedJob}
+          onClose={() => setSelectedJob(null)}
+          bookmarkStatus={bookmarks[selectedJob.link]?.status}
+        />
+      )}
     </div>
   )
 }

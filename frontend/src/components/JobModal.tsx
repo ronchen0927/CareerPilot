@@ -4,11 +4,12 @@ import { evaluateJob, fetchJobUrl } from '../api/client'
 import DimensionsPanel from './DimensionsPanel'
 import JobChat from './JobChat'
 import { formatPrefsForPrompt, usePreferences } from '../hooks/usePreferences'
-import type { JobEvaluateResponse, JobListing } from '../types'
+import type { BookmarkStatus, JobEvaluateResponse, JobListing } from '../types'
 
 interface Props {
   job: JobListing
   onClose: () => void
+  bookmarkStatus?: BookmarkStatus
 }
 
 const SCORE_CLASS: Record<string, string> = {
@@ -23,7 +24,7 @@ function getScoreClass(score: string): string {
   return SCORE_CLASS[score[0]?.toUpperCase() ?? ''] ?? ''
 }
 
-export default function JobModal({ job, onClose }: Props) {
+export default function JobModal({ job, onClose, bookmarkStatus }: Props) {
   const [evalResult, setEvalResult] = useState<JobEvaluateResponse | null>(null)
   const [evalLoading, setEvalLoading] = useState(false)
   const [evalError, setEvalError] = useState<string | null>(null)
@@ -41,6 +42,19 @@ export default function JobModal({ job, onClose }: Props) {
       `薪水：${job.salary}`,
     ].join('\n')
     navigate('/resume-rewrite', { state: { job_text: jobContent ?? metadataText, job_url: job.link } })
+    onClose()
+  }
+
+  function handleCoverLetter() {
+    const metadataText = [
+      `職位：${job.job}`,
+      `公司：${job.company}`,
+      `城市：${job.city}`,
+      `經歷要求：${job.experience}`,
+      `最低學歷：${job.education}`,
+      `薪水：${job.salary}`,
+    ].join('\n')
+    navigate('/cover-letter', { state: { job_text: jobContent ?? metadataText, job_url: job.link } })
     onClose()
   }
 
@@ -143,6 +157,17 @@ export default function JobModal({ job, onClose }: Props) {
         >
           ✍️ 針對此職缺改寫履歷
         </button>
+
+        {bookmarkStatus === '想投' && (
+          <button
+            type="button"
+            className="btn-export"
+            style={{ marginTop: '0.4rem', width: '100%' }}
+            onClick={handleCoverLetter}
+          >
+            ✉️ 產生 AI 推薦信
+          </button>
+        )}
 
         <div className="modal__ai-section">
           <button className="btn-evaluate" disabled={evalLoading} onClick={handleEvaluate}>
