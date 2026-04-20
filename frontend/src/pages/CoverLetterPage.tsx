@@ -115,7 +115,7 @@ export default function CoverLetterPage() {
             </div>
             {fetchError && (
               <p style={{ color: 'var(--color-error, #f87171)', fontSize: '0.85rem', marginTop: '0.4rem' }}>
-                ⚠️ {fetchError}，請直接貼上職缺描述
+                {fetchError}，請直接貼上職缺描述
               </p>
             )}
           </div>
@@ -152,7 +152,7 @@ export default function CoverLetterPage() {
             </div>
             {cvError && (
               <p style={{ color: 'var(--color-error, #f87171)', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
-                ⚠️ {cvError}
+                {cvError}
               </p>
             )}
             <textarea
