@@ -227,9 +227,9 @@ export default function SmartMatchPage() {
               value={newKeyword}
               onChange={e => setNewKeyword(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddKeyword() } }}
-              style={{ flex: 1 }}
+              style={{ flex: 1, minWidth: 0 }}
             />
-            <button className="btn-search" style={{ flexShrink: 0 }} onClick={handleAddKeyword}>
+            <button className="btn-search" style={{ width: 'auto', flexShrink: 0, padding: '0 1.25rem' }} onClick={handleAddKeyword}>
               <span className="btn-search__text">新增</span>
             </button>
           </div>
