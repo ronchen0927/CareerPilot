@@ -448,7 +448,7 @@ export default function SearchPage() {
                           <button
                             className="btn-export"
                             style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
-                            disabled={fetchingLink === link}
+                            disabled={fetchingLink !== null}
                             onClick={() => handleCoverLetter(link)}
                           >
                             {fetchingLink === link ? '抓取中...' : 'AI 推薦信'}
