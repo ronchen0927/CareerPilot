@@ -1,12 +1,17 @@
 """Unit tests for scraper_cake.py pure functions (no network calls)."""
 
+from unittest.mock import patch
+
+from app.models import JobSearchRequest
 from app.scraper_cake import (
+    MAX_PAGES,
     _build_url,
     _extract_jobs_from_next_data,
     _parse_city,
     _parse_date,
     _parse_job,
     _parse_salary,
+    scrape_jobs,
 )
 
 
@@ -26,6 +31,59 @@ class TestBuildUrl:
     def test_base_url(self):
         url = _build_url("Python", 1)
         assert url.startswith("https://www.cake.me/jobs")
+
+    def test_area_codes_mapped_to_city_slug(self):
+        url = _build_url("Python", 1, areas=["6001001000"])
+        assert "city%5B%5D=taipei-city" in url or "city[]=taipei-city" in url
+
+    def test_experience_codes_mapped(self):
+        url = _build_url("Python", 1, experience=["3"])
+        assert "years_of_experience" in url
+        assert "1_3_years" in url
+
+    def test_unknown_area_skipped(self):
+        url = _build_url("Python", 1, areas=["9999999999"])
+        assert "city" not in url
+
+    def test_keyword_is_urlencoded(self):
+        url = _build_url("Python 工程師", 1)
+        # The keyword should be URL-encoded (spaces as + or %20, Chinese chars encoded)
+        assert "Python+%E5%B7%A5%E7%A8%8B%E5%B8%AB" in url or "Python%20" in url
+        assert "Python 工程師" not in url  # raw unencoded form must not appear
+
+    def test_empty_areas_adds_no_city_param(self):
+        url = _build_url("Python", 1, areas=[])
+        assert "city" not in url
+
+    def test_empty_experience_adds_no_exp_param(self):
+        url = _build_url("Python", 1, experience=[])
+        assert "years_of_experience" not in url
+
+    def test_multiple_areas_all_mapped(self):
+        url = _build_url("Python", 1, areas=["6001001000", "6001002000"])
+        assert "taipei-city" in url
+        assert "new-taipei-city" in url
+
+
+class TestPagesCappedAtMax:
+    def test_pages_capped_at_max(self):
+        """scrape_jobs should fetch at most MAX_PAGES pages even if request.pages is larger."""
+        import asyncio
+
+        call_count = 0
+
+        async def fake_fetch_page(session, url):
+            nonlocal call_count
+            call_count += 1
+            return []
+
+        async def run():
+            request = JobSearchRequest(keyword="Python", pages=MAX_PAGES + 5)
+            with patch("app.scraper_cake._fetch_page", side_effect=fake_fetch_page):
+                await scrape_jobs(request)
+
+        asyncio.run(run())
+        assert call_count == MAX_PAGES
 
 
 class TestParseDate:

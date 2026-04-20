@@ -10,6 +10,7 @@ import asyncio
 import logging
 import re
 from datetime import datetime
+from urllib.parse import urlencode
 
 import aiohttp
 
@@ -31,9 +32,40 @@ HEADERS = {
     "Referer": "https://www.yourator.co/jobs",
 }
 
+_AREA_TO_YOURATOR_CITY: dict[str, str] = {
+    "6001001000": "台北市",
+    "6001002000": "新北市",
+    "6001006000": "新竹市",
+    "6001008000": "台中市",
+    "6001014000": "台南市",
+    "6001016000": "高雄市",
+}
 
-def _build_url(keyword: str, page: int) -> str:
-    return f"{YOURATOR_API}?term={keyword}&page={page}"
+_EXP_TO_YOURATOR: dict[str, str] = {
+    "1": "less_than_1",
+    "3": "1_3_years",
+    "5": "3_5_years",
+    "10": "5_10_years",
+    "99": "over_10_years",
+}
+
+
+def _build_url(
+    keyword: str,
+    page: int,
+    areas: list[str] | None = None,
+    experience: list[str] | None = None,
+) -> str:
+    params: list[tuple[str, str]] = [("term", keyword), ("page", str(page))]
+    for code in areas or []:
+        city = _AREA_TO_YOURATOR_CITY.get(code)
+        if city:
+            params.append(("location[]", city))
+    for code in experience or []:
+        exp = _EXP_TO_YOURATOR.get(code)
+        if exp:
+            params.append(("years_of_exp[]", exp))
+    return f"{YOURATOR_API}?{urlencode(params)}"
 
 
 def _parse_salary(salary_str: str | None) -> tuple[int, int, str]:
@@ -97,8 +129,7 @@ def _parse_job(item: dict) -> JobListing | None:
         return None
 
 
-async def _fetch_page(session: aiohttp.ClientSession, keyword: str, page: int) -> list[dict]:
-    url = _build_url(keyword, page)
+async def _fetch_page(session: aiohttp.ClientSession, url: str) -> list[dict]:
     try:
         async with session.get(url) as resp:
             if resp.status != 200:
@@ -114,10 +145,12 @@ async def _fetch_page(session: aiohttp.ClientSession, keyword: str, page: int) -
 
 async def scrape_jobs(request: JobSearchRequest) -> list[JobListing]:
     """非同步爬取 Yourator 職缺，每頁約 20 筆。"""
+    urls = [
+        _build_url(request.keyword, page, request.areas, request.experience)
+        for page in range(1, request.pages + 1)
+    ]
     async with aiohttp.ClientSession(headers=HEADERS) as session:
-        results = await asyncio.gather(
-            *[_fetch_page(session, request.keyword, page) for page in range(1, request.pages + 1)]
-        )
+        results = await asyncio.gather(*[_fetch_page(session, url) for url in urls])
 
     seen_links: set[str] = set()
     all_jobs: list[JobListing] = []
