@@ -95,7 +95,7 @@ async def evaluate_job(request: JobEvaluateRequest):
     job = request.job
     # Use structured fields as the canonical text for hashing
     job_repr = f"{job.job}|{job.company}|{job.city}|{job.experience}|{job.education}|{job.salary}"
-    job_hash = _compute_hash(job_repr, request.user_cv.strip())
+    job_hash = _compute_hash(job_repr, request.user_cv.strip(), request.job_description.strip())
 
     cached = await get_cached(job_hash)
     if cached:
@@ -103,6 +103,11 @@ async def evaluate_job(request: JobEvaluateRequest):
 
     client = _make_openai_client()
     cv_section = f"\n\n## 求職者背景\n{request.user_cv.strip()}" if request.user_cv.strip() else ""
+    jd_section = (
+        f"\n\nJob Description (full text):\n{request.job_description.strip()}"
+        if request.job_description.strip()
+        else ""
+    )
 
     prompt = f"""You are a professional career advisor. Evaluate the fit between the candidate and the job listing below, then respond in strict JSON format.
 
@@ -112,7 +117,7 @@ async def evaluate_job(request: JobEvaluateRequest):
 - City: {job.city}
 - Experience required: {job.experience}
 - Education required: {job.education}
-- Salary: {job.salary}{cv_section}
+- Salary: {job.salary}{jd_section}{cv_section}
 
 ## Response format (JSON only, no extra text)
 {{
