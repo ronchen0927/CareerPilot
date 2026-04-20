@@ -15,6 +15,7 @@ FETCH_TIMEOUT_S = 15
 FETCH_TIMEOUT_MS = 15_000
 
 _NOSCRIPT_RE = re.compile(r"<noscript\b[^>]*>.*?</noscript>", re.DOTALL | re.IGNORECASE)
+_104_JOB_RE = re.compile(r"https?://(?:www\.)?104\.com\.tw/job/([a-z0-9]+)", re.IGNORECASE)
 
 _HEADERS = {
     "User-Agent": (
@@ -41,6 +42,31 @@ def parse_html(html: str) -> str:
     except Exception:
         pass
     return ""
+
+
+async def fetch_104_detail(url: str) -> str:
+    """Fetch structured address info from 104's job detail API. Returns formatted text or ''."""
+    m = _104_JOB_RE.match(url)
+    if not m:
+        return ""
+    job_id = m.group(1)
+    api_url = f"https://www.104.com.tw/job/ajax/content/{job_id}"
+    try:
+        timeout = aiohttp.ClientTimeout(total=FETCH_TIMEOUT_S)
+        headers = {**_HEADERS, "Referer": url}
+        async with aiohttp.ClientSession(headers=headers, timeout=timeout) as session:
+            async with session.get(api_url, ssl=False) as resp:
+                if resp.status != 200:
+                    return ""
+                data = await resp.json()
+        job_detail = data.get("data", {}).get("jobDetail", {})
+        region = job_detail.get("addressRegion") or ""
+        detail = job_detail.get("addressDetail") or ""
+        address = f"{region}{detail}".strip()
+        return f"上班地點：{address}" if address else ""
+    except Exception as e:
+        logger.debug("104 detail API failed for %s: %s", url, e)
+        return ""
 
 
 async def fetch_with_aiohttp(url: str) -> str | None:

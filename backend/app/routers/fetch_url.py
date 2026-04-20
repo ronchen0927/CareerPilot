@@ -1,9 +1,10 @@
+import asyncio
 import logging
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, HttpUrl
 
-from ..fetchers import fetch_with_aiohttp, fetch_with_playwright
+from ..fetchers import fetch_104_detail, fetch_with_aiohttp, fetch_with_playwright
 
 router = APIRouter(prefix="/api/jobs", tags=["fetch-url"])
 logger = logging.getLogger(__name__)
@@ -21,7 +22,10 @@ async def fetch_job_url(request: FetchUrlRequest):
     """Fetch a job listing page. Tries aiohttp+BeautifulSoup first; falls back to Playwright."""
     url = str(request.url)
 
-    text = await fetch_with_aiohttp(url)
+    detail_prefix, text = await asyncio.gather(
+        fetch_104_detail(url),
+        fetch_with_aiohttp(url),
+    )
 
     if not text or len(text) < MIN_LENGTH:
         logger.info("aiohttp yielded too little content, falling back to Playwright for %s", url)
@@ -36,5 +40,8 @@ async def fetch_job_url(request: FetchUrlRequest):
 
     if len(text) > MAX_LENGTH:
         text = text[:MAX_LENGTH]
+
+    if detail_prefix:
+        text = f"{detail_prefix}\n\n{text}"
 
     return {"text": text}
