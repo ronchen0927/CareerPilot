@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { fetchOptions, searchJobs } from '../api/client'
+import { Link, useNavigate } from 'react-router-dom'
+import { fetchJobUrl, fetchOptions, searchJobs } from '../api/client'
 import CheckboxGroup from '../components/CheckboxGroup'
 import JobModal from '../components/JobModal'
 import { useBookmarks } from '../hooks/useBookmarks'
@@ -66,6 +66,24 @@ export default function SearchPage() {
 
   const { bookmarks, toggle: toggleBookmark, remove: removeBookmark, setStatus, isBookmarked } =
     useBookmarks()
+
+  const navigate = useNavigate()
+  const [fetchingLink, setFetchingLink] = useState<string | null>(null)
+  const [fetchLinkError, setFetchLinkError] = useState<string | null>(null)
+
+  async function handleCoverLetter(link: string) {
+    setFetchingLink(link)
+    setFetchLinkError(null)
+    try {
+      const data = await fetchJobUrl(link)
+      navigate('/cover-letter', { state: { job_text: data.text, job_url: link } })
+    } catch {
+      setFetchLinkError(link)
+      setTimeout(() => setFetchLinkError(null), 3000)
+    } finally {
+      setFetchingLink(null)
+    }
+  }
 
   const displayedResults = useMemo(
     () => (minSalary > 0 ? allResults.filter(j => j.salary_low >= minSalary) : allResults),
@@ -424,7 +442,24 @@ export default function SearchPage() {
                         ))}
                       </select>
                     </td>
-                    <td>
+                    <td style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                      {bm.status === '想投' && (
+                        <>
+                          <button
+                            className="btn-export"
+                            style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+                            disabled={fetchingLink !== null}
+                            onClick={() => handleCoverLetter(link)}
+                          >
+                            {fetchingLink === link ? '抓取中...' : 'AI 推薦信'}
+                          </button>
+                          {fetchLinkError === link && (
+                            <span style={{ color: 'var(--color-error, #e53e3e)', fontSize: '0.75rem' }}>
+                              擷取失敗
+                            </span>
+                          )}
+                        </>
+                      )}
                       <button className="btn-remove" onClick={() => removeBookmark(link)}>
                         移除
                       </button>
@@ -437,7 +472,13 @@ export default function SearchPage() {
         </section>
       )}
 
-      {selectedJob && <JobModal job={selectedJob} onClose={() => setSelectedJob(null)} />}
+      {selectedJob && (
+        <JobModal
+          job={selectedJob}
+          onClose={() => setSelectedJob(null)}
+          bookmarkStatus={bookmarks[selectedJob.link]?.status}
+        />
+      )}
     </div>
   )
 }

@@ -1,10 +1,14 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { fetchJobUrl, generateCoverLetter, parseCvPdf } from '../api/client'
 
 export default function CoverLetterPage() {
-  const [jobUrl, setJobUrl] = useState('')
-  const [jobText, setJobText] = useState('')
+  const location = useLocation()
+  const locState = location.state as { job_text?: string; job_url?: string } | null
+  const navigate = useNavigate()
+
+  const [jobUrl, setJobUrl] = useState(locState?.job_url ?? '')
+  const [jobText, setJobText] = useState(locState?.job_text ?? '')
   const [cv, setCv] = useState(() => localStorage.getItem('careerpilot_cv') ?? '')
   const [letter, setLetter] = useState<string | null>(null)
 
@@ -17,7 +21,6 @@ export default function CoverLetterPage() {
   const [copied, setCopied] = useState(false)
 
   const cvFileRef = useRef<HTMLInputElement>(null)
-  const navigate = useNavigate()
 
   function handleCvChange(value: string) {
     setCv(value)
