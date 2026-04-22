@@ -7,6 +7,9 @@ export interface JobSearchRequest {
   categories: string[]
   salary_min: number
   salary_max: number
+  cake_seniority: string[]
+  cake_salary_min: number
+  cake_salary_max: number
 }
 
 export interface JobListing {

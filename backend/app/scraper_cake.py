@@ -35,23 +35,23 @@ _AREA_TO_CAKE_CITY: dict[str, str] = {
 }
 
 # Map frontend experience codes → CakeResume seniority_levels values
-# CakeResume 的年資篩選以「等級」為指（初階/中高階），參數名為 seniority_levels
+# CakeResume 資歷共六種：初階 / 中高階 / 助理 / 經理總監 / 實習 / 經營層
 _EXP_TO_CAKE: dict[str, str] = {
-    "1": "entry_level",  # 1年以下 → 初階
-    "3": "junior",  # 1-3年  → 初階
-    "5": "mid_level",  # 3-5年  → 中階
+    "1": "internship_level",  # 1年以下 → 實習
+    "3": "entry_level",  # 1-3年  → 初階
+    "5": "associate",  # 3-5年  → 助理
     "10": "mid_senior_level",  # 5-10年 → 中高階
-    "99": "director",  # 10年以上 → 高階
+    "99": "director",  # 10年以上 → 經理/總監
 }
 
-# CakeResume seniority level display mapping
+# CakeResume seniority level display mapping (for parsing fetched job data)
 SENIORITY_DISPLAY: dict[str, str] = {
-    "entry_level": "1年以下",
-    "junior": "1-3年",
-    "mid_level": "3-5年",
-    "mid_senior_level": "5年以上",
-    "senior": "5-10年",
-    "director": "10年以上",
+    "entry_level": "初階",
+    "associate": "助理",
+    "mid_senior_level": "中高階",
+    "director": "經理 / 總監",
+    "internship_level": "實習",
+    "executive": "經營層 (VP, GM, C-Level)",
     "no_preference": "不拘",
 }
 
@@ -70,13 +70,15 @@ def _build_url(
     keyword: str,
     page: int,
     areas: list[str] | None = None,
-    experience: list[str] | None = None,
+    cake_seniority: list[str] | None = None,
+    cake_salary_min: int = 0,
+    cake_salary_max: int = 0,
 ) -> str:
     """Build CakeResume search URL.
 
     CakeResume 的正確格式為：
-      https://www.cake.me/jobs/{keyword}?locations=台北市-台灣,新北市-台灣&page=2&...
-    關鍵字放在路徑（path），地區用逗號分隔放在 locations 參數（中文格式）。
+      https://www.cake.me/jobs/{keyword}?locations=台北市-台灣,新北市-台灣&seniority_levels=entry_level,mid_senior_level&page=2&...
+    關鍵字放在路徑（path），地區與年資用逗號分隔。
     """
     # Keyword goes in the URL path, not as a query param
     encoded_keyword = quote(keyword, safe="")
@@ -96,14 +98,18 @@ def _build_url(
     if cake_locations:
         params.append(("locations", ",".join(cake_locations)))
 
-    cake_seniority = []
-    for exp_code in experience or []:
-        cake_exp = _EXP_TO_CAKE.get(exp_code)
-        if cake_exp:
-            cake_seniority.append(cake_exp)
-
+    # cake_seniority contains CakeResume seniority level keys directly
+    # e.g. ["entry_level", "mid_senior_level"]
     if cake_seniority:
         params.append(("seniority_levels", ",".join(cake_seniority)))
+
+    if cake_salary_min > 0 or cake_salary_max > 0:
+        params.append(("salary.type", "per_month"))
+        params.append(("salary.currency", "TWD"))
+        if cake_salary_min > 0:
+            params.append(("salary[min]", str(cake_salary_min)))
+        if cake_salary_max > 0:
+            params.append(("salary[max]", str(cake_salary_max)))
 
     return f"{base}?{urlencode(params, doseq=True)}"
 
@@ -252,7 +258,14 @@ async def scrape_jobs(request: JobSearchRequest) -> list[JobListing]:
     """
     pages_to_fetch = min(request.pages, MAX_PAGES)
     urls = [
-        _build_url(request.keyword, page, request.areas, request.experience)
+        _build_url(
+            request.keyword,
+            page,
+            request.areas,
+            request.cake_seniority,
+            request.cake_salary_min,
+            request.cake_salary_max,
+        )
         for page in range(1, pages_to_fetch + 1)
     ]
 

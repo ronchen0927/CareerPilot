@@ -28,6 +28,15 @@ const YOURATOR_CATEGORY_OPTIONS = [
   { value: '全端工程師', label: '全端工程師' },
 ]
 
+const CAKE_SENIORITY_OPTIONS = [
+  { value: 'entry_level', label: '初階' },
+  { value: 'mid_senior_level', label: '中高階' },
+  { value: 'associate', label: '助理' },
+  { value: 'director', label: '經理 / 總監' },
+  { value: 'internship_level', label: '實習' },
+  { value: 'executive', label: '經營層 (VP, GM, C-Level)' },
+]
+
 const FALLBACK_OPTIONS: JobOptions = {
   areas: [
     { value: '6001001000', label: '台北市' },
@@ -70,6 +79,10 @@ export default function SearchPage() {
   const [youraCategories, setYouraCategories] = useState<string[]>([])
   const [youratSalaryMin, setYouratSalaryMin] = useState(0)
   const [youratSalaryMax, setYouratSalaryMax] = useState(0)
+  // CakeResume 專屬篩選
+  const [cakeSeniority, setCakeSeniority] = useState<string[]>([])
+  const [cakeSalaryMin, setCakeSalaryMin] = useState(0)
+  const [cakeSalaryMax, setCakeSalaryMax] = useState(0)
   const [options, setOptions] = useState<JobOptions>(FALLBACK_OPTIONS)
   const [allResults, setAllResults] = useState<JobListing[]>([])
   const [searchedKeywords, setSearchedKeywords] = useState<string[]>([])
@@ -77,6 +90,15 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null)
+  
+  // Tab UI State
+  const [activeTab, setActiveTab] = useState<string>('104')
+
+  useEffect(() => {
+    if (sources.length > 0 && !sources.includes(activeTab)) {
+      setActiveTab(sources[0])
+    }
+  }, [sources, activeTab])
 
   const { bookmarks, toggle: toggleBookmark, remove: removeBookmark, setStatus, isBookmarked } =
     useBookmarks()
@@ -125,6 +147,7 @@ export default function SearchPage() {
 
     try {
       const isYourator = sources.includes('yourator')
+      const isCake = sources.includes('cake')
       const responses = await Promise.all(
         kws.map(kw => searchJobs({
           keyword: kw,
@@ -135,6 +158,9 @@ export default function SearchPage() {
           categories: isYourator ? youraCategories : [],
           salary_min: isYourator ? youratSalaryMin : 0,
           salary_max: isYourator ? youratSalaryMax : 0,
+          cake_seniority: isCake ? cakeSeniority : [],
+          cake_salary_min: isCake ? cakeSalaryMin : 0,
+          cake_salary_max: isCake ? cakeSalaryMax : 0,
         })),
       )
       const seen = new Set<string>()
@@ -223,62 +249,6 @@ export default function SearchPage() {
 
           <div className="form-group">
             <label className="form-label">
-              選擇地區
-            </label>
-            <CheckboxGroup
-              options={options.areas}
-              selected={areas}
-              prefix="area"
-              onChange={setAreas}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              經歷要求
-            </label>
-            <CheckboxGroup
-              options={options.experience}
-              selected={experience}
-              prefix="exp"
-              onChange={setExperience}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="min-salary">
-              最低月薪（元，0 為不限）
-            </label>
-            <input
-              type="number"
-              id="min-salary"
-              className="form-input"
-              value={minSalary}
-              min={0}
-              step={5000}
-              placeholder="例：40000"
-              onChange={e => setMinSalary(parseInt(e.target.value, 10) || 0)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="min-annual-salary">
-              最低年薪（元，0 為不限）
-            </label>
-            <input
-              type="number"
-              id="min-annual-salary"
-              className="form-input"
-              value={minAnnualSalary}
-              min={0}
-              step={50000}
-              placeholder="例：600000"
-              onChange={e => setMinAnnualSalary(parseInt(e.target.value, 10) || 0)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">
               搜尋來源
             </label>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -302,53 +272,246 @@ export default function SearchPage() {
             </div>
           </div>
 
-          {/* Yourator 專屬篩選（僅勾選 Yourator 時顯示） */}
-          {sources.includes('yourator') && (
-            <>
-              <div className="form-group">
-                <label className="form-label">Yourator 職缺類別</label>
-                <CheckboxGroup
-                  options={YOURATOR_CATEGORY_OPTIONS}
-                  selected={youraCategories}
-                  prefix="youra-cat"
-                  onChange={setYouraCategories}
-                />
-              </div>
-
-              <div className="form-group" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: '10rem' }}>
-                  <label className="form-label" htmlFor="yourat-salary-min">
-                    Yourator 月薪下限（0 為不限）
-                  </label>
-                  <input
-                    type="number"
-                    id="yourat-salary-min"
-                    className="form-input"
-                    value={youratSalaryMin}
-                    min={0}
-                    step={5000}
-                    placeholder="例：70000"
-                    onChange={e => setYouratSalaryMin(parseInt(e.target.value, 10) || 0)}
-                  />
-                </div>
-                <div style={{ flex: 1, minWidth: '10rem' }}>
-                  <label className="form-label" htmlFor="yourat-salary-max">
-                    Yourator 月薪上限（0 為不限）
-                  </label>
-                  <input
-                    type="number"
-                    id="yourat-salary-max"
-                    className="form-input"
-                    value={youratSalaryMax}
-                    min={0}
-                    step={5000}
-                    placeholder="例：100000"
-                    onChange={e => setYouratSalaryMax(parseInt(e.target.value, 10) || 0)}
-                  />
-                </div>
-              </div>
-            </>
+          {/* Tabs Navigation */}
+          {sources.length > 0 && (
+            <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #e2e8f0', marginBottom: '1.5rem', paddingBottom: '0.5rem' }}>
+              {sources.includes('104') && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('104')}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: activeTab === '104' ? '#eff6ff' : 'transparent',
+                    color: activeTab === '104' ? '#2563eb' : '#64748b',
+                    border: '1px solid',
+                    borderColor: activeTab === '104' ? '#bfdbfe' : 'transparent',
+                    borderRadius: '0.375rem',
+                    cursor: 'pointer',
+                    fontWeight: activeTab === '104' ? '600' : '400',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  104 人力銀行設定
+                </button>
+              )}
+              {sources.includes('cake') && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('cake')}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: activeTab === 'cake' ? '#eff6ff' : 'transparent',
+                    color: activeTab === 'cake' ? '#2563eb' : '#64748b',
+                    border: '1px solid',
+                    borderColor: activeTab === 'cake' ? '#bfdbfe' : 'transparent',
+                    borderRadius: '0.375rem',
+                    cursor: 'pointer',
+                    fontWeight: activeTab === 'cake' ? '600' : '400',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  CakeResume 設定
+                </button>
+              )}
+              {sources.includes('yourator') && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('yourator')}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: activeTab === 'yourator' ? '#eff6ff' : 'transparent',
+                    color: activeTab === 'yourator' ? '#2563eb' : '#64748b',
+                    border: '1px solid',
+                    borderColor: activeTab === 'yourator' ? '#bfdbfe' : 'transparent',
+                    borderRadius: '0.375rem',
+                    cursor: 'pointer',
+                    fontWeight: activeTab === 'yourator' ? '600' : '400',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Yourator 設定
+                </button>
+              )}
+            </div>
           )}
+
+          {/* Tab Contents */}
+          <div style={{ minHeight: '180px', marginBottom: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '0.5rem', border: '1px solid #e2e8f0' }}>
+            {sources.length === 0 && (
+              <p style={{ color: '#64748b', textAlign: 'center', marginTop: '2rem' }}>請至少勾選一個搜尋來源</p>
+            )}
+
+            {activeTab === '104' && sources.includes('104') && (
+              <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
+                <div className="form-group">
+                  <label className="form-label">選擇地區</label>
+                  <CheckboxGroup
+                    options={options.areas}
+                    selected={areas}
+                    prefix="area"
+                    onChange={setAreas}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">經歷要求</label>
+                  <CheckboxGroup
+                    options={options.experience}
+                    selected={experience}
+                    prefix="exp"
+                    onChange={setExperience}
+                  />
+                </div>
+
+                <div className="form-group" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: '10rem' }}>
+                    <label className="form-label" htmlFor="min-salary">
+                      最低月薪（元，0 為不限）
+                    </label>
+                    <input
+                      type="number"
+                      id="min-salary"
+                      className="form-input"
+                      value={minSalary}
+                      min={0}
+                      step={5000}
+                      placeholder="例：40000"
+                      onChange={e => setMinSalary(parseInt(e.target.value, 10) || 0)}
+                    />
+                  </div>
+                  <div style={{ flex: 1, minWidth: '10rem' }}>
+                    <label className="form-label" htmlFor="min-annual-salary">
+                      最低年薪（元，0 為不限）
+                    </label>
+                    <input
+                      type="number"
+                      id="min-annual-salary"
+                      className="form-input"
+                      value={minAnnualSalary}
+                      min={0}
+                      step={50000}
+                      placeholder="例：600000"
+                      onChange={e => setMinAnnualSalary(parseInt(e.target.value, 10) || 0)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'cake' && sources.includes('cake') && (
+              <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
+                <div className="form-group">
+                  <label className="form-label">選擇地區</label>
+                  <CheckboxGroup
+                    options={options.areas}
+                    selected={areas}
+                    prefix="cake-area"
+                    onChange={setAreas}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">CakeResume 年資等級</label>
+                  <CheckboxGroup
+                    options={CAKE_SENIORITY_OPTIONS}
+                    selected={cakeSeniority}
+                    prefix="cake-sen"
+                    onChange={setCakeSeniority}
+                  />
+                </div>
+
+                <div className="form-group" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: '10rem' }}>
+                    <label className="form-label" htmlFor="cake-salary-min">
+                      CakeResume 月薪下限（0 為不限）
+                    </label>
+                    <input
+                      type="number"
+                      id="cake-salary-min"
+                      className="form-input"
+                      value={cakeSalaryMin}
+                      min={0}
+                      step={5000}
+                      placeholder="例：70000"
+                      onChange={e => setCakeSalaryMin(parseInt(e.target.value, 10) || 0)}
+                    />
+                  </div>
+                  <div style={{ flex: 1, minWidth: '10rem' }}>
+                    <label className="form-label" htmlFor="cake-salary-max">
+                      CakeResume 月薪上限（0 為不限）
+                    </label>
+                    <input
+                      type="number"
+                      id="cake-salary-max"
+                      className="form-input"
+                      value={cakeSalaryMax}
+                      min={0}
+                      step={5000}
+                      placeholder="例：100000"
+                      onChange={e => setCakeSalaryMax(parseInt(e.target.value, 10) || 0)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'yourator' && sources.includes('yourator') && (
+              <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
+                <div className="form-group">
+                  <label className="form-label">選擇地區</label>
+                  <CheckboxGroup
+                    options={options.areas}
+                    selected={areas}
+                    prefix="youra-area"
+                    onChange={setAreas}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Yourator 職缺類別</label>
+                  <CheckboxGroup
+                    options={YOURATOR_CATEGORY_OPTIONS}
+                    selected={youraCategories}
+                    prefix="youra-cat"
+                    onChange={setYouraCategories}
+                  />
+                </div>
+
+                <div className="form-group" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: '10rem' }}>
+                    <label className="form-label" htmlFor="yourat-salary-min">
+                      Yourator 月薪下限（0 為不限）
+                    </label>
+                    <input
+                      type="number"
+                      id="yourat-salary-min"
+                      className="form-input"
+                      value={youratSalaryMin}
+                      min={0}
+                      step={5000}
+                      placeholder="例：70000"
+                      onChange={e => setYouratSalaryMin(parseInt(e.target.value, 10) || 0)}
+                    />
+                  </div>
+                  <div style={{ flex: 1, minWidth: '10rem' }}>
+                    <label className="form-label" htmlFor="yourat-salary-max">
+                      Yourator 月薪上限（0 為不限）
+                    </label>
+                    <input
+                      type="number"
+                      id="yourat-salary-max"
+                      className="form-input"
+                      value={youratSalaryMax}
+                      min={0}
+                      step={5000}
+                      placeholder="例：100000"
+                      onChange={e => setYouratSalaryMax(parseInt(e.target.value, 10) || 0)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           <button type="submit" className="btn-search" disabled={loading || sources.length === 0}>
             <span className="btn-search__text">{loading ? '搜尋中...' : '開始搜尋'}</span>
