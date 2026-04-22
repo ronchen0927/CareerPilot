@@ -100,15 +100,16 @@ async def generate_mock_interview(req: MockInterviewRequest):
     retrieved_docs = await _retrieve_top_k(jd_embedding, ["project", "interview_question"], top_k=5)
     context_text = "\n\n".join([f"[{d['doc_type']}] {d['content']}" for d in retrieved_docs])
 
-    system_prompt = """你是一個專業的技術面試官與職涯教練。
-你的任務是根據提供的「目標職缺描述 (JD)」以及候選人的「個人專案/歷史面試題庫 (Context)」，
-動態生成高相關性的技術與行為面試題。
-請務必以 JSON 格式回覆，包含以下欄位：
-- technical_questions: 字串陣列，包含 3-5 個技術面試問題。
-- behavioral_questions: 字串陣列，包含 3-5 個行為面試問題。
-- tips: 字串，面試準備的綜合建議。"""
+    system_prompt = """You are a professional technical interviewer and career coach.
+Your task is to dynamically generate highly relevant technical and behavioral interview questions based on the provided "Target Job Description (JD)" and the candidate's "Personal Projects/Historical Interview Questions (Context)".
+Please respond in strict JSON format with the following fields:
+- technical_questions: Array of strings, containing 3-5 technical interview questions.
+- behavioral_questions: Array of strings, containing 3-5 behavioral interview questions.
+- tips: String, comprehensive advice for interview preparation.
 
-    user_prompt = f"【職缺描述】\n{req.job_text}\n\n【參考資料 (專案與歷史題)】\n{context_text}"
+All text values must be written in Traditional Chinese (繁體中文)."""
+
+    user_prompt = f"## Target Job Description (JD)\n{req.job_text}\n\n## Reference Material (Projects & History)\n{context_text}"
 
     try:
         response = await client.chat.completions.create(
@@ -135,15 +136,17 @@ async def generate_resume_match(req: ResumeMatchRequest):
     retrieved_docs = await _retrieve_top_k(jd_embedding, ["experience", "project"], top_k=5)
     context_text = "\n\n".join([f"[{d['doc_type']}] {d['content']}" for d in retrieved_docs])
 
-    system_prompt = """你是一個資深的後端/AI架構師與技術招募專家。
-請比對候選人的「過往經驗與專案 (Context)」及「履歷 (CV)」與「目標職缺 (JD)」的契合度。
-精準比對個人後端架構與 AI 應用開發經驗與特定職缺的要求。
-請以 JSON 格式回覆，包含以下欄位：
-- gap_analysis: 字串，能力缺口分析。
-- answer_strategy: 字串，彌補缺口或突顯優勢的答題策略。
-- match_score: 數字 (0-100)，代表整體契合度。"""
+    system_prompt = """You are a senior backend/AI architect and technical recruiting expert.
+Evaluate the fit between the candidate's "Past Experience and Projects (Context)", "Resume (CV)", and the "Target Job Description (JD)".
+Accurately match the candidate's backend architecture and AI application development experience with the specific requirements of the job.
+Please respond in strict JSON format with the following fields:
+- gap_analysis: String, capability gap analysis.
+- answer_strategy: String, answering strategy to bridge gaps or highlight strengths.
+- match_score: Number (0-100), representing the overall match percentage.
 
-    user_prompt = f"【職缺描述】\n{req.job_text}\n\n【候選人履歷】\n{req.user_cv}\n\n【檢索到的相關經驗與專案】\n{context_text}"
+All text values must be written in Traditional Chinese (繁體中文)."""
+
+    user_prompt = f"## Target Job Description (JD)\n{req.job_text}\n\n## Candidate Resume (CV)\n{req.user_cv}\n\n## Retrieved Relevant Experience and Projects\n{context_text}"
 
     try:
         response = await client.chat.completions.create(
