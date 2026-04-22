@@ -44,8 +44,8 @@ backend/
     models.py         # Pydantic models: JobSearchRequest, JobListing, AlertCreateRequest, etc.
     db.py             # aiosqlite helpers: init_db(), CRUD for evaluations / cover_letters / resume_rewrites / job_liveness
     scraper.py        # Async scraper hitting 104's internal JSON API via aiohttp
-    scraper_cake.py   # Async scraper for CakeResume via aiohttp + BeautifulSoup
-    scraper_yourator.py # Async scraper for Yourator via aiohttp + BeautifulSoup; supports categories & salary_min/max
+    scraper_cake.py   # Async scraper for CakeResume via Playwright (extracts Next.js SSR data)
+    scraper_yourator.py # Async scraper for Yourator via aiohttp (JSON API); supports categories & salary_min/max
     fetchers.py       # Shared HTTP helpers: fetch_104_detail, fetch_with_aiohttp (trafilatura/Goose3), fetch_with_playwright
     alerts.py         # load_alerts() / save_alerts() — persists to backend/alerts.json
     liveness.py       # Background liveness loop: checks evaluated job URLs every 6 h; debounce threshold = 2
@@ -89,7 +89,7 @@ frontend/
       DimensionsPanel.tsx # Collapsible AI score breakdown panel
       CheckboxGroup.tsx # Reusable checkbox filter group
     pages/
-      SearchPage.tsx    # Main search page + bookmarks list
+      SearchPage.tsx    # Main search page with tab-based platform filter configuration + bookmarks list
       DashboardPage.tsx # Kanban board (drag-and-drop job status tracking)
       AlertsPage.tsx    # Scheduled alert management UI
       EvaluatePage.tsx  # AI job evaluation: URL fetch or paste JD + PDF CV upload
@@ -108,13 +108,13 @@ frontend/
 static/                 # Served at /static by FastAPI
 ```
 
-**Data flow:** Frontend form → `POST /api/jobs/search` → `scraper.scrape_jobs()` / `scraper_cake.scrape_cake_jobs()` / `scraper_yourator.scrape_jobs()` fetch concurrently via `asyncio.gather` → deduplicates by job link → sorts by date descending → returns `JobSearchResponse`.
+**Data flow:** Frontend form (with tab-based platform filters) → `POST /api/jobs/search` → `scraper.scrape_jobs()` / `scraper_cake.scrape_jobs()` / `scraper_yourator.scrape_jobs()` fetch concurrently via `asyncio.gather` → deduplicates by job link → sorts by date descending → returns `JobSearchResponse`.
 
 **104 API:** Targets `https://www.104.com.tw/jobs/search/api/jobs` with a `Referer` header and SSL cert verification disabled (104 cert quirk). Area and experience codes are URL-encoded comma-joined lists.
 
-**CakeResume scraper:** Hits `https://www.cakeresume.com/jobs` HTML pages via aiohttp + BeautifulSoup. Parses job cards from the rendered HTML.
+**CakeResume scraper:** Hits `https://www.cake.me/jobs` via Playwright headless browser. Extracts job data directly from Next.js SSR `__NEXT_DATA__` JSON structure to bypass client-side rendering limitations. Supports location and seniority filtering.
 
-**Yourator scraper:** Hits `https://www.yourator.co/api/v2/jobs` JSON API via aiohttp. Supports `categories` (list of category slugs) and `salary_min` / `salary_max` (monthly salary range in NTD). Both filters are forwarded directly as query params.
+**Yourator scraper:** Hits `https://www.yourator.co/api/v4/jobs` JSON API via aiohttp. Supports `categories` (list of category slugs) and `salary_min` / `salary_max` (monthly salary range in NTD). Both filters are forwarded directly as query params.
 
 **Fetchers (`fetchers.py`):** Shared HTTP helpers used by the URL-fetch endpoint and the liveness checker.
 - `fetch_104_detail(url)` — calls `https://www.104.com.tw/job/ajax/content/{job_id}` and formats structured job data as plain text.

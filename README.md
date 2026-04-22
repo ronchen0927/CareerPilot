@@ -8,7 +8,10 @@
 
 - 🔍 **多來源搜尋** — 同時搜尋 104 人力銀行、CakeResume 與 Yourator，結果自動合併去重
 - 🧠 **多關鍵字** — 逗號分隔最多 5 個關鍵字
-- 📍 **篩選條件** — 依地區（六都）、工作經歷篩選；Yourator 額外支援職缺類別與月薪區間
+- 📍 **平台專屬篩選** — 採用分頁標籤（Tabs）設定各平台專屬條件：
+  - **104**：地區（六都）、工作經歷
+  - **CakeResume**：地區、資歷層級、月薪區間
+  - **Yourator**：地區、工作經歷、職缺類別、月薪區間
 - ⚡ **非同步爬取** — 多頁、多關鍵字同時抓取，速度飛快
 - 🪟 **職缺詳細 Modal** — 點職位名稱展開詳情，不跳新分頁
 - ⭐ **收藏 + 狀態追蹤** — 星星收藏職缺，標記「想投 / 已投 / 面試中 / 錄取 / 不適合」
@@ -77,7 +80,7 @@ npm run dev      # 啟動開發 server
 |------|------|
 | 後端 API | FastAPI + Uvicorn |
 | 排程 | asyncio 背景 task（內建，零額外依賴） |
-| 爬蟲 | aiohttp（非同步）+ 104 內部 JSON API、CakeResume HTML、Yourator JSON API |
+| 爬蟲 | aiohttp（104 / Yourator JSON API）、Playwright（CakeResume SSR 資料擷取） |
 | 內容擷取 | trafilatura + Goose3（aiohttp 路徑）、Playwright（JS 渲染頁面 fallback） |
 | AI 功能 | OpenAI API（GPT）、pdfplumber（PDF 解析）、StreamingResponse（串流回應） |
 | 資料庫 | SQLite（aiosqlite），儲存評分、求職信、履歷改寫、職缺活躍度記錄 |
@@ -102,16 +105,19 @@ POST /api/jobs/search
 {
   "keyword": "Python",
   "pages": 5,
+  "sources": ["104", "cake", "yourator"],
   "areas": ["6001001000"],
   "experience": ["3"],
-  "sources": ["104", "cake", "yourator"],
+  "cake_seniority": ["entry_level", "mid_senior_level"],
+  "cake_salary_min": 60000,
+  "cake_salary_max": 100000,
   "categories": ["back-end"],
   "salary_min": 60000,
   "salary_max": 100000
 }
 ```
 
-> `categories` 與 `salary_min` / `salary_max` 僅對 Yourator 來源有效。
+> 平台過濾參數各自獨立，例如 `categories` 適用於 Yourator，`cake_seniority` 適用於 CakeResume。
 
 ### AI 評分
 
