@@ -230,7 +230,7 @@ class TestParseJob:
             "locationsWithLocale": [{"zh-TW": "台北市"}],
             "locations": ["台北市"],
             "contentUpdatedAt": "2026-04-10T00:00:00.000Z",
-            "seniorityLevel": "junior",
+            "seniorityLevel": "associate",
             "salary": {"min": "50000", "max": "80000", "type": "per_month"},
         }
         base.update(overrides)
@@ -245,7 +245,7 @@ class TestParseJob:
         assert job.link == "https://www.cake.me/jobs/backend-engineer-abc123"
         assert job.date == "2026/04/10"
         assert job.city == "台北市"
-        assert job.experience == "1-3年"
+        assert job.experience == "助理"
         assert job.is_featured is False
 
     def test_no_salary_returns_negotiable(self):
