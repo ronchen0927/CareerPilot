@@ -41,8 +41,8 @@ class TestBuildUrl:
 
     def test_experience_codes_mapped(self):
         url = _build_url("Python", 1, experience=["3"])
-        assert "years_of_experience" in url
-        assert "1_3_years" in url
+        assert "seniority_levels" in url
+        assert "junior" in url
 
     def test_unknown_area_skipped(self):
         url = _build_url("Python", 1, areas=["9999999999"])
@@ -60,7 +60,7 @@ class TestBuildUrl:
 
     def test_empty_experience_adds_no_exp_param(self):
         url = _build_url("Python", 1, experience=[])
-        assert "years_of_experience" not in url
+        assert "seniority_levels" not in url
 
     def test_multiple_areas_all_mapped(self):
         url = _build_url("Python", 1, areas=["6001001000", "6001002000"])

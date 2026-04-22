@@ -34,13 +34,14 @@ _AREA_TO_CAKE_CITY: dict[str, str] = {
     "6001016000": "高雄市-台灣",
 }
 
-# Map 104 experience codes → CakeResume years_of_experience values
+# Map frontend experience codes → CakeResume seniority_levels values
+# CakeResume 的年資篩選以「等級」為指（初階/中高階），參數名為 seniority_levels
 _EXP_TO_CAKE: dict[str, str] = {
-    "1": "less_than_1",
-    "3": "1_3_years",
-    "5": "3_5_years",
-    "10": "5_10_years",
-    "99": "over_10_years",
+    "1": "entry_level",  # 1年以下 → 初階
+    "3": "junior",  # 1-3年  → 初階
+    "5": "mid_level",  # 3-5年  → 中階
+    "10": "mid_senior_level",  # 5-10年 → 中高階
+    "99": "director",  # 10年以上 → 高階
 }
 
 # CakeResume seniority level display mapping
@@ -95,10 +96,14 @@ def _build_url(
     if cake_locations:
         params.append(("locations", ",".join(cake_locations)))
 
+    cake_seniority = []
     for exp_code in experience or []:
         cake_exp = _EXP_TO_CAKE.get(exp_code)
         if cake_exp:
-            params.append(("years_of_experience[]", cake_exp))
+            cake_seniority.append(cake_exp)
+
+    if cake_seniority:
+        params.append(("seniority_levels", ",".join(cake_seniority)))
 
     return f"{base}?{urlencode(params, doseq=True)}"
 
