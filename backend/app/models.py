@@ -9,6 +9,9 @@ class JobSearchRequest(BaseModel):
     areas: list[str] = Field(default_factory=list, description="地區代碼清單")
     experience: list[str] = Field(default_factory=list, description="經歷要求代碼清單")
     sources: list[str] = Field(default_factory=lambda: ["104"], description="搜尋來源")
+    categories: list[str] = Field(default_factory=list, description="職缺類別（Yourator 用）")
+    salary_min: int = Field(default=0, ge=0, description="月薪下限篩選（元，Yourator 用）")
+    salary_max: int = Field(default=0, ge=0, description="月薪上限篩選（元，Yourator 用）")
 
 
 class JobListing(BaseModel):
