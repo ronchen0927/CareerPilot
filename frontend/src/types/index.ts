@@ -4,6 +4,9 @@ export interface JobSearchRequest {
   areas: string[]
   experience: string[]
   sources: string[]
+  categories: string[]
+  salary_min: number
+  salary_max: number
 }
 
 export interface JobListing {

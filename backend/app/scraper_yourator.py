@@ -32,13 +32,13 @@ HEADERS = {
     "Referer": "https://www.yourator.co/jobs",
 }
 
-_AREA_TO_YOURATOR_CITY: dict[str, str] = {
-    "6001001000": "台北市",
-    "6001002000": "新北市",
-    "6001006000": "新竹市",
-    "6001008000": "台中市",
-    "6001014000": "台南市",
-    "6001016000": "高雄市",
+_AREA_TO_YOURATOR_CODE: dict[str, str] = {
+    "6001001000": "TPE",
+    "6001002000": "NWT",
+    "6001006000": "HSQ",
+    "6001008000": "TXG",
+    "6001014000": "TNN",
+    "6001016000": "KHH",
 }
 
 _EXP_TO_YOURATOR: dict[str, str] = {
@@ -55,16 +55,29 @@ def _build_url(
     page: int,
     areas: list[str] | None = None,
     experience: list[str] | None = None,
+    categories: list[str] | None = None,
+    salary_min: int = 0,
+    salary_max: int = 0,
 ) -> str:
-    params: list[tuple[str, str]] = [("term", keyword), ("page", str(page))]
+    params: list[tuple[str, str]] = [
+        ("term[]", keyword),
+        ("page", str(page)),
+        ("sort", "most_related"),
+    ]
     for code in areas or []:
-        city = _AREA_TO_YOURATOR_CITY.get(code)
-        if city:
-            params.append(("location[]", city))
+        area_code = _AREA_TO_YOURATOR_CODE.get(code)
+        if area_code:
+            params.append(("area[]", area_code))
     for code in experience or []:
         exp = _EXP_TO_YOURATOR.get(code)
         if exp:
             params.append(("years_of_exp[]", exp))
+    for cat in categories or []:
+        params.append(("category[]", cat))
+    if salary_min > 0 or salary_max > 0:
+        low = salary_min if salary_min > 0 else 0
+        high = salary_max if salary_max > 0 else 0
+        params.append(("monthly", f"{low},{high}"))
     return f"{YOURATOR_API}?{urlencode(params)}"
 
 
@@ -146,7 +159,15 @@ async def _fetch_page(session: aiohttp.ClientSession, url: str) -> list[dict]:
 async def scrape_jobs(request: JobSearchRequest) -> list[JobListing]:
     """非同步爬取 Yourator 職缺，每頁約 20 筆。"""
     urls = [
-        _build_url(request.keyword, page, request.areas, request.experience)
+        _build_url(
+            request.keyword,
+            page,
+            request.areas,
+            request.experience,
+            request.categories,
+            request.salary_min,
+            request.salary_max,
+        )
         for page in range(1, request.pages + 1)
     ]
     async with aiohttp.ClientSession(headers=HEADERS) as session:

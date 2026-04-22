@@ -17,6 +17,17 @@ const STATUS_CSS: Record<Status, string> = {
   不適合: 'status--reject',
 }
 
+const YOURATOR_CATEGORY_OPTIONS = [
+  { value: '後端工程', label: '後端工程' },
+  { value: '前端工程', label: '前端工程' },
+  { value: 'AI 工程師', label: 'AI 工程師' },
+  { value: '行動應用開發', label: '行動應用開發' },
+  { value: '資料科學', label: '資料科學' },
+  { value: 'DevOps / SRE', label: 'DevOps / SRE' },
+  { value: '資安工程', label: '資安工程' },
+  { value: '全端工程師', label: '全端工程師' },
+]
+
 const FALLBACK_OPTIONS: JobOptions = {
   areas: [
     { value: '6001001000', label: '台北市' },
@@ -57,6 +68,10 @@ export default function SearchPage() {
   const [sources, setSources] = useState<string[]>(['104'])
   const [minSalary, setMinSalary] = useState(0)
   const [minAnnualSalary, setMinAnnualSalary] = useState(0)
+  // Yourator 專屬篩選
+  const [youraCategories, setYouraCategories] = useState<string[]>([])
+  const [youratSalaryMin, setYouratSalaryMin] = useState(0)
+  const [youratSalaryMax, setYouratSalaryMax] = useState(0)
   const [options, setOptions] = useState<JobOptions>(FALLBACK_OPTIONS)
   const [allResults, setAllResults] = useState<JobListing[]>([])
   const [searchedKeywords, setSearchedKeywords] = useState<string[]>([])
@@ -111,8 +126,18 @@ export default function SearchPage() {
     setSearchedKeywords(kws)
 
     try {
+      const isYourator = sources.includes('yourator')
       const responses = await Promise.all(
-        kws.map(kw => searchJobs({ keyword: kw, pages, areas, experience, sources })),
+        kws.map(kw => searchJobs({
+          keyword: kw,
+          pages,
+          areas,
+          experience,
+          sources,
+          categories: isYourator ? youraCategories : [],
+          salary_min: isYourator ? youratSalaryMin : 0,
+          salary_max: isYourator ? youratSalaryMax : 0,
+        })),
       )
       const seen = new Set<string>()
       const merged: JobListing[] = []
@@ -279,6 +304,54 @@ export default function SearchPage() {
               ))}
             </div>
           </div>
+
+          {/* Yourator 專屬篩選（僅勾選 Yourator 時顯示） */}
+          {sources.includes('yourator') && (
+            <>
+              <div className="form-group">
+                <label className="form-label">Yourator 職缺類別</label>
+                <CheckboxGroup
+                  options={YOURATOR_CATEGORY_OPTIONS}
+                  selected={youraCategories}
+                  prefix="youra-cat"
+                  onChange={setYouraCategories}
+                />
+              </div>
+
+              <div className="form-group" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: '10rem' }}>
+                  <label className="form-label" htmlFor="yourat-salary-min">
+                    Yourator 月薪下限（0 為不限）
+                  </label>
+                  <input
+                    type="number"
+                    id="yourat-salary-min"
+                    className="form-input"
+                    value={youratSalaryMin}
+                    min={0}
+                    step={5000}
+                    placeholder="例：70000"
+                    onChange={e => setYouratSalaryMin(parseInt(e.target.value, 10) || 0)}
+                  />
+                </div>
+                <div style={{ flex: 1, minWidth: '10rem' }}>
+                  <label className="form-label" htmlFor="yourat-salary-max">
+                    Yourator 月薪上限（0 為不限）
+                  </label>
+                  <input
+                    type="number"
+                    id="yourat-salary-max"
+                    className="form-input"
+                    value={youratSalaryMax}
+                    min={0}
+                    step={5000}
+                    placeholder="例：100000"
+                    onChange={e => setYouratSalaryMax(parseInt(e.target.value, 10) || 0)}
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           <button type="submit" className="btn-search" disabled={loading || sources.length === 0}>
             <span className="btn-search__text">{loading ? '搜尋中...' : '開始搜尋'}</span>
