@@ -174,3 +174,39 @@ class CVSuggestKeywordsResponse(BaseModel):
     """AI 關鍵字建議結果"""
 
     keywords: list[str] = Field(description="3-5 組建議職位關鍵字")
+
+
+# ── RAG Models ────────────────────────────────────────────────────────────────
+
+
+class RagDocumentCreate(BaseModel):
+    doc_type: str = Field(description="文件類型: project | interview_question | experience | other")
+    content: str = Field(min_length=10, description="文件內容")
+
+
+class RagDocumentResponse(BaseModel):
+    id: int
+    doc_type: str
+    content: str
+    created_at: str
+
+
+class MockInterviewRequest(BaseModel):
+    job_text: str = Field(description="職缺描述全文")
+
+
+class MockInterviewResponse(BaseModel):
+    technical_questions: list[str] = Field(description="技術面試題")
+    behavioral_questions: list[str] = Field(description="行為面試題")
+    tips: str = Field(description="準備建議")
+
+
+class ResumeMatchRequest(BaseModel):
+    job_text: str = Field(description="職缺描述全文")
+    user_cv: str = Field(default="", description="求職者履歷或背景描述")
+
+
+class ResumeMatchResponse(BaseModel):
+    gap_analysis: str = Field(description="能力缺口分析")
+    answer_strategy: str = Field(description="答題策略")
+    match_score: int = Field(ge=0, le=100, description="契合度分數")

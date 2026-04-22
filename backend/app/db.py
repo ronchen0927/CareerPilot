@@ -73,6 +73,17 @@ async def init_db() -> None:
             )
             """
         )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS rag_documents (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                doc_type    TEXT    NOT NULL,
+                content     TEXT    NOT NULL,
+                embedding   TEXT    NOT NULL,
+                created_at  TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+            )
+            """
+        )
         await db.commit()
 
 
@@ -278,3 +289,38 @@ async def list_liveness_targets() -> list[str]:
         ) as cur:
             rows = await cur.fetchall()
     return [r["job_url"] for r in rows]
+
+
+# ── RAG Documents ─────────────────────────────────────────────────────────────
+
+
+async def save_rag_document(doc_type: str, content: str, embedding: list[float]) -> int:
+    async with aiosqlite.connect(_db_path()) as db:
+        cur = await db.execute(
+            "INSERT INTO rag_documents (doc_type, content, embedding) VALUES (?, ?, ?)",
+            (doc_type, content, json.dumps(embedding)),
+        )
+        await db.commit()
+        return cur.lastrowid  # type: ignore[return-value]
+
+
+async def list_rag_documents(doc_type: str | None = None) -> list[dict]:
+    async with aiosqlite.connect(_db_path()) as db:
+        db.row_factory = aiosqlite.Row
+        if doc_type:
+            async with db.execute(
+                "SELECT * FROM rag_documents WHERE doc_type = ? ORDER BY created_at DESC",
+                (doc_type,),
+            ) as cur:
+                rows = await cur.fetchall()
+        else:
+            async with db.execute("SELECT * FROM rag_documents ORDER BY created_at DESC") as cur:
+                rows = await cur.fetchall()
+    return [dict(r) for r in rows]
+
+
+async def delete_rag_document(record_id: int) -> bool:
+    async with aiosqlite.connect(_db_path()) as db:
+        cur = await db.execute("DELETE FROM rag_documents WHERE id = ?", (record_id,))
+        await db.commit()
+        return cur.rowcount > 0
