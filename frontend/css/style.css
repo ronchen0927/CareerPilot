@@ -822,12 +822,6 @@ body {
   color: var(--amber);
 }
 
-.source-badge--meetjob {
-  background: rgba(174, 150, 213, 0.12);
-  border: 1px solid rgba(174, 150, 213, 0.35);
-  color: var(--purple);
-}
-
 /* Job link / detail button */
 .job-link,
 .job-detail-btn {

@@ -7,7 +7,6 @@ from ..config import AREA_OPTIONS, EXPERIENCE_OPTIONS
 from ..models import JobSearchRequest, JobSearchResponse
 from ..scraper import scrape_jobs as scrape_104
 from ..scraper_cake import scrape_jobs as scrape_cake
-from ..scraper_meetjob import scrape_jobs as scrape_meetjob
 from ..scraper_yourator import scrape_jobs as scrape_yourator
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
@@ -24,13 +23,12 @@ async def get_options():
 
 @router.post("/search", response_model=JobSearchResponse)
 async def search_jobs(request: JobSearchRequest):
-    """搜尋職缺（支援 104 / CakeResume / Yourator / MeetJob）"""
+    """搜尋職缺（支援 104 / CakeResume / Yourator）"""
     # Dict built at call time so unit-test patches on individual scraper names take effect
     scrapers = {
         "104": scrape_104,
         "cake": scrape_cake,
         "yourator": scrape_yourator,
-        "meetjob": scrape_meetjob,
     }
     sources = [s for s in (request.sources or ["104"]) if s in scrapers]
     if not sources:

@@ -50,14 +50,12 @@ const SOURCE_BADGE_KEY: Record<string, string> = {
   '104': '104',
   CakeResume: 'cake',
   Yourator: 'yourator',
-  MeetJob: 'meetjob',
 }
 
 const SOURCE_BADGE_LABEL: Record<string, string> = {
   '104': '104',
   CakeResume: 'Cake',
   Yourator: 'Yourator',
-  MeetJob: 'Meet',
 }
 
 export default function SearchPage() {
@@ -288,7 +286,6 @@ export default function SearchPage() {
                 { value: '104', label: '104 人力銀行' },
                 { value: 'cake', label: 'CakeResume' },
                 { value: 'yourator', label: 'Yourator' },
-                { value: 'meetjob', label: 'MeetJob' },
               ].map(opt => (
                 <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.9rem' }}>
                   <input

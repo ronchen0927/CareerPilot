@@ -28,14 +28,12 @@ def client(tmp_alerts_file):
     - uses a temp alerts.json (no real file left behind)
     - replaces run_scheduler and run_liveness_loop with no-ops
     - mocks all non-104 scrapers to return [] so no real network calls occur;
-      individual tests override scrape_104 to supply specific fixture data
     """
     with (
         patch("app.scheduler.run_scheduler", new_callable=AsyncMock),
         patch("app.liveness.run_liveness_loop", new_callable=AsyncMock),
         patch("app.routers.jobs.scrape_cake", new=AsyncMock(return_value=[])),
         patch("app.routers.jobs.scrape_yourator", new=AsyncMock(return_value=[])),
-        patch("app.routers.jobs.scrape_meetjob", new=AsyncMock(return_value=[])),
     ):
         from app.main import app
 
