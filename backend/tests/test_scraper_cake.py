@@ -40,7 +40,7 @@ class TestBuildUrl:
         assert "%E5%8F%B0%E5%8C%97%E5%B8%82" in url  # 台北市
 
     def test_experience_codes_mapped(self):
-        url = _build_url("Python", 1, experience=["3"])
+        url = _build_url("Python", 1, cake_seniority=["junior"])
         assert "seniority_levels" in url
         assert "junior" in url
 
@@ -59,13 +59,26 @@ class TestBuildUrl:
         assert "locations" not in url
 
     def test_empty_experience_adds_no_exp_param(self):
-        url = _build_url("Python", 1, experience=[])
+        url = _build_url("Python", 1, cake_seniority=[])
         assert "seniority_levels" not in url
 
     def test_multiple_areas_all_mapped(self):
         url = _build_url("Python", 1, areas=["6001001000", "6001002000"])
         assert "%E5%8F%B0%E5%8C%97%E5%B8%82" in url  # 台北市
         assert "%E6%96%B0%E5%8C%97%E5%B8%82" in url  # 新北市
+
+    def test_salary_min_max(self):
+        url = _build_url("Python", 1, cake_salary_min=70000, cake_salary_max=100000)
+        assert "salary.type=per_month" in url
+        assert "salary.currency=TWD" in url
+        assert "salary%5Bmin%5D=70000" in url
+        assert "salary%5Bmax%5D=100000" in url
+
+    def test_salary_min_only(self):
+        url = _build_url("Python", 1, cake_salary_min=70000)
+        assert "salary.type=per_month" in url
+        assert "salary%5Bmin%5D=70000" in url
+        assert "salary%5Bmax%5D" not in url
 
 
 class TestPagesCappedAtMax:

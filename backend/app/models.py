@@ -7,11 +7,17 @@ class JobSearchRequest(BaseModel):
     keyword: str = Field(min_length=1, description="搜尋關鍵字")
     pages: int = Field(default=5, ge=1, le=20, description="爬取頁數")
     areas: list[str] = Field(default_factory=list, description="地區代碼清單")
-    experience: list[str] = Field(default_factory=list, description="經歷要求代碼清單")
+    experience: list[str] = Field(default_factory=list, description="經歷要求代碼清單（104 用）")
     sources: list[str] = Field(default_factory=lambda: ["104"], description="搜尋來源")
     categories: list[str] = Field(default_factory=list, description="職缺類別（Yourator 用）")
     salary_min: int = Field(default=0, ge=0, description="月薪下限篩選（元，Yourator 用）")
     salary_max: int = Field(default=0, ge=0, description="月薪上限篩選（元，Yourator 用）")
+    cake_seniority: list[str] = Field(
+        default_factory=list,
+        description="年資等級（CakeResume 用，e.g. entry_level, mid_senior_level）",
+    )
+    cake_salary_min: int = Field(default=0, ge=0, description="月薪下限篩選（元，CakeResume 用）")
+    cake_salary_max: int = Field(default=0, ge=0, description="月薪上限篩選（元，CakeResume 用）")
 
 
 class JobListing(BaseModel):
