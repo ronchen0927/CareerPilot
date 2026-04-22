@@ -16,6 +16,9 @@ FETCH_TIMEOUT_MS = 15_000
 
 _NOSCRIPT_RE = re.compile(r"<noscript\b[^>]*>.*?</noscript>", re.DOTALL | re.IGNORECASE)
 _104_JOB_RE = re.compile(r"https?://(?:www\.)?104\.com\.tw/job/([a-z0-9]+)", re.IGNORECASE)
+_CAKE_JOB_RE = re.compile(
+    r"https?://(?:www\.)?cake\.me/(?:companies/[^/]+/)?jobs/([^/]+)", re.IGNORECASE
+)
 
 _HEADERS = {
     "User-Agent": (
@@ -164,3 +167,38 @@ async def fetch_with_playwright(url: str) -> str:
         html = await page.content()
         await browser.close()
     return parse_html(html)
+
+
+async def fetch_cake_detail(url: str) -> str:
+    """Fetch CakeResume job detail directly using Playwright without trafilatura/Goose3."""
+    m = _CAKE_JOB_RE.match(url)
+    if not m:
+        return ""
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+        await page.set_extra_http_headers({"User-Agent": _HEADERS["User-Agent"]})
+        try:
+            await page.goto(url, wait_until="domcontentloaded", timeout=FETCH_TIMEOUT_MS)
+            # Wait for any of the common CakeResume description containers
+            try:
+                await page.wait_for_selector(
+                    "div.job-description-content, div[data-testid='job-description'], article, main",
+                    timeout=5000,
+                )
+            except PlaywrightTimeout:
+                pass
+
+            text = await page.evaluate("""() => {
+                let el = document.querySelector('div[data-testid="job-description"]');
+                if (!el) el = document.querySelector('.job-description-content');
+                if (!el) el = document.querySelector('article');
+                if (!el) el = document.querySelector('main');
+                return el ? el.innerText : '';
+            }""")
+            return (text or "").strip()
+        except Exception as e:
+            logger.debug("CakeResume detail fetch failed for %s: %s", url, e)
+            return ""
+        finally:
+            await browser.close()

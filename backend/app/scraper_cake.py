@@ -9,13 +9,11 @@ CakeResume 的職缺搜尋為 client-side 渲染（Algolia），SSR 頁面的 __
 但 SSR 渲染的筆數有限，因此最多只抓取 MAX_PAGES 頁。
 """
 
-import asyncio
 import json
 import logging
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
-import aiohttp
-from bs4 import BeautifulSoup
+from playwright.async_api import Page, async_playwright
 
 from .models import JobListing, JobSearchRequest
 
@@ -26,14 +24,14 @@ CAKE_BASE_URL = "https://www.cake.me/jobs"
 # Maximum pages to fetch from CakeResume SSR (beyond this, results are typically empty/duplicates)
 MAX_PAGES = 3
 
-# Map 104 area codes → CakeResume city slugs
+# Map 104 area codes → CakeResume location strings (中文格式 e.g. 台北市-台灣)
 _AREA_TO_CAKE_CITY: dict[str, str] = {
-    "6001001000": "taipei-city",
-    "6001002000": "new-taipei-city",
-    "6001006000": "hsinchu-city",
-    "6001008000": "taichung-city",
-    "6001014000": "tainan-city",
-    "6001016000": "kaohsiung-city",
+    "6001001000": "台北市-台灣",
+    "6001002000": "新北市-台灣",
+    "6001006000": "新竹市-台灣",
+    "6001008000": "台中市-台灣",
+    "6001014000": "台南市-台灣",
+    "6001016000": "高雄市-台灣",
 }
 
 # Map 104 experience codes → CakeResume years_of_experience values
@@ -73,37 +71,36 @@ def _build_url(
     areas: list[str] | None = None,
     experience: list[str] | None = None,
 ) -> str:
-    """Build CakeResume search URL with URL-encoded keyword and optional filters."""
+    """Build CakeResume search URL.
+
+    CakeResume 的正確格式為：
+      https://www.cake.me/jobs/{keyword}?locations=台北市-台灣,新北市-台灣&page=2&...
+    關鍵字放在路徑（path），地區用逗號分隔放在 locations 參數（中文格式）。
+    """
+    # Keyword goes in the URL path, not as a query param
+    encoded_keyword = quote(keyword, safe="")
+    base = f"{CAKE_BASE_URL}/{encoded_keyword}"
+
     params: list[tuple[str, str]] = [
-        ("keywords", keyword),
         ("page", str(page)),
         ("locale", "zh-TW"),
     ]
 
+    cake_locations = []
     for area_code in areas or []:
         city_slug = _AREA_TO_CAKE_CITY.get(area_code)
         if city_slug:
-            params.append(("city[]", city_slug))
+            cake_locations.append(city_slug)
+
+    if cake_locations:
+        params.append(("locations", ",".join(cake_locations)))
 
     for exp_code in experience or []:
         cake_exp = _EXP_TO_CAKE.get(exp_code)
         if cake_exp:
             params.append(("years_of_experience[]", cake_exp))
 
-    return f"{CAKE_BASE_URL}?{urlencode(params, doseq=True)}"
-
-
-def _extract_next_data(html: str) -> dict:
-    """Extract __NEXT_DATA__ JSON from page HTML."""
-    soup = BeautifulSoup(html, "html.parser")
-    tag = soup.find("script", id="__NEXT_DATA__")
-    if not tag or not tag.string:
-        return {}
-    try:
-        return json.loads(tag.string)
-    except json.JSONDecodeError as e:
-        logger.error("解析 __NEXT_DATA__ 失敗: %s", e)
-        return {}
+    return f"{base}?{urlencode(params, doseq=True)}"
 
 
 def _extract_jobs_from_next_data(data: dict) -> list[dict]:
@@ -190,9 +187,14 @@ def _parse_job(entity: dict) -> JobListing | None:
     """Parse a single CakeResume entity dict into JobListing."""
     try:
         path = entity.get("path", "")
-        link = f"https://www.cake.me/jobs/{path}" if path else ""
-        job_name = entity.get("title", "")
         page_obj = entity.get("page") or {}
+        company_path = page_obj.get("path", "")
+        link = (
+            f"https://www.cake.me/companies/{company_path}/jobs/{path}"
+            if company_path and path
+            else f"https://www.cake.me/jobs/{path}"
+        )
+        job_name = entity.get("title", "")
         company = page_obj.get("name", "")
         city = _parse_city(entity)
         raw_date = entity.get("contentUpdatedAt") or entity.get("updatedAt", "")
@@ -220,16 +222,17 @@ def _parse_job(entity: dict) -> JobListing | None:
         return None
 
 
-async def _fetch_page(session: aiohttp.ClientSession, url: str) -> list[dict]:
+async def _fetch_page(page: Page, url: str) -> list[dict]:
     """Fetch one CakeResume search page and return raw entity dicts."""
     try:
-        async with session.get(url) as resp:
-            if resp.status != 200:
-                logger.error("CakeResume 回應 %d: %s", resp.status, url)
-                return []
-            html = await resp.text()
-            next_data = _extract_next_data(html)
-            return _extract_jobs_from_next_data(next_data)
+        await page.goto(url, wait_until="domcontentloaded")
+        next_data_str = await page.evaluate(
+            "() => { const el = document.getElementById('__NEXT_DATA__'); return el ? el.textContent : null; }"
+        )
+        if not next_data_str:
+            return []
+        next_data = json.loads(next_data_str)
+        return _extract_jobs_from_next_data(next_data)
     except Exception as e:
         logger.error("CakeResume 爬取失敗 %s: %s", url, e)
         return []
@@ -248,8 +251,16 @@ async def scrape_jobs(request: JobSearchRequest) -> list[JobListing]:
         for page in range(1, pages_to_fetch + 1)
     ]
 
-    async with aiohttp.ClientSession(headers=HEADERS) as session:
-        results = await asyncio.gather(*[_fetch_page(session, url) for url in urls])
+    results = []
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        context = await browser.new_context(user_agent=HEADERS.get("User-Agent"))
+        for url in urls:
+            page = await context.new_page()
+            page_results = await _fetch_page(page, url)
+            results.append(page_results)
+            await page.close()
+        await browser.close()
 
     seen_links: set[str] = set()
     all_jobs: list[JobListing] = []

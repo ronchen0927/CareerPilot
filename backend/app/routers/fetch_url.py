@@ -3,7 +3,12 @@ import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, HttpUrl
 
-from ..fetchers import fetch_104_detail, fetch_with_aiohttp, fetch_with_playwright
+from ..fetchers import (
+    fetch_104_detail,
+    fetch_cake_detail,
+    fetch_with_aiohttp,
+    fetch_with_playwright,
+)
 
 router = APIRouter(prefix="/api/jobs", tags=["fetch-url"])
 logger = logging.getLogger(__name__)
@@ -25,6 +30,12 @@ async def fetch_job_url(request: FetchUrlRequest):
     text = await fetch_104_detail(url)
     if text:
         return {"text": text[:MAX_LENGTH]}
+
+    # CakeResume: dedicated Playwright extractor for job descriptions
+    if "cake.me" in url:
+        text = await fetch_cake_detail(url)
+        if text:
+            return {"text": text[:MAX_LENGTH]}
 
     # Non-104 (or API failure): scrape with aiohttp → Playwright fallback
     text = await fetch_with_aiohttp(url)

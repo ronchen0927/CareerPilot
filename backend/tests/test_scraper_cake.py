@@ -18,7 +18,9 @@ from app.scraper_cake import (
 class TestBuildUrl:
     def test_contains_keyword(self):
         url = _build_url("Python", 1)
-        assert "keywords=Python" in url
+        # Keyword should be in the URL path, not as a query param
+        assert "/jobs/Python" in url
+        assert "q=" not in url
 
     def test_contains_page(self):
         url = _build_url("Python", 3)
@@ -30,11 +32,12 @@ class TestBuildUrl:
 
     def test_base_url(self):
         url = _build_url("Python", 1)
-        assert url.startswith("https://www.cake.me/jobs")
+        assert url.startswith("https://www.cake.me/jobs/Python")
 
     def test_area_codes_mapped_to_city_slug(self):
         url = _build_url("Python", 1, areas=["6001001000"])
-        assert "city%5B%5D=taipei-city" in url or "city[]=taipei-city" in url
+        # Location value should be Chinese: 台北市-台灣 (URL-encoded)
+        assert "%E5%8F%B0%E5%8C%97%E5%B8%82" in url  # 台北市
 
     def test_experience_codes_mapped(self):
         url = _build_url("Python", 1, experience=["3"])
@@ -43,17 +46,17 @@ class TestBuildUrl:
 
     def test_unknown_area_skipped(self):
         url = _build_url("Python", 1, areas=["9999999999"])
-        assert "city" not in url
+        assert "locations" not in url
 
     def test_keyword_is_urlencoded(self):
-        url = _build_url("Python 工程師", 1)
-        # The keyword should be URL-encoded (spaces as + or %20, Chinese chars encoded)
-        assert "Python+%E5%B7%A5%E7%A8%8B%E5%B8%AB" in url or "Python%20" in url
-        assert "Python 工程師" not in url  # raw unencoded form must not appear
+        url = _build_url("軟體工程師", 1)
+        # Chinese keyword should appear URL-encoded in the path
+        assert "%E8%BB%9F%E9%AB%94" in url  # 軟體
+        assert "軟體工程師" not in url  # raw unencoded form must not appear
 
     def test_empty_areas_adds_no_city_param(self):
         url = _build_url("Python", 1, areas=[])
-        assert "city" not in url
+        assert "locations" not in url
 
     def test_empty_experience_adds_no_exp_param(self):
         url = _build_url("Python", 1, experience=[])
@@ -61,26 +64,41 @@ class TestBuildUrl:
 
     def test_multiple_areas_all_mapped(self):
         url = _build_url("Python", 1, areas=["6001001000", "6001002000"])
-        assert "taipei-city" in url
-        assert "new-taipei-city" in url
+        assert "%E5%8F%B0%E5%8C%97%E5%B8%82" in url  # 台北市
+        assert "%E6%96%B0%E5%8C%97%E5%B8%82" in url  # 新北市
 
 
 class TestPagesCappedAtMax:
     def test_pages_capped_at_max(self):
         """scrape_jobs should fetch at most MAX_PAGES pages even if request.pages is larger."""
         import asyncio
+        from unittest.mock import AsyncMock
 
         call_count = 0
 
-        async def fake_fetch_page(session, url):
+        async def fake_fetch_page(page, url):
             nonlocal call_count
             call_count += 1
             return []
 
         async def run():
             request = JobSearchRequest(keyword="Python", pages=MAX_PAGES + 5)
+
+            mock_playwright = AsyncMock()
+            mock_browser = AsyncMock()
+            mock_context = AsyncMock()
+            mock_page = AsyncMock()
+
+            mock_playwright.chromium.launch.return_value = mock_browser
+            mock_browser.new_context.return_value = mock_context
+            mock_context.new_page.return_value = mock_page
+
+            mock_playwright_cm = AsyncMock()
+            mock_playwright_cm.__aenter__.return_value = mock_playwright
+
             with patch("app.scraper_cake._fetch_page", side_effect=fake_fetch_page):
-                await scrape_jobs(request)
+                with patch("app.scraper_cake.async_playwright", return_value=mock_playwright_cm):
+                    await scrape_jobs(request)
 
         asyncio.run(run())
         assert call_count == MAX_PAGES
