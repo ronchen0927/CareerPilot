@@ -110,21 +110,21 @@ async def generate_mock_interview(req: MockInterviewRequest):
 
     user_prompt = f"【職缺描述】\n{req.job_text}\n\n【參考資料 (專案與歷史題)】\n{context_text}"
 
-    response = await client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        response_format={"type": "json_object"},
-        temperature=0.7,
-    )
-
     try:
-        content = json.loads(response.choices[0].message.content or "{}")
-        return MockInterviewResponse(**content)
+        response = await client.chat.completions.create(
+            model="gpt-5.4-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.3,
+            max_completion_tokens=900,
+        )
+        data = json.loads(response.choices[0].message.content or "{}")
+        return MockInterviewResponse(**data)
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to parse AI response") from e
+        raise HTTPException(status_code=502, detail=f"OpenAI API 錯誤：{e}") from e
 
 
 @router.post("/resume-match", response_model=ResumeMatchResponse)
@@ -145,18 +145,18 @@ async def generate_resume_match(req: ResumeMatchRequest):
 
     user_prompt = f"【職缺描述】\n{req.job_text}\n\n【候選人履歷】\n{req.user_cv}\n\n【檢索到的相關經驗與專案】\n{context_text}"
 
-    response = await client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        response_format={"type": "json_object"},
-        temperature=0.7,
-    )
-
     try:
-        content = json.loads(response.choices[0].message.content or "{}")
-        return ResumeMatchResponse(**content)
+        response = await client.chat.completions.create(
+            model="gpt-5.4-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.3,
+            max_completion_tokens=900,
+        )
+        data = json.loads(response.choices[0].message.content or "{}")
+        return ResumeMatchResponse(**data)
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to parse AI response") from e
+        raise HTTPException(status_code=502, detail=f"OpenAI API 錯誤：{e}") from e
