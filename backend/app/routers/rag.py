@@ -162,7 +162,7 @@ All text values must be written in Traditional Chinese (繁體中文)."""
             ],
             response_format={"type": "json_object"},
             temperature=0.3,
-            max_completion_tokens=900,
+            max_completion_tokens=2500,
         )
         data = json.loads(response.choices[0].message.content or "{}")
         return MockInterviewResponse(**data)
@@ -199,7 +199,7 @@ All text values must be written in Traditional Chinese (繁體中文)."""
             ],
             response_format={"type": "json_object"},
             temperature=0.3,
-            max_completion_tokens=900,
+            max_completion_tokens=2500,
         )
         data = json.loads(response.choices[0].message.content or "{}")
         return ResumeMatchResponse(**data)
