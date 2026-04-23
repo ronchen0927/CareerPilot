@@ -225,3 +225,10 @@ export function generateResumeMatch(req: import('../types').ResumeMatchRequest):
     body: JSON.stringify(req),
   })
 }
+
+export function extractCV(cvText: string): Promise<{ message: string, count: number }> {
+  return apiFetch<{ message: string, count: number }>('/api/rag/extract-cv', {
+    method: 'POST',
+    body: JSON.stringify({ cv_text: cvText }),
+  })
+}

@@ -210,3 +210,7 @@ class ResumeMatchResponse(BaseModel):
     gap_analysis: str = Field(description="能力缺口分析")
     answer_strategy: str = Field(description="答題策略")
     match_score: int = Field(ge=0, le=100, description="契合度分數")
+
+
+class CVExtractRequest(BaseModel):
+    cv_text: str = Field(description="履歷純文字")

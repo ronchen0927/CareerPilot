@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createRagDocument, deleteRagDocument, fetchRagDocuments } from '../api/client'
+import { createRagDocument, deleteRagDocument, fetchRagDocuments, extractCV } from '../api/client'
 import type { RagDocumentResponse } from '../types'
 
 export default function KnowledgeBasePage() {
@@ -9,6 +9,7 @@ export default function KnowledgeBasePage() {
   const [docType, setDocType] = useState('project')
   const [content, setContent] = useState('')
   const [saving, setSaving] = useState(false)
+  const [extracting, setExtracting] = useState(false)
 
   useEffect(() => {
     loadDocs()
@@ -51,6 +52,27 @@ export default function KnowledgeBasePage() {
     }
   }
 
+  async function handleAutoExtract() {
+    const cvText = localStorage.getItem('careerpilot_cv')
+    if (!cvText || cvText.trim().length < 50) {
+      setError('尚未設定履歷，或履歷內容過短。請先在左下角「設定履歷」中上傳 PDF。')
+      return
+    }
+    if (!confirm('這將會透過 AI 自動解析您的履歷，並將專案與工作經歷匯入知識庫。可能需要幾十秒鐘，確定要執行嗎？')) return
+    
+    setExtracting(true)
+    setError(null)
+    try {
+      const res = await extractCV(cvText)
+      alert(`自動萃取完成！\n${res.message}`)
+      await loadDocs()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '自動萃取失敗')
+    } finally {
+      setExtracting(false)
+    }
+  }
+
   return (
     <div className="container">
       <div className="page-intro">
@@ -84,14 +106,26 @@ export default function KnowledgeBasePage() {
           />
         </div>
         {error && <p style={{ color: 'var(--color-error)', margin: '1rem 0' }}>{error}</p>}
-        <button 
-          className="btn-search" 
-          onClick={handleAdd} 
-          disabled={saving || content.length < 10}
-          style={{ marginTop: '1rem' }}
-        >
-          <span className="btn-search__text">{saving ? '新增中...' : '新增至知識庫'}</span>
-        </button>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+          <button 
+            className="btn-search" 
+            onClick={handleAdd} 
+            disabled={saving || extracting || content.length < 10}
+            style={{ flex: 1 }}
+          >
+            <span className="btn-search__text">{saving ? '新增中...' : '新增至知識庫'}</span>
+          </button>
+          
+          <button 
+            className="btn-search" 
+            onClick={handleAutoExtract} 
+            disabled={saving || extracting}
+            style={{ flex: 1, background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+            title="從已上傳的履歷自動解析並建立專案與經歷檔案"
+          >
+            <span className="btn-search__text">{extracting ? 'AI 萃取中...' : '✨ 從履歷自動萃取'}</span>
+          </button>
+        </div>
       </section>
 
       <section className="search-card">

@@ -8,6 +8,7 @@ from openai import AsyncOpenAI
 from ..config import settings
 from ..db import delete_rag_document, list_rag_documents, save_rag_document
 from ..models import (
+    CVExtractRequest,
     MockInterviewRequest,
     MockInterviewResponse,
     RagDocumentCreate,
@@ -52,7 +53,6 @@ async def _retrieve_top_k(
     for doc in all_docs:
         doc_emb = json.loads(doc["embedding"])
         doc["score"] = cosine_similarity(target_embedding, doc_emb)
-
     all_docs.sort(key=lambda x: x["score"], reverse=True)
     return all_docs[:top_k]
 
@@ -90,6 +90,48 @@ async def delete_document(doc_id: int):
     if not success:
         raise HTTPException(status_code=404, detail="Document not found")
     return {"message": "deleted"}
+
+
+@router.post("/extract-cv")
+async def extract_cv_to_documents(req: CVExtractRequest):
+    client = _make_openai_client()
+    system_prompt = """You are an expert resume parser.
+Extract individual distinct "projects" and "work experiences" from the provided resume text.
+For each item, provide a detailed textual description that encapsulates the skills, tech stack, and achievements.
+Respond strictly in JSON format with a single key 'items' containing a list of objects.
+Each object must have:
+- 'doc_type': either 'project' or 'experience'.
+- 'content': a detailed paragraph describing it."""
+    try:
+        response = await client.chat.completions.create(
+            model="gpt-5.4-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": req.cv_text},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.3,
+            max_completion_tokens=1500,
+        )
+        data = json.loads(response.choices[0].message.content or "{}")
+        items = data.get("items", [])
+
+        saved_count = 0
+        for item in items:
+            doc_type = item.get("doc_type")
+            content = item.get("content")
+            if doc_type in ["project", "experience"] and content:
+                emb = await _get_embedding(client, content)
+                await save_rag_document(doc_type, content, emb)
+                saved_count += 1
+
+        return {
+            "message": f"Successfully extracted and saved {saved_count} documents.",
+            "count": saved_count,
+        }
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=502, detail=f"OpenAI API 錯誤：{e}") from e
 
 
 @router.post("/mock-interview", response_model=MockInterviewResponse)
