@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { fetchJobUrl, generateMockInterview, generateResumeMatch } from '../api/client'
 import type { MockInterviewResponse, ResumeMatchResponse } from '../types'
