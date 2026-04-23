@@ -1,10 +1,16 @@
-import { useState } from 'react'
-import { generateMockInterview, generateResumeMatch } from '../api/client'
+import { useLocation } from 'react-router-dom'
+import { fetchJobUrl, generateMockInterview, generateResumeMatch } from '../api/client'
 import type { MockInterviewResponse, ResumeMatchResponse } from '../types'
 
 export default function InterviewPrepPage() {
-  const [jobText, setJobText] = useState('')
+  const location = useLocation()
+  const locState = location.state as { job_text?: string; job_url?: string } | null
+
+  const [jobUrl, setJobUrl] = useState(locState?.job_url ?? '')
+  const [jobText, setJobText] = useState(locState?.job_text ?? '')
   const [cvText, setCvText] = useState(() => localStorage.getItem('careerpilot_cv') ?? '')
+  
+  const [fetchLoading, setFetchLoading] = useState(false)
   
   const [loadingMock, setLoadingMock] = useState(false)
   const [mockResult, setMockResult] = useState<MockInterviewResponse | null>(null)
@@ -13,6 +19,20 @@ export default function InterviewPrepPage() {
   const [matchResult, setMatchResult] = useState<ResumeMatchResponse | null>(null)
   
   const [error, setError] = useState<string | null>(null)
+
+  async function handleFetchUrl() {
+    if (!jobUrl.trim()) return
+    setFetchLoading(true)
+    setError(null)
+    try {
+      const data = await fetchJobUrl(jobUrl.trim())
+      setJobText(data.text)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '頁面擷取失敗')
+    } finally {
+      setFetchLoading(false)
+    }
+  }
 
   async function handleGenerateMockInterview() {
     if (!jobText.trim()) {
@@ -61,6 +81,34 @@ export default function InterviewPrepPage() {
         <div style={{ flex: '1 1 400px' }}>
           <section className="search-card">
             <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>輸入資料</h2>
+
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" htmlFor="job-url">
+                職缺網址（選填）
+                <span className="form-label__hint">自動從網址擷取，或從我的收藏匯入</span>
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  type="url"
+                  id="job-url"
+                  className="form-input"
+                  placeholder="https://www.104.com.tw/job/..."
+                  value={jobUrl}
+                  onChange={e => setJobUrl(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  className="btn-search"
+                  style={{ width: 'auto', padding: '0 1.2rem' }}
+                  disabled={fetchLoading || !jobUrl.trim()}
+                  onClick={handleFetchUrl}
+                >
+                  {fetchLoading ? '擷取中...' : '擷取'}
+                </button>
+              </div>
+            </div>
+
             <div className="form-group">
               <label className="form-label">目標職缺描述 (JD)</label>
               <textarea
