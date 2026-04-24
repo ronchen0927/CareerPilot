@@ -7,9 +7,12 @@ from openai import AsyncOpenAI
 
 from ..config import settings
 from ..db import (
+    delete_mock_interview,
     delete_rag_document,
     delete_resume_match,
+    get_mock_interview,
     get_resume_match,
+    list_mock_interviews,
     list_rag_documents,
     list_resume_matches,
     save_mock_interview,
@@ -259,4 +262,30 @@ async def delete_resume_match_endpoint(match_id: int):
     success = await delete_resume_match(match_id)
     if not success:
         raise HTTPException(status_code=404, detail="Resume match not found")
+    return {"message": "deleted"}
+
+
+@router.get("/mock-interviews")
+async def get_mock_interviews():
+    return await list_mock_interviews()
+
+
+@router.get("/mock-interviews/{match_id}")
+async def read_mock_interview(match_id: int):
+    match = await get_mock_interview(match_id)
+    if not match:
+        raise HTTPException(status_code=404, detail="Mock interview not found")
+    # Convert stringified JSON fields back to list
+    if match.get("technical_questions"):
+        match["technical_questions"] = json.loads(match["technical_questions"])
+    if match.get("behavioral_questions"):
+        match["behavioral_questions"] = json.loads(match["behavioral_questions"])
+    return match
+
+
+@router.delete("/mock-interviews/{match_id}")
+async def delete_mock_interview_endpoint(match_id: int):
+    success = await delete_mock_interview(match_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Mock interview not found")
     return {"message": "deleted"}

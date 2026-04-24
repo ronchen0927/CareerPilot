@@ -223,6 +223,15 @@ export interface MockInterviewResponse {
   used_contexts: string[];
 }
 
+export interface MockInterviewRecord {
+  id: number;
+  job_text: string;
+  technical_questions: string[];
+  behavioral_questions: string[];
+  tips: string;
+  created_at: string;
+}
+
 export interface ResumeMatchRequest {
   job_text: string
   job_url?: string

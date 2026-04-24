@@ -18,6 +18,8 @@ import KnowledgeBasePage from './pages/KnowledgeBasePage'
 import InterviewPrepPage from './pages/InterviewPrepPage'
 import ResumeMatchHistoryPage from './pages/ResumeMatchHistoryPage'
 import ResumeMatchDetailPage from './pages/ResumeMatchDetailPage'
+import MockInterviewHistoryPage from './pages/MockInterviewHistoryPage'
+import MockInterviewDetailPage from './pages/MockInterviewDetailPage'
 
 export default function App() {
   return (
@@ -41,6 +43,8 @@ export default function App() {
         <Route path="interview-prep" element={<InterviewPrepPage />} />
         <Route path="resume-match-history" element={<ResumeMatchHistoryPage />} />
         <Route path="resume-match-history/:id" element={<ResumeMatchDetailPage />} />
+        <Route path="mock-interviews" element={<MockInterviewHistoryPage />} />
+        <Route path="mock-interviews/:id" element={<MockInterviewDetailPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

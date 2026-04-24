@@ -242,3 +242,17 @@ export function deleteResumeMatch(id: number): Promise<void> {
     method: 'DELETE',
   })
 }
+
+export function fetchMockInterviews(): Promise<import('../types').MockInterviewRecord[]> {
+  return apiFetch<import('../types').MockInterviewRecord[]>('/api/rag/mock-interviews')
+}
+
+export function fetchMockInterviewDetail(id: number): Promise<import('../types').MockInterviewRecord> {
+  return apiFetch<import('../types').MockInterviewRecord>(`/api/rag/mock-interviews/${id}`)
+}
+
+export function deleteMockInterview(id: number): Promise<void> {
+  return apiFetch<void>(`/api/rag/mock-interviews/${id}`, {
+    method: 'DELETE',
+  })
+}

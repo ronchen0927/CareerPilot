@@ -71,7 +71,10 @@ export default function Layout() {
               AI 面試與履歷比對
             </NavLink>
             <NavLink to="/resume-match-history" className="sidebar__link" onClick={closeSidebar}>
-              履歷匹配歷史
+              履歷解析歷史
+            </NavLink>
+            <NavLink to="/mock-interviews" className="sidebar__link" onClick={closeSidebar}>
+              模擬面試歷史
             </NavLink>
           </div>
         </nav>
