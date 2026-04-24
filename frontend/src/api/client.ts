@@ -193,3 +193,66 @@ export function suggestKeywords(cvText: string): Promise<CVSuggestKeywordsRespon
     body: JSON.stringify({ cv_text: cvText }),
   })
 }
+
+// ── RAG API ────────────────────────────────────────────────────────────────
+
+export function createRagDocument(req: import('../types').RagDocumentCreate): Promise<import('../types').RagDocumentResponse> {
+  return apiFetch<import('../types').RagDocumentResponse>('/api/rag/documents', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  })
+}
+
+export function fetchRagDocuments(docType?: string): Promise<import('../types').RagDocumentResponse[]> {
+  const url = docType ? `/api/rag/documents?doc_type=${encodeURIComponent(docType)}` : '/api/rag/documents'
+  return apiFetch<import('../types').RagDocumentResponse[]>(url)
+}
+
+export function deleteRagDocument(id: number): Promise<void> {
+  return apiFetch<void>(`/api/rag/documents/${id}`, { method: 'DELETE' })
+}
+
+export function generateMockInterview(req: import('../types').MockInterviewRequest): Promise<import('../types').MockInterviewResponse> {
+  return apiFetch<import('../types').MockInterviewResponse>('/api/rag/mock-interview', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  })
+}
+
+export function generateResumeMatch(req: import('../types').ResumeMatchRequest): Promise<import('../types').ResumeMatchResponse> {
+  return apiFetch<import('../types').ResumeMatchResponse>('/api/rag/resume-match', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  })
+}
+
+export function extractCV(cvText: string): Promise<{ message: string, count: number }> {
+  return apiFetch<{ message: string, count: number }>('/api/rag/extract-cv', {
+    method: 'POST',
+    body: JSON.stringify({ cv_text: cvText }),
+  })
+}
+
+export function fetchResumeMatches(): Promise<import('../types').ResumeMatchRecord[]> {
+  return apiFetch<import('../types').ResumeMatchRecord[]>('/api/rag/resume-matches')
+}
+
+export function deleteResumeMatch(id: number): Promise<void> {
+  return apiFetch<void>(`/api/rag/resume-matches/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+export function fetchMockInterviews(): Promise<import('../types').MockInterviewRecord[]> {
+  return apiFetch<import('../types').MockInterviewRecord[]>('/api/rag/mock-interviews')
+}
+
+export function fetchMockInterviewDetail(id: number): Promise<import('../types').MockInterviewRecord> {
+  return apiFetch<import('../types').MockInterviewRecord>(`/api/rag/mock-interviews/${id}`)
+}
+
+export function deleteMockInterview(id: number): Promise<void> {
+  return apiFetch<void>(`/api/rag/mock-interviews/${id}`, {
+    method: 'DELETE',
+  })
+}

@@ -198,3 +198,61 @@ export interface ChatRequest {
 export interface CVSuggestKeywordsResponse {
   keywords: string[]
 }
+
+export interface RagDocumentCreate {
+  doc_type: string
+  content: string
+}
+
+export interface RagDocumentResponse {
+  id: number
+  doc_type: string
+  content: string
+  created_at: string
+}
+
+export interface MockInterviewRequest {
+  job_text: string
+}
+
+export interface MockInterviewResponse {
+  id?: number;
+  technical_questions: string[];
+  behavioral_questions: string[];
+  tips: string;
+  used_contexts: string[];
+}
+
+export interface MockInterviewRecord {
+  id: number;
+  job_text: string;
+  technical_questions: string[];
+  behavioral_questions: string[];
+  tips: string;
+  created_at: string;
+}
+
+export interface ResumeMatchRequest {
+  job_text: string
+  job_url?: string
+  user_cv: string
+}
+
+export interface ResumeMatchResponse {
+  id?: number;
+  gap_analysis: string;
+  answer_strategy: string;
+  match_score: number;
+  used_contexts: string[];
+}
+
+export interface ResumeMatchRecord {
+  id: number
+  job_text: string
+  job_url?: string
+  user_cv: string
+  gap_analysis: string
+  answer_strategy: string
+  match_score: number
+  created_at: string
+}

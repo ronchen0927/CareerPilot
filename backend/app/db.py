@@ -73,6 +73,43 @@ async def init_db() -> None:
             )
             """
         )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS rag_documents (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                doc_type    TEXT    NOT NULL,
+                content     TEXT    NOT NULL,
+                embedding   TEXT    NOT NULL,
+                created_at  TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+            )
+            """
+        )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS resume_matches (
+                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_text       TEXT    NOT NULL,
+                job_url        TEXT,
+                user_cv        TEXT    NOT NULL,
+                gap_analysis   TEXT    NOT NULL,
+                answer_strategy TEXT    NOT NULL,
+                match_score    INTEGER NOT NULL,
+                created_at     TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+            )
+            """
+        )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS mock_interviews (
+                id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_text             TEXT    NOT NULL,
+                technical_questions  TEXT    NOT NULL,
+                behavioral_questions TEXT    NOT NULL,
+                tips                 TEXT    NOT NULL,
+                created_at           TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+            )
+            """
+        )
         await db.commit()
 
 
@@ -278,3 +315,135 @@ async def list_liveness_targets() -> list[str]:
         ) as cur:
             rows = await cur.fetchall()
     return [r["job_url"] for r in rows]
+
+
+# ── RAG Documents ─────────────────────────────────────────────────────────────
+
+
+async def save_rag_document(doc_type: str, content: str, embedding: list[float]) -> int:
+    async with aiosqlite.connect(_db_path()) as db:
+        cur = await db.execute(
+            "INSERT INTO rag_documents (doc_type, content, embedding) VALUES (?, ?, ?)",
+            (doc_type, content, json.dumps(embedding)),
+        )
+        await db.commit()
+        return cur.lastrowid  # type: ignore[return-value]
+
+
+async def list_rag_documents(doc_type: str | None = None) -> list[dict]:
+    async with aiosqlite.connect(_db_path()) as db:
+        db.row_factory = aiosqlite.Row
+        if doc_type:
+            async with db.execute(
+                "SELECT * FROM rag_documents WHERE doc_type = ? ORDER BY created_at DESC",
+                (doc_type,),
+            ) as cur:
+                rows = await cur.fetchall()
+        else:
+            async with db.execute("SELECT * FROM rag_documents ORDER BY created_at DESC") as cur:
+                rows = await cur.fetchall()
+    return [dict(r) for r in rows]
+
+
+async def delete_rag_document(record_id: int) -> bool:
+    async with aiosqlite.connect(_db_path()) as db:
+        cur = await db.execute("DELETE FROM rag_documents WHERE id = ?", (record_id,))
+        await db.commit()
+        return cur.rowcount > 0
+
+
+# ── Resume Matches ────────────────────────────────────────────────────────────
+
+
+async def save_resume_match(
+    job_text: str,
+    job_url: str | None,
+    user_cv: str,
+    gap_analysis: str,
+    answer_strategy: str,
+    match_score: int,
+) -> int:
+    async with aiosqlite.connect(_db_path()) as db:
+        cur = await db.execute(
+            """
+            INSERT INTO resume_matches
+                (job_text, job_url, user_cv, gap_analysis, answer_strategy, match_score)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (job_text, job_url, user_cv, gap_analysis, answer_strategy, match_score),
+        )
+        await db.commit()
+        return cur.lastrowid  # type: ignore[return-value]
+
+
+async def list_resume_matches() -> list[dict]:
+    async with aiosqlite.connect(_db_path()) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("SELECT * FROM resume_matches ORDER BY created_at DESC") as cur:
+            rows = await cur.fetchall()
+    return [dict(r) for r in rows]
+
+
+async def get_resume_match(record_id: int) -> dict | None:
+    async with aiosqlite.connect(_db_path()) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("SELECT * FROM resume_matches WHERE id = ?", (record_id,)) as cur:
+            row = await cur.fetchone()
+    return dict(row) if row else None
+
+
+async def delete_resume_match(record_id: int) -> bool:
+    async with aiosqlite.connect(_db_path()) as db:
+        cur = await db.execute("DELETE FROM resume_matches WHERE id = ?", (record_id,))
+        await db.commit()
+        return cur.rowcount > 0
+
+
+# ── Mock Interviews ────────────────────────────────────────────────────────────
+
+
+async def save_mock_interview(
+    job_text: str,
+    technical_questions: list[str],
+    behavioral_questions: list[str],
+    tips: str,
+) -> int:
+    async with aiosqlite.connect(_db_path()) as db:
+        cur = await db.execute(
+            """
+            INSERT INTO mock_interviews
+                (job_text, technical_questions, behavioral_questions, tips)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                job_text,
+                json.dumps(technical_questions, ensure_ascii=False),
+                json.dumps(behavioral_questions, ensure_ascii=False),
+                tips,
+            ),
+        )
+        await db.commit()
+        return cur.lastrowid  # type: ignore[return-value]
+
+
+async def list_mock_interviews() -> list[dict]:
+    async with aiosqlite.connect(_db_path()) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("SELECT * FROM mock_interviews ORDER BY created_at DESC") as cur:
+            rows = await cur.fetchall()
+    return [dict(r) for r in rows]
+
+
+async def get_mock_interview(record_id: int) -> dict | None:
+    async with aiosqlite.connect(_db_path()) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("SELECT * FROM mock_interviews WHERE id = ?", (record_id,)) as cur:
+            row = await cur.fetchone()
+    return dict(row) if row else None
+
+
+async def delete_mock_interview(record_id: int) -> bool:
+    async with aiosqlite.connect(_db_path()) as db:
+        cur = await db.execute("DELETE FROM mock_interviews WHERE id = ?", (record_id,))
+        await db.commit()
+        return cur.rowcount > 0

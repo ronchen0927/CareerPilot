@@ -19,6 +19,7 @@ from .routers import (
     history,
     jobs,
     liveness,
+    rag,
     resume,
 )
 
@@ -78,6 +79,7 @@ app.include_router(cover_letter.router)
 app.include_router(resume.router)
 app.include_router(liveness.router)
 app.include_router(chat.router)
+app.include_router(rag.router)
 
 
 @app.get("/")

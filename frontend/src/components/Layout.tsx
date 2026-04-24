@@ -64,6 +64,18 @@ export default function Layout() {
             <NavLink to="/resume-rewrites" className="sidebar__link" onClick={closeSidebar}>
               改寫歷史
             </NavLink>
+            <NavLink to="/knowledge-base" className="sidebar__link" onClick={closeSidebar}>
+              個人知識庫 (RAG)
+            </NavLink>
+            <NavLink to="/interview-prep" className="sidebar__link" onClick={closeSidebar}>
+              AI 面試與履歷比對
+            </NavLink>
+            <NavLink to="/resume-match-history" className="sidebar__link" onClick={closeSidebar}>
+              履歷解析歷史
+            </NavLink>
+            <NavLink to="/mock-interviews" className="sidebar__link" onClick={closeSidebar}>
+              模擬面試歷史
+            </NavLink>
           </div>
         </nav>
 

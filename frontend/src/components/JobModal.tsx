@@ -53,6 +53,10 @@ export default function JobModal({ job, onClose, bookmarkStatus }: Props) {
     navigateWithJobContent('/cover-letter')
   }
 
+  function handleInterviewPrep() {
+    navigateWithJobContent('/interview-prep')
+  }
+
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     function handleKey(e: KeyboardEvent) {
@@ -163,6 +167,15 @@ export default function JobModal({ job, onClose, bookmarkStatus }: Props) {
             ✉️ 產生 AI 推薦信
           </button>
         )}
+
+        <button
+          type="button"
+          className="btn-export"
+          style={{ marginTop: '0.4rem', width: '100%' }}
+          onClick={handleInterviewPrep}
+        >
+          🗣️ AI 面試與履歷解析
+        </button>
 
         <div className="modal__ai-section">
           <button className="btn-evaluate" disabled={evalLoading} onClick={handleEvaluate}>

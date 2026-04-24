@@ -174,3 +174,60 @@ class CVSuggestKeywordsResponse(BaseModel):
     """AI 關鍵字建議結果"""
 
     keywords: list[str] = Field(description="3-5 組建議職位關鍵字")
+
+
+# ── RAG Models ────────────────────────────────────────────────────────────────
+
+
+class RagDocumentCreate(BaseModel):
+    doc_type: str = Field(description="文件類型: project | interview_question | experience | other")
+    content: str = Field(min_length=10, description="文件內容")
+
+
+class RagDocumentResponse(BaseModel):
+    id: int
+    doc_type: str
+    content: str
+    created_at: str
+
+
+class MockInterviewRequest(BaseModel):
+    job_text: str = Field(description="職缺描述全文")
+
+
+class MockInterviewResponse(BaseModel):
+    id: int | None = Field(default=None, description="儲存的 ID")
+    technical_questions: list[str] = Field(description="技術面試問題")
+    behavioral_questions: list[str] = Field(description="行為面試問題")
+    tips: str = Field(description="準備建議")
+    used_contexts: list[str] = Field(
+        default_factory=list, description="被 RAG 擷取並使用的文件內容"
+    )
+
+
+class ResumeMatchRequest(BaseModel):
+    job_text: str = Field(..., description="目標職缺描述")
+    user_cv: str = Field(..., description="求職者履歷")
+
+
+class ResumeMatchResponse(BaseModel):
+    id: int | None = Field(default=None, description="儲存的 ID")
+    gap_analysis: str = Field(description="能力缺口分析")
+    answer_strategy: str = Field(description="答題策略")
+    match_score: int = Field(ge=0, le=100, description="契合度分數")
+    used_contexts: list[str] = Field(
+        default_factory=list, description="被 RAG 擷取並使用的文件內容"
+    )
+
+
+class ResumeMatchSave(BaseModel):
+    job_text: str = Field(description="職缺描述")
+    job_url: str | None = Field(default=None, description="職缺網址")
+    user_cv: str = Field(description="用戶履歷")
+    gap_analysis: str = Field(description="能力缺口分析")
+    answer_strategy: str = Field(description="答題策略")
+    match_score: int = Field(ge=0, le=100, description="契合度分數")
+
+
+class CVExtractRequest(BaseModel):
+    cv_text: str = Field(description="履歷純文字")
