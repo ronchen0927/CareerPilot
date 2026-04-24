@@ -176,6 +176,19 @@ export default function InterviewPrepPage() {
                   {matchResult.answer_strategy}
                 </p>
               </div>
+              
+              {matchResult.used_contexts && matchResult.used_contexts.length > 0 && (
+                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                  <h3 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                    💡 RAG 參考資料來源 (以此分析契合度)
+                  </h3>
+                  <ul style={{ paddingLeft: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.85rem', opacity: 0.8 }}>
+                    {matchResult.used_contexts.map((ctx, i) => (
+                      <li key={i} style={{ marginBottom: '0.3rem' }}>{ctx}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </section>
           )}
 
@@ -206,6 +219,19 @@ export default function InterviewPrepPage() {
                   {mockResult.tips}
                 </p>
               </div>
+
+              {mockResult.used_contexts && mockResult.used_contexts.length > 0 && (
+                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                  <h3 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                    💡 RAG 參考資料來源 (以此生成題庫)
+                  </h3>
+                  <ul style={{ paddingLeft: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.85rem', opacity: 0.8 }}>
+                    {mockResult.used_contexts.map((ctx, i) => (
+                      <li key={i} style={{ marginBottom: '0.3rem' }}>{ctx}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </section>
           )}
 

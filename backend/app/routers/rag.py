@@ -12,6 +12,7 @@ from ..db import (
     get_resume_match,
     list_rag_documents,
     list_resume_matches,
+    save_mock_interview,
     save_rag_document,
     save_resume_match,
 )
@@ -173,7 +174,18 @@ All text values must be written in Traditional Chinese (繁體中文)."""
             max_completion_tokens=2500,
         )
         data = json.loads(response.choices[0].message.content or "{}")
-        return MockInterviewResponse(**data)
+
+        # 儲存到資料庫
+        record_id = await save_mock_interview(
+            job_text=req.job_text,
+            technical_questions=data.get("technical_questions", []),
+            behavioral_questions=data.get("behavioral_questions", []),
+            tips=data.get("tips", ""),
+        )
+
+        return MockInterviewResponse(
+            id=record_id, used_contexts=[d["content"] for d in retrieved_docs], **data
+        )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"OpenAI API 錯誤：{e}") from e
 
@@ -210,19 +222,20 @@ All text values must be written in Traditional Chinese (繁體中文)."""
             max_completion_tokens=2500,
         )
         data = json.loads(response.choices[0].message.content or "{}")
-        result = ResumeMatchResponse(**data)
 
         # Save to database
-        await save_resume_match(
+        record_id = await save_resume_match(
             job_text=req.job_text,
             job_url=req.job_url,
             user_cv=req.user_cv,
-            gap_analysis=result.gap_analysis,
-            answer_strategy=result.answer_strategy,
-            match_score=result.match_score,
+            gap_analysis=data.get("gap_analysis", ""),
+            answer_strategy=data.get("answer_strategy", ""),
+            match_score=data.get("match_score", 0),
         )
 
-        return result
+        return ResumeMatchResponse(
+            id=record_id, used_contexts=[d["content"] for d in retrieved_docs], **data
+        )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"OpenAI API 錯誤：{e}") from e
 

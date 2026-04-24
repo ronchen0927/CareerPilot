@@ -216,9 +216,11 @@ export interface MockInterviewRequest {
 }
 
 export interface MockInterviewResponse {
-  technical_questions: string[]
-  behavioral_questions: string[]
-  tips: string
+  id?: number;
+  technical_questions: string[];
+  behavioral_questions: string[];
+  tips: string;
+  used_contexts: string[];
 }
 
 export interface ResumeMatchRequest {
@@ -228,9 +230,11 @@ export interface ResumeMatchRequest {
 }
 
 export interface ResumeMatchResponse {
-  gap_analysis: string
-  answer_strategy: string
-  match_score: number
+  id?: number;
+  gap_analysis: string;
+  answer_strategy: string;
+  match_score: number;
+  used_contexts: string[];
 }
 
 export interface ResumeMatchRecord {
