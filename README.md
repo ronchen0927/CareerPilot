@@ -20,6 +20,8 @@
 - ✨ **AI 職缺評分** — 貼上任何平台的職缺描述，或輸入 URL 自動擷取，搭配 PDF 履歷取得 AI 評估
 - 💌 **AI 求職信** — 根據職缺與個人履歷自動生成客製化求職信，附歷史記錄
 - 📝 **AI 履歷改寫** — 針對特定職缺改寫履歷內容，突顯匹配亮點，附歷史記錄
+- 🗣️ **AI 面試與履歷比對 (RAG)** — 從個人知識庫精準檢索經歷，動態生成高關聯技術與行為面試題，並產出能力缺口與答題策略
+- 📚 **個人知識庫** — 支援上傳履歷自動萃取專案與工作經歷，建置專屬向量檢索資料庫
 - 💬 **職缺 Q&A 對話** — 每個職缺獨立的 AI 串流問答，對話記錄自動保存
 - 🔑 **AI 關鍵字建議** — 上傳 CV 後由 AI 建議 3-5 組適合的職位搜尋關鍵字
 - 💓 **職缺活躍度偵測** — 背景定期檢查收藏職缺是否仍然有效，標記已關閉職缺
@@ -72,6 +74,10 @@ npm run dev      # 啟動開發 server
 | `/cover-letters` | 求職信歷史記錄 |
 | `/resume-rewrite` | AI 履歷改寫 |
 | `/resume-rewrites` | 履歷改寫歷史記錄 |
+| `/knowledge-base` | 個人知識庫管理 (RAG) |
+| `/interview-prep` | AI 面試題生成與履歷解析 |
+| `/resume-match-history` | 履歷解析歷史記錄 |
+| `/mock-interviews` | 模擬面試歷史記錄 |
 | `/settings` | 個人偏好設定（職缺條件、期望薪資等） |
 
 ## 🏗️ 技術架構
@@ -83,6 +89,7 @@ npm run dev      # 啟動開發 server
 | 爬蟲 | aiohttp（104 / Yourator JSON API）、Playwright（CakeResume SSR 資料擷取） |
 | 內容擷取 | trafilatura + Goose3（aiohttp 路徑）、Playwright（JS 渲染頁面 fallback） |
 | AI 功能 | OpenAI API（GPT）、pdfplumber（PDF 解析）、StreamingResponse（串流回應） |
+| RAG 技術 | 原生純 Python Cosine Similarity（輕量化檢索）、OpenAI Text Embedding |
 | 資料庫 | SQLite（aiosqlite），儲存評分、求職信、履歷改寫、職缺活躍度記錄 |
 | 前端 | React 18 + TypeScript + Vite |
 | 路由 | React Router v6 |
@@ -142,6 +149,24 @@ GET  /api/cover-letters/{id}   # 單筆記錄
 POST /api/jobs/resume-rewrite  # 改寫履歷
 GET  /api/resume-rewrites      # 歷史列表
 GET  /api/resume-rewrites/{id} # 單筆記錄
+```
+
+### AI 面試與履歷解析 (RAG)
+
+```
+POST /api/rag/mock-interview      # 生成動態模擬面試題庫
+POST /api/rag/resume-match        # 生成履歷缺口與答題策略
+GET  /api/rag/mock-interviews     # 面試紀錄列表
+GET  /api/rag/resume-matches      # 履歷解析紀錄列表
+```
+
+### 知識庫管理 (RAG Documents)
+
+```
+POST   /api/rag/documents         # 新增文件至個人知識庫
+GET    /api/rag/documents         # 列出知識庫文件
+DELETE /api/rag/documents/{id}    # 刪除文件
+POST   /api/rag/extract-cv        # 從履歷文字自動萃取專案/經歷
 ```
 
 ### 職缺 Q&A 對話（串流）

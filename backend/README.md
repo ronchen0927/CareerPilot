@@ -19,6 +19,7 @@ uv run uvicorn app.main:app --reload --port 8000
   - `aiohttp` for non-blocking HTTP requests to 104 and Yourator JSON APIs.
   - `Playwright` for extracting Next.js SSR data from CakeResume.
 - **AI Processing**: Integration with OpenAI API for cover letter generation, resume rewriting, and job evaluation.
-- **Database**: SQLite (via `aiosqlite`) for fast, async local storage of AI output history.
+- **RAG Pipeline**: Custom pure Python Vector Search using Cosine Similarity, leveraging `gpt-5.4-mini` for dynamic mock interviews and tailored resume gap analysis without external heavy vector databases.
+- **Database**: SQLite (via `aiosqlite`) for fast, async local storage of AI output history, job liveness status, and user knowledge base (RAG embeddings).
 
 See [CLAUDE.md](../CLAUDE.md) for more detailed architectural notes and testing instructions.

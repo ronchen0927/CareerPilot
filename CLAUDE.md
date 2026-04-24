@@ -62,6 +62,7 @@ backend/
       resume.py       # POST /api/jobs/resume-rewrite, GET /api/resume-rewrites, GET /api/resume-rewrites/{id}
       history.py      # GET /api/history, GET /api/history/{id} — evaluation history records
       liveness.py     # POST /api/liveness/status, POST /api/liveness/check
+      rag.py          # POST /api/rag/documents, /api/rag/mock-interview, /api/rag/resume-match — Local RAG pipeline
   tests/
     conftest.py               # Fixtures: tmp_alerts_file (monkeypatches ALERTS_FILE), client (TestClient)
     test_scraper.py
@@ -96,6 +97,8 @@ frontend/
       HistoryPage.tsx / HistoryDetailPage.tsx
       CoverLetterPage.tsx / CoverLetterHistoryPage.tsx / CoverLetterDetailPage.tsx
       ResumeRewritePage.tsx / ResumeRewriteHistoryPage.tsx / ResumeRewriteDetailPage.tsx
+      KnowledgeBasePage.tsx # Local RAG Knowledge Base management and CV extraction
+      InterviewPrepPage.tsx / MockInterviewHistoryPage.tsx / ResumeMatchHistoryPage.tsx
       SettingsPage.tsx  # User preferences (job prefs stored via usePreferences)
     hooks/
       useBookmarks.ts   # Bookmark CRUD backed by localStorage
@@ -129,6 +132,8 @@ static/                 # Served at /static by FastAPI
 **Liveness checker (`liveness.py`):** Background asyncio task that wakes every 6 hours. For each URL in `evaluations`, it calls `fetch_with_aiohttp` and looks for "closed" keywords. Uses a debounce of 2 consecutive failures before marking a job `dead`. Results stored in `job_liveness` table. The `/api/liveness/check` endpoint triggers an immediate re-check.
 
 **AI Evaluation:** Two modes — structured (`/evaluate`, takes a `JobListing` object) and free-text (`/evaluate-text`, takes raw JD string). Both share `_make_openai_client` / `_call_openai` helpers. The free-text endpoint is used by `EvaluatePage`. Requires `OPENAI_API_KEY` in `.env`. Results are cached by content hash in `evaluations` table.
+
+**RAG Pipeline (`rag.py`):** Provides a pure Python implementation of Vector Search using Cosine Similarity over OpenAI `text-embedding-3-small` embeddings. User can upload CV text which gets split and extracted into `rag_documents`. When generating mock interviews (`/api/rag/mock-interview`) or resume matches (`/api/rag/resume-match`), relevant chunks are fetched and injected into the LLM context. `used_contexts` is returned for explainability. Both outputs persist in SQLite `mock_interviews` and `resume_matches` respectively.
 
 **Per-job Q&A Chat:** `POST /api/chat` streams an OpenAI response via `StreamingResponse` (`text/plain; charset=utf-8`). System prompt is English; output is Traditional Chinese. Injects job details + user CV + preferences into context. Frontend reads the stream with `fetch` + `ReadableStream`.
 
