@@ -223,6 +223,7 @@ export interface MockInterviewResponse {
 
 export interface ResumeMatchRequest {
   job_text: string
+  job_url?: string
   user_cv: string
 }
 
@@ -230,4 +231,15 @@ export interface ResumeMatchResponse {
   gap_analysis: string
   answer_strategy: string
   match_score: number
+}
+
+export interface ResumeMatchRecord {
+  id: number
+  job_text: string
+  job_url?: string
+  user_cv: string
+  gap_analysis: string
+  answer_strategy: string
+  match_score: number
+  created_at: string
 }

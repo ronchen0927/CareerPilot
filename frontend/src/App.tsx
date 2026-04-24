@@ -16,6 +16,8 @@ import SettingsPage from './pages/SettingsPage'
 import SmartMatchPage from './pages/SmartMatchPage'
 import KnowledgeBasePage from './pages/KnowledgeBasePage'
 import InterviewPrepPage from './pages/InterviewPrepPage'
+import ResumeMatchHistoryPage from './pages/ResumeMatchHistoryPage'
+import ResumeMatchDetailPage from './pages/ResumeMatchDetailPage'
 
 export default function App() {
   return (
@@ -37,6 +39,8 @@ export default function App() {
         <Route path="smart-match" element={<SmartMatchPage />} />
         <Route path="knowledge-base" element={<KnowledgeBasePage />} />
         <Route path="interview-prep" element={<InterviewPrepPage />} />
+        <Route path="resume-match-history" element={<ResumeMatchHistoryPage />} />
+        <Route path="resume-match-history/:id" element={<ResumeMatchDetailPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

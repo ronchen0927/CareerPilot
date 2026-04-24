@@ -203,10 +203,20 @@ class MockInterviewResponse(BaseModel):
 
 class ResumeMatchRequest(BaseModel):
     job_text: str = Field(description="職缺描述全文")
+    job_url: str | None = Field(default=None, description="職缺網址")
     user_cv: str = Field(default="", description="求職者履歷或背景描述")
 
 
 class ResumeMatchResponse(BaseModel):
+    gap_analysis: str = Field(description="能力缺口分析")
+    answer_strategy: str = Field(description="答題策略")
+    match_score: int = Field(ge=0, le=100, description="契合度分數")
+
+
+class ResumeMatchSave(BaseModel):
+    job_text: str = Field(description="職缺描述")
+    job_url: str | None = Field(default=None, description="職缺網址")
+    user_cv: str = Field(description="用戶履歷")
     gap_analysis: str = Field(description="能力缺口分析")
     answer_strategy: str = Field(description="答題策略")
     match_score: int = Field(ge=0, le=100, description="契合度分數")

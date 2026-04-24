@@ -62,7 +62,7 @@ export default function InterviewPrepPage() {
     setError(null)
     setMatchResult(null)
     try {
-      const res = await generateResumeMatch({ job_text: jobText, user_cv: cvText })
+      const res = await generateResumeMatch({ job_text: jobText, job_url: jobUrl || undefined, user_cv: cvText })
       setMatchResult(res)
     } catch (e) {
       setError(e instanceof Error ? e.message : '比對失敗')

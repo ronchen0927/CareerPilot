@@ -232,3 +232,13 @@ export function extractCV(cvText: string): Promise<{ message: string, count: num
     body: JSON.stringify({ cv_text: cvText }),
   })
 }
+
+export function fetchResumeMatches(): Promise<import('../types').ResumeMatchRecord[]> {
+  return apiFetch<import('../types').ResumeMatchRecord[]>('/api/rag/resume-matches')
+}
+
+export function deleteResumeMatch(id: number): Promise<void> {
+  return apiFetch<void>(`/api/rag/resume-matches/${id}`, {
+    method: 'DELETE',
+  })
+}

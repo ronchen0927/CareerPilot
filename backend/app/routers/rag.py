@@ -6,7 +6,15 @@ from fastapi import APIRouter, HTTPException
 from openai import AsyncOpenAI
 
 from ..config import settings
-from ..db import delete_rag_document, list_rag_documents, save_rag_document
+from ..db import (
+    delete_rag_document,
+    delete_resume_match,
+    get_resume_match,
+    list_rag_documents,
+    list_resume_matches,
+    save_rag_document,
+    save_resume_match,
+)
 from ..models import (
     CVExtractRequest,
     MockInterviewRequest,
@@ -202,6 +210,40 @@ All text values must be written in Traditional Chinese (繁體中文)."""
             max_completion_tokens=2500,
         )
         data = json.loads(response.choices[0].message.content or "{}")
-        return ResumeMatchResponse(**data)
+        result = ResumeMatchResponse(**data)
+
+        # Save to database
+        await save_resume_match(
+            job_text=req.job_text,
+            job_url=req.job_url,
+            user_cv=req.user_cv,
+            gap_analysis=result.gap_analysis,
+            answer_strategy=result.answer_strategy,
+            match_score=result.match_score,
+        )
+
+        return result
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"OpenAI API 錯誤：{e}") from e
+
+
+@router.get("/resume-matches")
+async def get_resume_matches():
+    matches = await list_resume_matches()
+    return matches
+
+
+@router.get("/resume-matches/{match_id}")
+async def read_resume_match(match_id: int):
+    match = await get_resume_match(match_id)
+    if not match:
+        raise HTTPException(status_code=404, detail="Resume match not found")
+    return match
+
+
+@router.delete("/resume-matches/{match_id}")
+async def delete_resume_match_endpoint(match_id: int):
+    success = await delete_resume_match(match_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Resume match not found")
+    return {"message": "deleted"}
