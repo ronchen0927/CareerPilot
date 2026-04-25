@@ -1,16 +1,34 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { deleteMockInterview, fetchMockInterviews } from '../api/client'
 import type { MockInterviewRecord } from '../types'
+
+const LABEL_KEY = (id: number) => `mock_interview_label_${id}`
+
+function getLabel(id: number): string {
+  return localStorage.getItem(LABEL_KEY(id)) ?? `紀錄 #${id}`
+}
+
+function saveLabel(id: number, label: string) {
+  const trimmed = label.trim()
+  if (trimmed) localStorage.setItem(LABEL_KEY(id), trimmed)
+  else localStorage.removeItem(LABEL_KEY(id))
+}
 
 export default function MockInterviewHistoryPage() {
   const [records, setRecords] = useState<MockInterviewRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editValue, setEditValue] = useState('')
+  const [labels, setLabels] = useState<Record<number, string>>({})
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { loadRecords() }, [])
 
   useEffect(() => {
-    loadRecords()
-  }, [])
+    if (editingId !== null) inputRef.current?.focus()
+  }, [editingId])
 
   async function loadRecords() {
     setLoading(true)
@@ -18,6 +36,9 @@ export default function MockInterviewHistoryPage() {
     try {
       const data = await fetchMockInterviews()
       setRecords(data)
+      const map: Record<number, string> = {}
+      data.forEach(r => { map[r.id] = getLabel(r.id) })
+      setLabels(map)
     } catch (e) {
       setError(e instanceof Error ? e.message : '載入失敗')
     } finally {
@@ -35,21 +56,21 @@ export default function MockInterviewHistoryPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="container">
-        <p>載入中...</p>
-      </div>
-    )
+  function startEdit(e: React.MouseEvent, id: number) {
+    e.preventDefault()
+    e.stopPropagation()
+    setEditingId(id)
+    setEditValue(labels[id] ?? getLabel(id))
   }
 
-  if (error) {
-    return (
-      <div className="container">
-        <p style={{ color: 'var(--color-error)' }}>{error}</p>
-      </div>
-    )
+  function commitEdit(id: number) {
+    saveLabel(id, editValue)
+    setLabels(prev => ({ ...prev, [id]: editValue.trim() || `紀錄 #${id}` }))
+    setEditingId(null)
   }
+
+  if (loading) return <div className="container"><p>載入中...</p></div>
+  if (error) return <div className="container"><p style={{ color: 'var(--color-error)' }}>{error}</p></div>
 
   return (
     <div className="container">
@@ -65,23 +86,52 @@ export default function MockInterviewHistoryPage() {
           records.map(record => (
             <div key={record.id} className="search-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--text-primary)' }}>
-                  紀錄 #{record.id}
-                </h3>
-                <button 
+                {editingId === record.id ? (
+                  <input
+                    ref={inputRef}
+                    value={editValue}
+                    onChange={e => setEditValue(e.target.value)}
+                    onBlur={() => commitEdit(record.id)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') commitEdit(record.id)
+                      if (e.key === 'Escape') setEditingId(null)
+                    }}
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                      fontSize: '1.1rem',
+                      fontWeight: 600,
+                      border: 'none',
+                      borderBottom: '2px solid var(--color-primary)',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      outline: 'none',
+                      flex: 1,
+                      marginRight: '1rem',
+                    }}
+                  />
+                ) : (
+                  <h3
+                    onClick={e => startEdit(e, record.id)}
+                    title="點擊編輯標題"
+                    style={{ fontSize: '1.1rem', margin: 0, color: 'var(--text-primary)', cursor: 'text' }}
+                  >
+                    {labels[record.id] ?? getLabel(record.id)}
+                  </h3>
+                )}
+                <button
                   onClick={() => handleDelete(record.id)}
-                  style={{ background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer', fontSize: '0.9rem' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer', fontSize: '0.9rem', flexShrink: 0 }}
                 >
                   刪除
                 </button>
               </div>
-              <p style={{ 
-                fontSize: '0.9rem', 
+              <p style={{
+                fontSize: '0.9rem',
                 color: 'var(--text-secondary)',
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
-                overflow: 'hidden'
+                overflow: 'hidden',
               }}>
                 {record.job_text}
               </p>
