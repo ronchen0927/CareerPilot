@@ -72,14 +72,14 @@ export default function InterviewPrepPage() {
   }
 
   return (
-    <div className="container">
+    <div className="container" style={{ maxWidth: '1200px' }}>
       <div className="page-intro">
         <h1 className="page-intro__title">AI 面試與履歷比對</h1>
         <p className="page-intro__sub">基於 RAG 架構與個人知識庫，動態生成模擬面試題，並精準比對您的經驗與特定職缺。</p>
       </div>
 
-      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 400px' }}>
+      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        <div style={{ flex: '0 0 400px', minWidth: 0 }}>
           <section className="search-card">
             <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>輸入資料</h2>
 
@@ -158,88 +158,86 @@ export default function InterviewPrepPage() {
           </section>
         </div>
 
-        <div style={{ flex: '1 1 400px' }}>
-          {matchResult && (
-            <section className="search-card" style={{ marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--color-primary)' }}>
-                履歷解析結果 (契合度: {matchResult.match_score}%)
-              </h2>
-              <div style={{ marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>能力缺口分析</h3>
-                <p style={{ whiteSpace: 'pre-wrap', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
-                  {matchResult.gap_analysis}
-                </p>
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>答題與彌補策略</h3>
-                <p style={{ whiteSpace: 'pre-wrap', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
-                  {matchResult.answer_strategy}
-                </p>
-              </div>
-              
-              {matchResult.used_contexts && matchResult.used_contexts.length > 0 && (
-                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                  <h3 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                    💡 RAG 參考資料來源 (以此分析契合度)
-                  </h3>
-                  <ul style={{ paddingLeft: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.85rem', opacity: 0.8 }}>
-                    {matchResult.used_contexts.map((ctx, i) => (
-                      <li key={i} style={{ marginBottom: '0.3rem' }}>{ctx}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </section>
-          )}
-
-          {mockResult && (
-            <section className="search-card">
-              <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--color-primary)' }}>
-                模擬面試題庫
-              </h2>
-              <div style={{ marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>技術面試題</h3>
-                <ul style={{ paddingLeft: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                  {mockResult.technical_questions.map((q, i) => (
-                    <li key={i} style={{ marginBottom: '0.3rem' }}>{q}</li>
+        <div style={{ flex: '1 1 300px', display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start', minWidth: 0 }}>
+        {matchResult && (
+          <section className="search-card" style={{ flex: '1 1 260px', minWidth: 0 }}>
+            <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--color-primary)' }}>
+              履歷解析結果 (契合度: {matchResult.match_score}%)
+            </h2>
+            <div style={{ marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>能力缺口分析</h3>
+              <p style={{ whiteSpace: 'pre-wrap', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
+                {matchResult.gap_analysis}
+              </p>
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>答題與彌補策略</h3>
+              <p style={{ whiteSpace: 'pre-wrap', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
+                {matchResult.answer_strategy}
+              </p>
+            </div>
+            {matchResult.used_contexts && matchResult.used_contexts.length > 0 && (
+              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                <h3 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                  💡 RAG 參考資料來源 (以此分析契合度)
+                </h3>
+                <ul style={{ paddingLeft: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.85rem', opacity: 0.8 }}>
+                  {matchResult.used_contexts.map((ctx, i) => (
+                    <li key={i} style={{ marginBottom: '0.3rem' }}>{ctx}</li>
                   ))}
                 </ul>
               </div>
-              <div style={{ marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>行為面試題</h3>
-                <ul style={{ paddingLeft: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                  {mockResult.behavioral_questions.map((q, i) => (
-                    <li key={i} style={{ marginBottom: '0.3rem' }}>{q}</li>
+            )}
+          </section>
+        )}
+
+        {mockResult && (
+          <section className="search-card" style={{ flex: '1 1 260px', minWidth: 0 }}>
+            <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--color-primary)' }}>
+              模擬面試題庫
+            </h2>
+            <div style={{ marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>技術面試題</h3>
+              <ul style={{ paddingLeft: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                {mockResult.technical_questions.map((q, i) => (
+                  <li key={i} style={{ marginBottom: '0.3rem' }}>{q}</li>
+                ))}
+              </ul>
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>行為面試題</h3>
+              <ul style={{ paddingLeft: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                {mockResult.behavioral_questions.map((q, i) => (
+                  <li key={i} style={{ marginBottom: '0.3rem' }}>{q}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>準備建議</h3>
+              <p style={{ whiteSpace: 'pre-wrap', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
+                {mockResult.tips}
+              </p>
+            </div>
+            {mockResult.used_contexts && mockResult.used_contexts.length > 0 && (
+              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                <h3 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                  💡 RAG 參考資料來源 (以此生成題庫)
+                </h3>
+                <ul style={{ paddingLeft: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.85rem', opacity: 0.8 }}>
+                  {mockResult.used_contexts.map((ctx, i) => (
+                    <li key={i} style={{ marginBottom: '0.3rem' }}>{ctx}</li>
                   ))}
                 </ul>
               </div>
-              <div>
-                <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>準備建議</h3>
-                <p style={{ whiteSpace: 'pre-wrap', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
-                  {mockResult.tips}
-                </p>
-              </div>
+            )}
+          </section>
+        )}
 
-              {mockResult.used_contexts && mockResult.used_contexts.length > 0 && (
-                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                  <h3 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                    💡 RAG 參考資料來源 (以此生成題庫)
-                  </h3>
-                  <ul style={{ paddingLeft: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.85rem', opacity: 0.8 }}>
-                    {mockResult.used_contexts.map((ctx, i) => (
-                      <li key={i} style={{ marginBottom: '0.3rem' }}>{ctx}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </section>
-          )}
-
-          {!matchResult && !mockResult && !loadingMatch && !loadingMock && (
-            <section className="search-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: 'var(--text-secondary)' }}>
-              請輸入職缺描述並點擊左側按鈕以產生分析或面試題。
-            </section>
-          )}
+        {!matchResult && !mockResult && !loadingMatch && !loadingMock && (
+          <section className="search-card" style={{ flex: '1 1 260px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: 'var(--text-secondary)' }}>
+            請輸入職缺描述並點擊左側按鈕以產生分析或面試題。
+          </section>
+        )}
         </div>
       </div>
     </div>

@@ -208,6 +208,7 @@ class MockInterviewResponse(BaseModel):
 class ResumeMatchRequest(BaseModel):
     job_text: str = Field(..., description="目標職缺描述")
     user_cv: str = Field(..., description="求職者履歷")
+    job_url: str | None = Field(default=None, description="職缺網址（選填）")
 
 
 class ResumeMatchResponse(BaseModel):
