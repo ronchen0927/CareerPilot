@@ -26,6 +26,12 @@ export default function ResumeMatchHistoryPage() {
     }
   }
 
+  function scoreColor(score: number) {
+    if (score >= 80) return 'var(--color-success, #4ade80)'
+    if (score >= 60) return 'var(--color-warning, #facc15)'
+    return 'var(--color-error, #f87171)'
+  }
+
   return (
     <div className="container">
       <div className="page-intro">
@@ -36,66 +42,74 @@ export default function ResumeMatchHistoryPage() {
       {loading && (
         <section className="loading">
           <div className="loading__spinner" />
-          <p>載入中...</p>
+          <p className="loading__text">載入中...</p>
         </section>
       )}
 
       {error && (
-        <section className="error">
-          <p>{error}</p>
+        <section className="error-card">
+          <p className="error-card__text">{error}</p>
         </section>
       )}
 
       {!loading && !error && records.length === 0 && (
-        <section className="empty">
-          <p>還沒有任何履歷匹配記錄</p>
+        <section className="search-card" style={{ textAlign: 'center', color: 'var(--color-muted)' }}>
+          <p style={{ padding: '2rem 0' }}>還沒有任何履歷匹配記錄</p>
         </section>
       )}
 
-      {!loading && !error && records.length > 0 && (
-        <section className="history-list">
-          {records.map(record => (
-            <article
-              key={record.id}
-              className="history-item"
-              onClick={() => navigate(`/resume-match-history/${record.id}`)}
+      {records.map(r => (
+        <section
+          key={r.id}
+          className="search-card"
+          style={{ marginBottom: '0.75rem', cursor: 'pointer' }}
+          onClick={() => navigate(`/resume-match-history/${r.id}`)}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <span style={{
+              flexShrink: 0,
+              fontSize: '1.1rem',
+              fontWeight: 700,
+              color: scoreColor(r.match_score),
+              minWidth: '3rem',
+              textAlign: 'center',
+            }}>
+              {r.match_score}%
+            </span>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 500 }}>
+                  {r.job_url
+                    ? new URL(r.job_url).hostname.replace('www.', '')
+                    : r.job_text.substring(0, 60) + (r.job_text.length > 60 ? '...' : '')}
+                </span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.5, whiteSpace: 'nowrap' }}>
+                  {new Date(r.created_at).toLocaleString('zh-TW')}
+                </span>
+              </div>
+              <p style={{
+                fontSize: '0.82rem',
+                opacity: 0.65,
+                marginTop: '0.25rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {r.job_text.substring(0, 80)}
+              </p>
+            </div>
+
+            <button
+              className="btn-export"
+              style={{ padding: '0.3rem 0.7rem', fontSize: '0.8rem', color: 'var(--color-error, #f87171)', flexShrink: 0 }}
+              onClick={e => handleDelete(e, r.id)}
             >
-              <div className="history-item__header">
-                <div className="history-item__score">
-                  <span className="score score--match">{record.match_score}%</span>
-                  <span className="score-label">契合度</span>
-                </div>
-                <div className="history-item__meta">
-                  <time className="history-item__date">
-                    {new Date(record.created_at).toLocaleString('zh-TW')}
-                  </time>
-                  <button
-                    className="btn-delete"
-                    onClick={e => handleDelete(e, record.id)}
-                    title="刪除記錄"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </div>
-              <div className="history-item__content">
-                <h3 className="history-item__title">
-                  {record.job_text.length > 100
-                    ? `${record.job_text.substring(0, 100)}...`
-                    : record.job_text}
-                </h3>
-                {record.job_url && (
-                  <p className="history-item__url">
-                    <a href={record.job_url} target="_blank" rel="noopener noreferrer">
-                      {record.job_url}
-                    </a>
-                  </p>
-                )}
-              </div>
-            </article>
-          ))}
+              刪除
+            </button>
+          </div>
         </section>
-      )}
+      ))}
     </div>
   )
 }
