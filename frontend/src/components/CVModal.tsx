@@ -74,14 +74,14 @@ export default function CVModal({ onClose }: Props) {
           />
           <button
             type="button"
-            style={{ padding: '0.4rem 0.9rem', border: '1px solid var(--color-border)', borderRadius: '6px', cursor: 'pointer', background: 'transparent' }}
+            className="btn-export"
             disabled={pdfLoading}
             onClick={() => pdfFileRef.current?.click()}
           >
             {pdfLoading ? '解析中...' : '上傳 PDF 履歷'}
           </button>
           {pdfError && (
-            <p style={{ color: 'var(--color-danger, #e53e3e)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+            <p style={{ color: 'var(--danger, #f87171)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
               {pdfError}
             </p>
           )}
