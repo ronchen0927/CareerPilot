@@ -123,6 +123,8 @@ export interface JobEvaluateResponse {
 export interface CoverLetterRequest {
   job_text: string
   user_cv: string
+  company_name?: string
+  user_name?: string
 }
 
 export interface CoverLetterResponse {
