@@ -75,6 +75,21 @@ export default function SettingsPage() {
           />
         </div>
 
+        <div className="form-group">
+          <label className="form-label" htmlFor="user-name">
+            姓名
+            <span className="form-label__hint">用於推薦信結尾署名</span>
+          </label>
+          <input
+            type="text"
+            id="user-name"
+            className="form-input"
+            placeholder="例：Pin Yuan Chen"
+            value={prefs.user_name}
+            onChange={e => update('user_name', e.target.value)}
+          />
+        </div>
+
         <p style={{ fontSize: '0.8rem', opacity: 0.55, marginTop: '0.5rem' }}>
           自動儲存，無需按確認
         </p>
