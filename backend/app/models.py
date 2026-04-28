@@ -102,6 +102,8 @@ class CoverLetterRequest(BaseModel):
 
     job_text: str = Field(min_length=10, description="職缺描述文字")
     user_cv: str = Field(default="", description="求職者履歷或背景描述")
+    company_name: str = Field(default="", description="招募公司名稱（選填，用於開頭稱呼）")
+    user_name: str = Field(default="", description="求職者姓名（選填，用於結尾署名）")
 
 
 class CoverLetterResponse(BaseModel):
@@ -109,6 +111,18 @@ class CoverLetterResponse(BaseModel):
 
     id: int = Field(description="資料庫記錄 ID")
     letter: str = Field(description="推薦信內文")
+
+
+class ExtractCompanyRequest(BaseModel):
+    """公司名稱萃取請求"""
+
+    job_text: str = Field(min_length=10, description="職缺描述文字")
+
+
+class ExtractCompanyResponse(BaseModel):
+    """公司名稱萃取結果"""
+
+    company_name: str = Field(description="萃取到的公司名稱，無法判斷時為空字串")
 
 
 class CoverLetterRecord(BaseModel):
