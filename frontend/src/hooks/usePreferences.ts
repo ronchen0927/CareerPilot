@@ -5,6 +5,7 @@ export interface UserPreferences {
   preferred_tech: string
   career_goals: string
   avoided_industries: string
+  user_name: string
 }
 
 const DEFAULT_PREFS: UserPreferences = {
@@ -12,6 +13,7 @@ const DEFAULT_PREFS: UserPreferences = {
   preferred_tech: '',
   career_goals: '',
   avoided_industries: '',
+  user_name: '',
 }
 
 export function usePreferences() {
