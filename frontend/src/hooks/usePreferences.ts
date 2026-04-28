@@ -20,6 +20,7 @@ export function usePreferences() {
   return useLocalStorage<UserPreferences>('careerpilot_prefs', DEFAULT_PREFS)
 }
 
+// Note: user_name is intentionally excluded — it is passed directly to cover letter requests, not injected as a prompt preference.
 export function formatPrefsForPrompt(prefs: UserPreferences): string {
   const parts: string[] = []
   if (prefs.target_salary > 0)

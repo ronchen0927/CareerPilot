@@ -115,10 +115,10 @@ export function generateCoverLetter(req: CoverLetterRequest): Promise<CoverLette
   })
 }
 
-export function extractCompanyName(job_text: string): Promise<{ company_name: string }> {
+export function extractCompanyName(jobText: string): Promise<{ company_name: string }> {
   return apiFetch<{ company_name: string }>('/api/jobs/extract-company', {
     method: 'POST',
-    body: JSON.stringify({ job_text }),
+    body: JSON.stringify({ job_text: jobText }),
   })
 }
 
