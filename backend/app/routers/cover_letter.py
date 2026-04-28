@@ -57,22 +57,23 @@ async def generate_cover_letter(request: CoverLetterRequest):
     """根據職缺描述與履歷，用 AI 產生自我推薦信並存入資料庫"""
     client = _make_client()
     cv_section = request.user_cv.strip() or "（未提供）"
+    company = request.company_name.strip()
+    user = request.user_name.strip()
 
-    if request.company_name.strip():
+    if company:
         greeting_instruction = (
-            f"- Start with a natural, warm greeting addressing the {request.company_name.strip()} "
+            f"- Start with a natural, warm greeting addressing the {company} "
             "recruiting team. The phrasing should feel genuine — adapt tone to the company culture, "
             "not formulaic. For example: '親愛的 ACME 招募夥伴：' or '嗨，XXX 團隊：'"
         )
     else:
         greeting_instruction = "- Do not include a salutation header."
 
-    if request.user_name.strip():
+    if user:
         closing_instruction = (
             "- End with an appropriate closing phrase that matches the letter's tone "
             "(e.g. 「祝商祺」for startups, 「此致 敬禮」for formal companies, "
-            "「期待有機會加入你們」for casual), then a blank line, then the sender's name: "
-            f"{request.user_name.strip()}"
+            f"「期待有機會加入你們」for casual), then a blank line, then the sender's name: {user}"
         )
     else:
         closing_instruction = "- Do not include a sign-off or signature."
@@ -86,7 +87,7 @@ async def generate_cover_letter(request: CoverLetterRequest):
                     "content": _PROMPT.format(
                         greeting_instruction=greeting_instruction,
                         closing_instruction=closing_instruction,
-                        job_text=request.job_text.strip(),
+                        job_text=request.job_text.strip()[:5000],
                         user_cv=cv_section,
                     ),
                 }
