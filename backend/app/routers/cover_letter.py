@@ -3,7 +3,13 @@ from openai import AsyncOpenAI
 
 from ..config import settings
 from ..db import delete_cover_letter, get_cover_letter, list_cover_letters, save_cover_letter
-from ..models import CoverLetterRecord, CoverLetterRequest, CoverLetterResponse
+from ..models import (
+    CoverLetterRecord,
+    CoverLetterRequest,
+    CoverLetterResponse,
+    ExtractCompanyRequest,
+    ExtractCompanyResponse,
+)
 
 router = APIRouter(tags=["cover-letter"])
 
@@ -11,13 +17,12 @@ _PROMPT = """\
 You are a career coach helping a job seeker write a cover letter in Traditional Chinese.
 
 ## Instructions
-- Write 3–4 natural paragraphs, approximately 250–350 characters total.
+- Write 3–4 natural paragraphs for the body, approximately 250–350 characters total.
 - Use first-person, conversational tone — as if the candidate is speaking directly to the hiring manager.
-- Do NOT open with clichés like "I am writing to express my interest" or "I am a hardworking and dedicated individual".
-- Do NOT use overly formal phrases like "貴公司" or "敬啟者". Use "你們團隊" or address the role directly.
+- Do NOT use clichés like "I am writing to express my interest" or overly formal phrases like "貴公司" or "敬啟者".
 - Pick 2–3 concrete skills or achievements from the CV that directly match the job requirements.
-- Close naturally — confident but not arrogant, no excessive self-deprecation.
-- Output only the cover letter text. No subject line, no salutation header, no sign-off signature.
+{greeting_instruction}
+{closing_instruction}
 - All output must be in Traditional Chinese (繁體中文).
 
 ## Job Description
@@ -25,6 +30,16 @@ You are a career coach helping a job seeker write a cover letter in Traditional 
 
 ## Candidate Background
 {user_cv}
+"""
+
+_EXTRACT_COMPANY_PROMPT = """\
+Extract the company name from the following job description.
+Return ONLY the company name as it appears in the text (Traditional Chinese or English).
+If you cannot determine the company name, return an empty string.
+Output only the company name, nothing else — no explanation, no punctuation.
+
+Job Description:
+{job_text}
 """
 
 
@@ -42,6 +57,26 @@ async def generate_cover_letter(request: CoverLetterRequest):
     """根據職缺描述與履歷，用 AI 產生自我推薦信並存入資料庫"""
     client = _make_client()
     cv_section = request.user_cv.strip() or "（未提供）"
+    company = request.company_name.strip()
+    user = request.user_name.strip()
+
+    if company:
+        greeting_instruction = (
+            f"- Start with a natural, warm greeting addressing the {company} "
+            "recruiting team. The phrasing should feel genuine — adapt tone to the company culture, "
+            "not formulaic. For example: '親愛的 ACME 招募夥伴：' or '嗨，XXX 團隊：'"
+        )
+    else:
+        greeting_instruction = "- Do not include a salutation header."
+
+    if user:
+        closing_instruction = (
+            "- End with an appropriate closing phrase that matches the letter's tone "
+            "(e.g. 「祝商祺」for startups, 「此致 敬禮」for formal companies, "
+            f"「期待有機會加入你們」for casual), then a blank line, then the sender's name: {user}"
+        )
+    else:
+        closing_instruction = "- Do not include a sign-off or signature."
 
     try:
         response = await client.chat.completions.create(
@@ -50,7 +85,9 @@ async def generate_cover_letter(request: CoverLetterRequest):
                 {
                     "role": "user",
                     "content": _PROMPT.format(
-                        job_text=request.job_text.strip(),
+                        greeting_instruction=greeting_instruction,
+                        closing_instruction=closing_instruction,
+                        job_text=request.job_text.strip()[:5000],
                         user_cv=cv_section,
                     ),
                 }
@@ -67,6 +104,31 @@ async def generate_cover_letter(request: CoverLetterRequest):
 
     record_id = await save_cover_letter(job_text=request.job_text.strip(), letter=letter)
     return CoverLetterResponse(id=record_id, letter=letter)
+
+
+@router.post("/api/jobs/extract-company", response_model=ExtractCompanyResponse)
+async def extract_company_name(request: ExtractCompanyRequest):
+    """從職缺描述中用 AI 萃取公司名稱"""
+    client = _make_client()
+    try:
+        response = await client.chat.completions.create(
+            model="gpt-5.4-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": _EXTRACT_COMPANY_PROMPT.format(
+                        job_text=request.job_text.strip()[:3000]
+                    ),
+                }
+            ],
+            temperature=0,
+            max_completion_tokens=50,
+        )
+        company_name = (response.choices[0].message.content or "").strip()
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"OpenAI API 錯誤：{e}") from e
+
+    return ExtractCompanyResponse(company_name=company_name)
 
 
 @router.get("/api/cover-letters", response_model=list[CoverLetterRecord])

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { fetchJobUrl, generateCoverLetter, parseCvPdf } from '../api/client'
+import { extractCompanyName, fetchJobUrl, generateCoverLetter, parseCvPdf } from '../api/client'
+import { usePreferences } from '../hooks/usePreferences'
 
 export default function CoverLetterPage() {
   const location = useLocation()
@@ -19,6 +20,11 @@ export default function CoverLetterPage() {
   const [genLoading, setGenLoading] = useState(false)
   const [genError, setGenError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+
+  const [prefs] = usePreferences()
+  const [companyName, setCompanyName] = useState('')
+  const [extractLoading, setExtractLoading] = useState(false)
+  const [extractError, setExtractError] = useState<string | null>(null)
 
   const cvFileRef = useRef<HTMLInputElement>(null)
 
@@ -57,6 +63,21 @@ export default function CoverLetterPage() {
     }
   }
 
+  async function handleExtractCompany() {
+    if (jobText.trim().length < 10) return
+    setExtractLoading(true)
+    setExtractError(null)
+    try {
+      const data = await extractCompanyName(jobText.trim())
+      if (data.company_name) setCompanyName(data.company_name)
+      else setExtractError('無法從職缺描述中判斷公司名稱，請手動填寫')
+    } catch (err) {
+      setExtractError(err instanceof Error ? err.message : '偵測失敗')
+    } finally {
+      setExtractLoading(false)
+    }
+  }
+
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault()
     if (jobText.trim().length < 10) return
@@ -64,7 +85,12 @@ export default function CoverLetterPage() {
     setGenError(null)
     setLetter(null)
     try {
-      const data = await generateCoverLetter({ job_text: jobText, user_cv: cv })
+      const data = await generateCoverLetter({
+        job_text: jobText,
+        user_cv: cv,
+        company_name: companyName.trim(),
+        user_name: prefs.user_name.trim(),
+      })
       setLetter(data.letter)
       navigate(`/cover-letters/${data.id}`, { state: { id: data.id, job_text: jobText, letter: data.letter } })
     } catch (err) {
@@ -119,6 +145,39 @@ export default function CoverLetterPage() {
             {fetchError && (
               <p style={{ color: 'var(--color-error, #f87171)', fontSize: '0.85rem', marginTop: '0.4rem' }}>
                 {fetchError}，請直接貼上職缺描述
+              </p>
+            )}
+          </div>
+
+          {/* Company name */}
+          <div className="form-group">
+            <label className="form-label" htmlFor="company-name">
+              公司名稱（選填）
+              <span className="form-label__hint">用於開頭稱呼，可自動從職缺描述偵測</span>
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                id="company-name"
+                className="form-input"
+                placeholder="例：SWAG、台積電"
+                value={companyName}
+                onChange={e => setCompanyName(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                className="btn-search"
+                style={{ width: 'auto', padding: '0 1.2rem' }}
+                disabled={extractLoading || jobText.trim().length < 10}
+                onClick={handleExtractCompany}
+              >
+                {extractLoading ? '偵測中...' : '自動偵測'}
+              </button>
+            </div>
+            {extractError && (
+              <p style={{ color: 'var(--color-error, #f87171)', fontSize: '0.85rem', marginTop: '0.4rem' }}>
+                {extractError}
               </p>
             )}
           </div>
