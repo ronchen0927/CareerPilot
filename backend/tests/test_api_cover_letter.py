@@ -32,8 +32,8 @@ class TestGenerateCoverLetterGreetingClosing:
             )
         assert resp.status_code == 200
         data = resp.json()
-        assert "letter" in data
-        assert "id" in data
+        assert data["letter"] == "親愛的 ACME 招募夥伴：\n\n正文內容...\n\n此致 敬禮\nPin Yuan Chen"
+        assert isinstance(data["id"], int)
 
     def test_returns_letter_without_optional_fields(self, client):
         inst = _make_mock_ai("正文內容...")
@@ -48,6 +48,9 @@ class TestGenerateCoverLetterGreetingClosing:
                 json={"job_text": "後端工程師，熟悉 Python", "user_cv": ""},
             )
         assert resp.status_code == 200
+        data = resp.json()
+        assert "letter" in data
+        assert "id" in data
 
     def test_missing_openai_key_returns_503(self, client):
         with patch("app.routers.cover_letter.settings") as mock_settings:
@@ -57,6 +60,27 @@ class TestGenerateCoverLetterGreetingClosing:
                 json={"job_text": "後端工程師職缺描述，需熟悉 Python", "user_cv": ""},
             )
         assert resp.status_code == 503
+
+    def test_job_text_too_short_returns_422(self, client):
+        resp = client.post(
+            "/api/jobs/cover-letter",
+            json={"job_text": "短", "user_cv": ""},
+        )
+        assert resp.status_code == 422
+
+    def test_openai_error_returns_502(self, client):
+        inst = MagicMock()
+        inst.chat.completions.create = AsyncMock(side_effect=Exception("rate limit"))
+        with (
+            patch("app.routers.cover_letter.settings") as mock_settings,
+            patch("app.routers.cover_letter.AsyncOpenAI", return_value=inst),
+        ):
+            mock_settings.OPENAI_API_KEY = "sk-test"
+            resp = client.post(
+                "/api/jobs/cover-letter",
+                json={"job_text": "後端工程師職缺，需要 Python 技能", "user_cv": ""},
+            )
+        assert resp.status_code == 502
 
 
 class TestExtractCompanyName:
