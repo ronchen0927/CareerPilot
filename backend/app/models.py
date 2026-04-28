@@ -122,7 +122,7 @@ class ExtractCompanyRequest(BaseModel):
 class ExtractCompanyResponse(BaseModel):
     """公司名稱萃取結果"""
 
-    company_name: str = Field(description="萃取到的公司名稱，無法判斷時為空字串")
+    company_name: str = Field(default="", description="萃取到的公司名稱，無法判斷時為空字串")
 
 
 class CoverLetterRecord(BaseModel):
