@@ -1,5 +1,7 @@
 """Shared HTTP fetch helpers used by the URL-fetch endpoint and the liveness checker."""
 
+import html
+import json
 import logging
 import re
 
@@ -169,36 +171,106 @@ async def fetch_with_playwright(url: str) -> str:
     return parse_html(html)
 
 
-async def fetch_cake_detail(url: str) -> str:
-    """Fetch CakeResume job detail directly using Playwright without trafilatura/Goose3."""
-    m = _CAKE_JOB_RE.match(url)
+_NEXT_DATA_RE = re.compile(
+    r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', re.DOTALL
+)
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _strip_html(raw: str) -> str:
+    text = _HTML_TAG_RE.sub("", raw)
+    return html.unescape(text).strip()
+
+
+def _extract_cake_next_data(raw_html: str) -> str:
+    """Parse __NEXT_DATA__ from a CakeResume job page and return formatted plain text."""
+    m = _NEXT_DATA_RE.search(raw_html)
     if not m:
         return ""
+    try:
+        data = json.loads(m.group(1))
+    except json.JSONDecodeError:
+        return ""
+
+    job = data.get("props", {}).get("pageProps", {}).get("job")
+    if not job:
+        return ""
+
+    lines: list[str] = []
+
+    title = job.get("title", "")
+    if title:
+        lines.append(f"職位：{title}")
+
+    locations = job.get("locations") or []
+    loc_names = [loc.get("full_name", "") for loc in locations if loc.get("full_name")]
+    if loc_names:
+        lines.append(f"地點：{', '.join(loc_names)}")
+
+    remote = job.get("remote", "")
+    if remote and remote != "no_remote_work":
+        lines.append(f"遠端：{remote}")
+
+    salary_min = job.get("salary_min")
+    salary_max = job.get("salary_max")
+    salary_type = job.get("salary_type", "")
+    if salary_min or salary_max:
+        salary_str = f"{int(float(salary_min)):,}" if salary_min else "?"
+        if salary_max:
+            salary_str += f" ~ {int(float(salary_max)):,}"
+        lines.append(f"薪資（{salary_type}）：{salary_str}")
+
+    job_type = job.get("job_type", "")
+    if job_type:
+        lines.append(f"工作類型：{job_type}")
+
+    seniority = job.get("seniority_level", "")
+    if seniority:
+        lines.append(f"資歷：{seniority}")
+
+    description = _strip_html(job.get("description") or "")
+    if description:
+        lines.append(f"\n【工作內容】\n{description}")
+
+    requirements = _strip_html(job.get("requirements") or "")
+    if requirements:
+        lines.append(f"\n【職位要求】\n{requirements}")
+
+    return "\n".join(lines)
+
+
+async def fetch_cake_detail(url: str) -> str:
+    """Fetch CakeResume job detail by extracting __NEXT_DATA__ SSR JSON.
+
+    Tries aiohttp first (faster); falls back to Playwright if the page requires JS.
+    """
+    if not _CAKE_JOB_RE.match(url):
+        return ""
+
+    # Fast path: __NEXT_DATA__ is server-rendered, no JS execution needed
+    try:
+        timeout = aiohttp.ClientTimeout(total=FETCH_TIMEOUT_S)
+        async with aiohttp.ClientSession(headers=_HEADERS, timeout=timeout) as session:
+            async with session.get(url, ssl=False) as resp:
+                if resp.status == 200:
+                    raw = await resp.text()
+                    text = _extract_cake_next_data(raw)
+                    if text:
+                        return text
+    except Exception as e:
+        logger.debug("CakeResume aiohttp fetch failed for %s: %s", url, e)
+
+    # Slow path: render with Playwright and re-extract
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         await page.set_extra_http_headers({"User-Agent": _HEADERS["User-Agent"]})
         try:
             await page.goto(url, wait_until="domcontentloaded", timeout=FETCH_TIMEOUT_MS)
-            # Wait for any of the common CakeResume description containers
-            try:
-                await page.wait_for_selector(
-                    "div.job-description-content, div[data-testid='job-description'], article, main",
-                    timeout=5000,
-                )
-            except PlaywrightTimeout:
-                pass
-
-            text = await page.evaluate("""() => {
-                let el = document.querySelector('div[data-testid="job-description"]');
-                if (!el) el = document.querySelector('.job-description-content');
-                if (!el) el = document.querySelector('article');
-                if (!el) el = document.querySelector('main');
-                return el ? el.innerText : '';
-            }""")
-            return (text or "").strip()
+            raw = await page.content()
+            return _extract_cake_next_data(raw)
         except Exception as e:
-            logger.debug("CakeResume detail fetch failed for %s: %s", url, e)
+            logger.debug("CakeResume Playwright fetch failed for %s: %s", url, e)
             return ""
         finally:
             await browser.close()
