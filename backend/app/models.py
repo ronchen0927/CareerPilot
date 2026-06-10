@@ -45,8 +45,8 @@ class AlertCreateRequest(BaseModel):
     experience: list[str] = Field(default_factory=list, description="經歷要求代碼清單")
     pages: int = Field(default=3, ge=1, le=10, description="爬取頁數")
     min_salary: int = Field(default=0, ge=0, description="最低月薪篩選（元）")
-    notify_type: str = Field(description="通知方式：line | webhook")
-    notify_target: str = Field(min_length=1, description="Line Notify Token 或 Webhook URL")
+    notify_type: str = Field(description="通知方式：discord | webhook")
+    notify_target: str = Field(min_length=1, description="Discord Webhook URL 或自訂 Webhook URL")
     interval_minutes: int = Field(default=60, ge=30, le=1440, description="檢查間隔（分鐘）")
 
 

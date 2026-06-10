@@ -125,8 +125,16 @@ async def _send_notification(alert: dict, new_jobs: list) -> None:
         f"找到 {len(new_jobs)} 筆新職缺\n\n" + "\n\n".join(job_lines) + suffix
     )
 
-    if notify_type == "line":
-        await _notify_line(target, message)
+    if notify_type == "discord":
+        await _notify_discord(target, message)
+    elif notify_type == "line":
+        # LINE Notify was discontinued on 2025-03-31; alerts created before the
+        # migration can no longer be delivered.
+        logger.warning(
+            "Alert '%s' uses LINE Notify, which has been discontinued. "
+            "Please recreate the alert with a Discord webhook.",
+            keyword,
+        )
     elif notify_type == "webhook":
         await _notify_webhook(
             target,
@@ -139,16 +147,18 @@ async def _send_notification(alert: dict, new_jobs: list) -> None:
         logger.warning("Unknown notify_type: %s", notify_type)
 
 
-async def _notify_line(token: str, message: str) -> None:
+# Discord rejects messages longer than 2000 characters
+DISCORD_MESSAGE_LIMIT = 2000
+
+
+async def _notify_discord(webhook_url: str, message: str) -> None:
+    if len(message) > DISCORD_MESSAGE_LIMIT:
+        message = message[: DISCORD_MESSAGE_LIMIT - 1] + "…"
     async with aiohttp.ClientSession() as session:
-        resp = await session.post(
-            "https://notify-api.line.me/api/notify",
-            headers={"Authorization": f"Bearer {token}"},
-            data={"message": message},
-        )
-        if resp.status != 200:
+        resp = await session.post(webhook_url, json={"content": message})
+        if resp.status not in (200, 204):
             body = await resp.text()
-            logger.error("Line Notify failed (%d): %s", resp.status, body)
+            logger.error("Discord webhook failed (%d): %s", resp.status, body)
 
 
 async def _notify_webhook(url: str, **payload) -> None:

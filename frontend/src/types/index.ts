@@ -62,7 +62,7 @@ export interface AlertCreateRequest {
   experience: string[]
   pages: number
   min_salary: number
-  notify_type: 'line' | 'webhook'
+  notify_type: 'discord' | 'webhook'
   notify_target: string
   interval_minutes: number
 }
@@ -74,7 +74,7 @@ export interface Alert {
   experience: string[]
   pages: number
   min_salary: number
-  notify_type: 'line' | 'webhook'
+  notify_type: 'discord' | 'line' | 'webhook'
   notify_target: string
   interval_minutes: number
   last_run: string | null

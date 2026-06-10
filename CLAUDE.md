@@ -139,7 +139,7 @@ static/                 # Served at /static by FastAPI
 
 **PDF CV parse:** `POST /api/cv/parse` accepts multipart PDF upload (max 5 MB), extracts text via `pdfplumber`, returns `{ text }`. `POST /api/cv/suggest-keywords` accepts CV text and returns 3-5 AI-suggested job keyword groups.
 
-**Scheduler:** Runs as an asyncio task inside the FastAPI `lifespan` context manager (no external dependency). Wakes every 60 seconds, checks each alert's `interval_minutes` against `last_run`, scrapes if due, sends Line Notify or Webhook, updates `seen_links` and `last_run` in `alerts.json`.
+**Scheduler:** Runs as an asyncio task inside the FastAPI `lifespan` context manager (no external dependency). Wakes every 60 seconds, checks each alert's `interval_minutes` against `last_run`, scrapes if due, sends Discord or generic Webhook notifications (legacy `line` alerts are skipped with a warning — LINE Notify was discontinued 2025-03-31), updates `seen_links` and `last_run` in `alerts.json`.
 
 **Frontend state:** Bookmarks and kanban status stored in `localStorage`. CV text stored under key `careerpilot_cv`. Per-job chat history stored under key `careerpilot_chats` (object keyed by job URL). User preferences stored under key `careerpilot_prefs`.
 
