@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import { fetchCoverLetter } from '../api/client'
 import type { CoverLetterRecord } from '../types'
 
 export default function CoverLetterDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { state } = useLocation()
-  const navigate = useNavigate()
 
   const [record, setRecord] = useState<CoverLetterRecord | null>(state ?? null)
   const [loading, setLoading] = useState(!state)

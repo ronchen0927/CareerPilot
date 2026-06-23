@@ -92,7 +92,19 @@ export default function SmartMatchPage() {
     setLoadingSearch(true)
     setError(null)
     try {
-      const res = await searchJobs({ keyword: keywords[0], pages: 5, areas, experience: [], sources })
+      const res = await searchJobs({
+        keyword: keywords[0],
+        pages: 5,
+        areas,
+        experience: [],
+        sources,
+        categories: [],
+        salary_min: 0,
+        salary_max: 0,
+        cake_seniority: [],
+        cake_salary_min: 0,
+        cake_salary_max: 0,
+      })
       const allJobs = res.results
       setJobs(allJobs)
       setPhase('results')
