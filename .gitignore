@@ -29,6 +29,9 @@ build/
 db.sqlite3
 backend/evaluations.db
 
+# Docker volume data (SQLite + alerts.json)
+data/
+
 # Logs
 *.log
 

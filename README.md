@@ -77,6 +77,36 @@ npm run dev      # 啟動開發 server
 | `/mock-interviews` | 模擬面試歷史記錄 |
 | `/settings` | 個人偏好設定（職缺條件、期望薪資等） |
 
+## 🐳 Docker 快速開始
+
+不想手動安裝 uv / Playwright / Node.js？用 Docker Compose 一鍵啟動：
+
+### 環境需求
+
+- [Docker](https://docs.docker.com/get-docker/) 與 Docker Compose v2
+
+### 啟動
+
+```bash
+# （選用）AI 功能需要 OpenAI API key，在專案根目錄建立 .env：
+echo "OPENAI_API_KEY=sk-..." > .env
+
+docker compose up -d --build   # 建置並啟動（首次建置需下載 Chromium，請耐心等候）
+```
+
+打開瀏覽器前往 👉 **http://localhost:8080**
+
+### 架構說明
+
+| Service | 說明 |
+|---------|------|
+| `backend` | FastAPI + uv + Playwright Chromium，監聽容器內 port 8000 |
+| `frontend` | Vite 靜態建置 + nginx，`/api/` 與 `/static/` 自動反向代理到 backend |
+
+- 資料持久化：SQLite（`evaluations.db`）與 `alerts.json` 存放在 `./data/`，重啟容器不會遺失
+- 停止服務：`docker compose down`
+- 查看後端日誌：`docker compose logs -f backend`
+
 ## 🏗️ 技術架構
 
 | 層級 | 技術 |

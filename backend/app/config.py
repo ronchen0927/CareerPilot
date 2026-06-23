@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     # SQLite database path (relative to working directory when server starts)
     DB_PATH: str = "evaluations.db"
 
+    # Alerts storage path; empty = default backend/alerts.json (next to the app package)
+    ALERTS_FILE: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

@@ -7,9 +7,15 @@ import json
 import logging
 from pathlib import Path
 
+from .config import settings
+
 logger = logging.getLogger(__name__)
 
-ALERTS_FILE = Path(__file__).resolve().parent.parent / "alerts.json"
+ALERTS_FILE = (
+    Path(settings.ALERTS_FILE)
+    if settings.ALERTS_FILE
+    else Path(__file__).resolve().parent.parent / "alerts.json"
+)
 
 # Maximum seen_links to retain per alert (prevents unbounded growth)
 MAX_SEEN_LINKS = 1000
@@ -29,6 +35,7 @@ def load_alerts() -> dict:
 def save_alerts(alerts: dict) -> None:
     """Persist alerts dict to disk."""
     try:
+        ALERTS_FILE.parent.mkdir(parents=True, exist_ok=True)
         ALERTS_FILE.write_text(
             json.dumps(alerts, ensure_ascii=False, indent=2),
             encoding="utf-8",

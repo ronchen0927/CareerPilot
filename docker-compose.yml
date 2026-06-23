@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: ./backend
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DB_PATH=/app/data/evaluations.db
+      - ALERTS_FILE=/app/data/alerts.json
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Empty → frontend uses relative paths, proxied to backend by nginx
+        VITE_API_BASE: ""
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
