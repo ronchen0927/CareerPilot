@@ -17,6 +17,9 @@ build/
 # IDE
 .vscode/
 .idea/
+
+# Claude Code (local settings & agent worktrees)
+.claude/
 *.swp
 *.swo
 *~
