@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import { fetchResumeRewrite } from '../api/client'
 import type { ResumeRewriteRecord } from '../types'
 
 export default function ResumeRewriteDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { state } = useLocation()
-  const navigate = useNavigate()
 
   const [record, setRecord] = useState<ResumeRewriteRecord | null>(state ?? null)
   const [loading, setLoading] = useState(!state)
