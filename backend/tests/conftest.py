@@ -49,8 +49,8 @@ def sample_alert_payload():
         "experience": ["3"],
         "pages": 2,
         "min_salary": 50000,
-        "notify_type": "line",
-        "notify_target": "test-token-abc",
+        "notify_type": "discord",
+        "notify_target": "https://discord.com/api/webhooks/123/test-token-abc",
         "interval_minutes": 60,
     }
 

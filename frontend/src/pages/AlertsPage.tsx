@@ -3,7 +3,13 @@ import { createAlert, deleteAlert, fetchAlerts, fetchOptions, triggerAlert } fro
 import CheckboxGroup from '../components/CheckboxGroup'
 import type { Alert, JobOptions } from '../types'
 
-type NotifyType = 'line' | 'webhook'
+type NotifyType = 'discord' | 'webhook'
+
+const NOTIFY_TYPE_LABELS: Record<string, string> = {
+  discord: 'Discord',
+  webhook: 'Webhook',
+  line: 'Line Notify（已停用）',
+}
 
 const FALLBACK_OPTIONS: JobOptions = {
   areas: [
@@ -49,7 +55,7 @@ export default function AlertsPage() {
   const [alertPages, setAlertPages] = useState(3)
   const [minSalary, setMinSalary] = useState(0)
   const [interval, setInterval] = useState(60)
-  const [notifyType, setNotifyType] = useState<NotifyType>('line')
+  const [notifyType, setNotifyType] = useState<NotifyType>('discord')
   const [notifyTarget, setNotifyTarget] = useState('')
 
   // UI state
@@ -100,7 +106,7 @@ export default function AlertsPage() {
       setAlertPages(3)
       setMinSalary(0)
       setInterval(60)
-      setNotifyType('line')
+      setNotifyType('discord')
       setNotifyTarget('')
       await loadAlerts()
     } catch (err) {
@@ -245,7 +251,7 @@ export default function AlertsPage() {
               通知方式
             </label>
             <div className="notify-type-grid">
-              {(['line', 'webhook'] as const).map(type => (
+              {(['discord', 'webhook'] as const).map(type => (
                 <label className="notify-type-chip" key={type}>
                   <input
                     type="radio"
@@ -254,7 +260,7 @@ export default function AlertsPage() {
                     checked={notifyType === type}
                     onChange={() => setNotifyType(type)}
                   />
-                  <span>{type === 'line' ? 'Line Notify' : 'Webhook URL'}</span>
+                  <span>{type === 'discord' ? 'Discord Webhook' : 'Webhook URL'}</span>
                 </label>
               ))}
             </div>
@@ -262,15 +268,15 @@ export default function AlertsPage() {
 
           <div className="form-group">
             <label className="form-label" htmlFor="alert-target">
-              {notifyType === 'line' ? 'Line Notify Token' : 'Webhook URL'}
-              {notifyType === 'line' && (
+              {notifyType === 'discord' ? 'Discord Webhook URL' : 'Webhook URL'}
+              {notifyType === 'discord' && (
                 <a
-                  href="https://notify-bot.line.me/my/"
+                  href="https://support.discord.com/hc/zh-tw/articles/228383668"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="form-label__link"
                 >
-                  取得 Token →
+                  如何建立 Webhook →
                 </a>
               )}
             </label>
@@ -279,7 +285,9 @@ export default function AlertsPage() {
               id="alert-target"
               className="form-input"
               placeholder={
-                notifyType === 'line' ? '貼上 Line Notify Token...' : 'https://hooks.example.com/...'
+                notifyType === 'discord'
+                  ? 'https://discord.com/api/webhooks/...'
+                  : 'https://hooks.example.com/...'
               }
               value={notifyTarget}
               onChange={e => setNotifyTarget(e.target.value)}
@@ -334,7 +342,7 @@ export default function AlertsPage() {
                   <span
                     className={`alert-notify-badge alert-notify-badge--${alert.notify_type}`}
                   >
-                    {alert.notify_type === 'line' ? 'Line Notify' : 'Webhook'}
+                    {NOTIFY_TYPE_LABELS[alert.notify_type] ?? alert.notify_type}
                   </span>
                   <span className="alert-interval">每 {formatInterval(alert.interval_minutes)}</span>
                   <span className="alert-last-run">{formatLastRun(alert.last_run)}</span>
