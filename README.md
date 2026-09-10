@@ -6,7 +6,7 @@
 
 ## ✨ 功能特色
 
-- 🔍 **多來源搜尋** — 同時搜尋 104 人力銀行、CakeResume 與 Yourator，結果自動合併去重
+- 🔍 **多來源搜尋** — 同時搜尋 104 人力銀行、CakeResume、Yourator 與 LinkedIn，結果自動合併去重
 - 🧠 **多關鍵字** — 逗號分隔最多 5 個關鍵字
 - 📍 **平台專屬篩選** — 分頁標籤設定各平台條件：**104**（地區、工作經歷）、**CakeResume**（地區、資歷層級、月薪區間）、**Yourator**（地區、工作經歷、職缺類別、月薪區間）
 - ⚡ **非同步爬取** — 多頁、多關鍵字同時抓取，速度飛快
@@ -139,7 +139,7 @@ POST /api/jobs/search
 {
   "keyword": "Python",
   "pages": 5,
-  "sources": ["104", "cake", "yourator"],
+  "sources": ["104", "cake", "yourator", "linkedin"],
   "areas": ["6001001000"],
   "experience": ["3"],
   "cake_seniority": ["entry_level", "mid_senior_level"],
@@ -152,6 +152,8 @@ POST /api/jobs/search
 ```
 
 > 平台過濾參數各自獨立，例如 `categories` 適用於 Yourator，`cake_seniority` 適用於 CakeResume。
+
+LinkedIn 使用公開訪客搜尋頁，依關鍵字搜尋台灣職缺，最多 5 頁，每頁間隔 1 秒。其他平台的地區、年資及薪資條件不套用；未公開的薪資、學歷與年資標示「未提供」。遇到限流、登入轉址或連線錯誤會停止，保留已取得的結果。此端點非穩定 API，頁面結構變動可能需要更新解析器。
 
 ### AI 評分
 
