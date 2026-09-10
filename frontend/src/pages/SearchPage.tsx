@@ -59,12 +59,14 @@ const SOURCE_BADGE_KEY: Record<string, string> = {
   '104': '104',
   CakeResume: 'cake',
   Yourator: 'yourator',
+  LinkedIn: 'linkedin',
 }
 
 const SOURCE_BADGE_LABEL: Record<string, string> = {
   '104': '104',
   CakeResume: 'Cake',
   Yourator: 'Yourator',
+  LinkedIn: 'LinkedIn',
 }
 
 export default function SearchPage() {
@@ -96,7 +98,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     if (sources.length > 0 && !sources.includes(activeTab)) {
-      setActiveTab(sources[0])
+      setActiveTab(sources.find(source => source !== 'linkedin') || 'linkedin')
     }
   }, [sources, activeTab])
 
@@ -256,6 +258,7 @@ export default function SearchPage() {
                 { value: '104', label: '104 人力銀行' },
                 { value: 'cake', label: 'CakeResume' },
                 { value: 'yourator', label: 'Yourator' },
+                { value: 'linkedin', label: 'LinkedIn（台灣）' },
               ].map(opt => (
                 <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.9rem' }}>
                   <input
@@ -272,8 +275,9 @@ export default function SearchPage() {
             </div>
           </div>
 
+          {sources.includes('linkedin') && <p>LinkedIn 搜尋台灣公開職缺，最多抓取 5 頁；不套用其他平台的地區、年資與薪資條件。</p>}
           {/* Tabs Navigation */}
-          {sources.length > 0 && (
+          {sources.some(source => source !== 'linkedin') && (
             <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #e2e8f0', marginBottom: '1.5rem', paddingBottom: '0.5rem' }}>
               {sources.includes('104') && (
                 <button
@@ -337,6 +341,7 @@ export default function SearchPage() {
 
           {/* Tab Contents */}
           <div style={{ minHeight: '180px', marginBottom: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '0.5rem', border: '1px solid #e2e8f0' }}>
+            {activeTab === 'linkedin' && <p>LinkedIn 使用上方關鍵字搜尋台灣職缺。</p>}
             {sources.length === 0 && (
               <p style={{ color: '#64748b', textAlign: 'center', marginTop: '2rem' }}>請至少勾選一個搜尋來源</p>
             )}
