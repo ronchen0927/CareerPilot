@@ -110,6 +110,25 @@ async def init_db() -> None:
             )
             """
         )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS applications (
+                id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                url               TEXT    NOT NULL UNIQUE,
+                job               TEXT    NOT NULL,
+                company           TEXT    NOT NULL DEFAULT '',
+                city              TEXT    NOT NULL DEFAULT '',
+                salary            TEXT    NOT NULL DEFAULT '',
+                date              TEXT    NOT NULL DEFAULT '',
+                status            TEXT    NOT NULL DEFAULT '想投',
+                status_changed_at TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
+                evaluation_id     INTEGER REFERENCES evaluations(id) ON DELETE SET NULL,
+                reason            TEXT,
+                notes             TEXT,
+                created_at        TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+            )
+            """
+        )
         await db.commit()
 
 
@@ -455,5 +474,55 @@ async def get_mock_interview(record_id: int) -> dict | None:
 async def delete_mock_interview(record_id: int) -> bool:
     async with aiosqlite.connect(_db_path()) as db:
         cur = await db.execute("DELETE FROM mock_interviews WHERE id = ?", (record_id,))
+        await db.commit()
+        return cur.rowcount > 0
+
+
+# ── Applications (kanban) ─────────────────────────────────────────────────────
+
+_APP_FIELDS = ("url", "job", "company", "city", "salary", "date", "status")
+
+
+async def insert_applications(items: list[dict]) -> None:
+    """INSERT OR IGNORE — existing urls are left untouched."""
+    async with aiosqlite.connect(_db_path()) as db:
+        await db.executemany(
+            f"INSERT OR IGNORE INTO applications ({', '.join(_APP_FIELDS)}) "
+            f"VALUES ({', '.join('?' * len(_APP_FIELDS))})",
+            [tuple(i[f] for f in _APP_FIELDS) for i in items],
+        )
+        await db.commit()
+
+
+async def list_applications() -> list[dict]:
+    async with aiosqlite.connect(_db_path()) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT * FROM applications ORDER BY created_at DESC, id DESC"
+        ) as cur:
+            rows = await cur.fetchall()
+    return [dict(r) for r in rows]
+
+
+async def update_application_status(url: str, status: str) -> bool:
+    async with aiosqlite.connect(_db_path()) as db:
+        # RHS sees the pre-update row, so the timestamp only moves on a real change.
+        cur = await db.execute(
+            """
+            UPDATE applications SET
+                status_changed_at = CASE WHEN status != ?
+                    THEN datetime('now','localtime') ELSE status_changed_at END,
+                status = ?
+            WHERE url = ?
+            """,
+            (status, status, url),
+        )
+        await db.commit()
+        return cur.rowcount > 0
+
+
+async def delete_application(url: str) -> bool:
+    async with aiosqlite.connect(_db_path()) as db:
+        cur = await db.execute("DELETE FROM applications WHERE url = ?", (url,))
         await db.commit()
         return cur.rowcount > 0

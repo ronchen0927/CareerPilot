@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -247,3 +249,30 @@ class ResumeMatchSave(BaseModel):
 
 class CVExtractRequest(BaseModel):
     cv_text: str = Field(description="履歷純文字")
+
+
+ApplicationStatus = Literal["想投", "已投", "面試中", "錄取", "不適合"]
+
+
+class ApplicationIn(BaseModel):
+    url: str = Field(..., min_length=1)
+    job: str
+    company: str = ""
+    city: str = ""
+    salary: str = ""
+    date: str = ""
+    status: ApplicationStatus = "想投"
+
+
+class ApplicationRecord(ApplicationIn):
+    id: int
+    status_changed_at: str
+    evaluation_id: int | None = None
+    reason: str | None = None
+    notes: str | None = None
+    created_at: str
+
+
+class ApplicationStatusUpdate(BaseModel):
+    url: str
+    status: ApplicationStatus

@@ -1,5 +1,8 @@
 import type {
   Alert,
+  ApplicationIn,
+  ApplicationRecord,
+  BookmarkStatus,
   AlertCreateRequest,
   AlertsListResponse,
   ChatMessage,
@@ -34,6 +37,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     const body = await res.json().catch(() => ({})) as { detail?: string }
     throw new Error(body.detail ?? `HTTP ${res.status}`)
   }
+  if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }
 
@@ -262,4 +266,29 @@ export function deleteMockInterview(id: number): Promise<void> {
   return apiFetch<void>(`/api/rag/mock-interviews/${id}`, {
     method: 'DELETE',
   })
+}
+
+// ── Applications (kanban) ───────────────────────────────────────────────────
+
+export function listApplications(): Promise<ApplicationRecord[]> {
+  return apiFetch<ApplicationRecord[]>('/api/applications')
+}
+
+export function addApplication(item: ApplicationIn): Promise<void> {
+  return apiFetch<void>('/api/applications', { method: 'POST', body: JSON.stringify(item) })
+}
+
+export function importApplications(items: ApplicationIn[]): Promise<void> {
+  return apiFetch<void>('/api/applications/import', { method: 'POST', body: JSON.stringify(items) })
+}
+
+export function setApplicationStatus(url: string, status: BookmarkStatus): Promise<void> {
+  return apiFetch<void>('/api/applications/status', {
+    method: 'PATCH',
+    body: JSON.stringify({ url, status }),
+  })
+}
+
+export function deleteApplication(url: string): Promise<void> {
+  return apiFetch<void>(`/api/applications?url=${encodeURIComponent(url)}`, { method: 'DELETE' })
 }

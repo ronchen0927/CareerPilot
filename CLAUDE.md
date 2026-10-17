@@ -63,6 +63,7 @@ backend/
       resume.py       # POST /api/jobs/resume-rewrite, GET /api/resume-rewrites, GET /api/resume-rewrites/{id}
       history.py      # GET /api/history, GET /api/history/{id} — evaluation history records
       liveness.py     # POST /api/liveness/status, POST /api/liveness/check
+      applications.py # GET/POST /api/applications, POST /import, PATCH /status, DELETE ?url= — kanban (SQLite)
       rag.py          # POST /api/rag/documents, /api/rag/mock-interview, /api/rag/resume-match — Local RAG pipeline
   tests/
     conftest.py               # Fixtures: tmp_alerts_file (monkeypatches ALERTS_FILE), client (TestClient)
@@ -103,7 +104,7 @@ frontend/
       InterviewPrepPage.tsx / MockInterviewHistoryPage.tsx / ResumeMatchHistoryPage.tsx
       SettingsPage.tsx  # User preferences (job prefs stored via usePreferences)
     hooks/
-      useBookmarks.ts   # Bookmark CRUD backed by localStorage
+      useBookmarks.ts   # Bookmark/kanban CRUD via /api/applications (one-time import of legacy localStorage)
       useLocalStorage.ts
       useTheme.ts
       usePreferences.ts # User job preferences (stored in localStorage)
@@ -145,7 +146,7 @@ static/                 # Served at /static by FastAPI
 
 **Scheduler:** Runs as an asyncio task inside the FastAPI `lifespan` context manager (no external dependency). Wakes every 60 seconds, checks each alert's `interval_minutes` against `last_run`, scrapes if due, sends Discord or generic Webhook notifications (legacy `line` alerts are skipped with a warning — LINE Notify was discontinued 2025-03-31), updates `seen_links` and `last_run` in `alerts.json`.
 
-**Frontend state:** Bookmarks and kanban status stored in `localStorage`. CV text stored under key `careerpilot_cv`. Per-job chat history stored under key `careerpilot_chats` (object keyed by job URL). User preferences stored under key `careerpilot_prefs`.
+**Frontend state:** Bookmarks and kanban status live in SQLite `applications` table (url UNIQUE; legacy `careerpilot_bookmarks` localStorage is imported once then deleted). CV text stored under key `careerpilot_cv`. Per-job chat history stored under key `careerpilot_chats` (object keyed by job URL). User preferences stored under key `careerpilot_prefs`.
 
 ## Testing approach
 
