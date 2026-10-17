@@ -166,6 +166,16 @@ async def save_evaluation(
         return cur.lastrowid  # type: ignore[return-value]
 
 
+async def set_evaluation_url(record_id: int, job_url: str) -> None:
+    """Backfill job_url on an evaluation that was saved without one."""
+    async with aiosqlite.connect(_db_path()) as db:
+        await db.execute(
+            "UPDATE evaluations SET job_url = ? WHERE id = ? AND job_url IS NULL",
+            (job_url, record_id),
+        )
+        await db.commit()
+
+
 async def list_evaluations() -> list[dict]:
     async with aiosqlite.connect(_db_path()) as db:
         db.row_factory = aiosqlite.Row

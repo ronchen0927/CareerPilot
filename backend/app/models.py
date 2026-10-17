@@ -71,6 +71,7 @@ class JobEvaluateTextRequest(BaseModel):
 
     job_text: str = Field(min_length=10, description="貼上的職缺描述文字")
     user_cv: str = Field(default="", description="求職者履歷或背景描述（選填）")
+    job_url: str | None = Field(default=None, description="職缺來源網址（選填，供存活檢查）")
 
 
 class EvaluationDimensions(BaseModel):

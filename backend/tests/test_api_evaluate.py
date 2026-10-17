@@ -1,7 +1,11 @@
 """Tests for POST /api/jobs/evaluate with job_description field."""
 
+import asyncio
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
+from app.db import list_liveness_targets
 from app.models import JobEvaluateResponse
 
 
@@ -80,3 +84,44 @@ def test_evaluate_without_job_description_omits_jd_section(client):
         )
     assert resp.status_code == 200
     assert "Job Description" not in captured["prompt"]
+
+
+# ── /api/jobs/evaluate-text job_url persistence (issue #60) ──────────────────
+
+_JD = "後端工程師，需要熟悉 Python 與 FastAPI，台北市"
+_URL = "https://www.104.com.tw/job/xyz"
+
+
+@pytest.fixture
+def tmp_db(tmp_path, monkeypatch):
+    monkeypatch.setattr("app.db._DB_PATH", tmp_path / "test.db")
+
+
+def _post_evaluate_text(client, **extra):
+    with (
+        patch("app.routers.evaluate.settings") as mock_settings,
+        patch("app.routers.evaluate._call_openai", AsyncMock(return_value=_FAKE_RESULT)),
+    ):
+        mock_settings.OPENAI_API_KEY = "sk-test"
+        return client.post("/api/jobs/evaluate-text", json={"job_text": _JD, **extra})
+
+
+def test_evaluate_text_saves_job_url(tmp_db, client):
+    resp = _post_evaluate_text(client, job_url=_URL)
+    assert resp.status_code == 200
+    assert asyncio.run(list_liveness_targets()) == [_URL]
+
+
+def test_evaluate_text_without_url_not_tracked(tmp_db, client):
+    assert _post_evaluate_text(client).status_code == 200
+    assert asyncio.run(list_liveness_targets()) == []
+
+
+def test_evaluate_text_cache_hit_backfills_job_url(tmp_db, client):
+    assert _post_evaluate_text(client).status_code == 200
+    assert asyncio.run(list_liveness_targets()) == []
+
+    resp = _post_evaluate_text(client, job_url=_URL)
+    assert resp.status_code == 200
+    assert resp.json()["score"] == "A"
+    assert asyncio.run(list_liveness_targets()) == [_URL]

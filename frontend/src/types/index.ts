@@ -98,6 +98,7 @@ export interface JobEvaluateRequest {
 export interface JobEvaluateTextRequest {
   job_text: string
   user_cv: string
+  job_url?: string
 }
 
 export interface EvaluationDimensions {

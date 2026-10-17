@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from openai import AsyncOpenAI
 
 from ..config import settings
-from ..db import get_cached, save_evaluation
+from ..db import get_cached, save_evaluation, set_evaluation_url
 from ..models import (
     EvaluationDimensions,
     JobEvaluateRequest,
@@ -150,9 +150,12 @@ All text values must be written in Traditional Chinese (繁體中文).
 async def evaluate_job_text(request: JobEvaluateTextRequest):
     """使用 GPT 評估職缺與求職者的匹配程度（純文字職缺描述）"""
     job_hash = _compute_hash(request.job_text.strip(), request.user_cv.strip())
+    job_url = (request.job_url or "").strip() or None
 
     cached = await get_cached(job_hash)
     if cached:
+        if job_url and not cached["job_url"]:
+            await set_evaluation_url(cached["id"], job_url)
         return _row_to_response(cached)
 
     client = _make_openai_client()
@@ -179,7 +182,7 @@ All text values must be written in Traditional Chinese (繁體中文).
     await save_evaluation(
         job_hash=job_hash,
         job_text=request.job_text.strip(),
-        job_url=None,
+        job_url=job_url,
         score=result.score,
         summary=result.summary,
         match_points=result.match_points,
