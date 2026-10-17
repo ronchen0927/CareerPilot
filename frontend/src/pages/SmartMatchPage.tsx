@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { evaluateJob, fetchOptions, parseCvPdf, searchJobs, suggestKeywords } from '../api/client'
 import CheckboxGroup from '../components/CheckboxGroup'
 import JobModal from '../components/JobModal'
+import { formatPrefsForPrompt, usePreferences } from '../hooks/usePreferences'
 import type { JobEvaluateResponse, JobListing, JobOptions } from '../types'
 
 const FALLBACK_OPTIONS: JobOptions = {
@@ -25,8 +26,11 @@ const FALLBACK_OPTIONS: JobOptions = {
 type Phase = 'input' | 'keywords' | 'results'
 
 const AUTO_EVAL_LIMIT = 10
+// Mirrors CVSuggestKeywordsRequest.cv_text max_length in backend/app/models.py
+const SUGGEST_KEYWORDS_MAX_CHARS = 20000
 
 export default function SmartMatchPage() {
+  const [prefs] = usePreferences()
   const [phase, setPhase] = useState<Phase>('input')
   const [cvText, setCvText] = useState<string>(() => localStorage.getItem('careerpilot_cv') ?? '')
   const [keywords, setKeywords] = useState<string[]>([])
@@ -64,7 +68,9 @@ export default function SmartMatchPage() {
     setLoadingKeywords(true)
     setError(null)
     try {
-      const res = await suggestKeywords(text)
+      // Truncate the CV (not the prefs) so CV + prefs stays within the backend length limit
+      const prefsText = formatPrefsForPrompt(prefs)
+      const res = await suggestKeywords(text.slice(0, SUGGEST_KEYWORDS_MAX_CHARS - prefsText.length) + prefsText)
       setKeywords(res.keywords)
     } catch {
       setKeywords([])
@@ -112,7 +118,7 @@ export default function SmartMatchPage() {
       const topJobs = allJobs.slice(0, AUTO_EVAL_LIMIT)
       setLoadingEval(true)
       const results = await Promise.allSettled(
-        topJobs.map(job => evaluateJob({ job, user_cv: cvText }))
+        topJobs.map(job => evaluateJob({ job, user_cv: cvText + formatPrefsForPrompt(prefs) }))
       )
       const newEvals = new Map<string, JobEvaluateResponse>()
       const newErrors = new Set<string>()
