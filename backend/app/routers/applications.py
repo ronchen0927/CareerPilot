@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException
 
 from ..db import (
-    delete_application,
     insert_applications,
     list_applications,
+    unboard_application,
     update_application_status,
 )
 from ..models import ApplicationIn, ApplicationRecord, ApplicationStatusUpdate
@@ -19,13 +19,13 @@ async def get_applications():
 
 @router.post("", status_code=204)
 async def add_application(item: ApplicationIn):
-    """加入看板；url 已存在則忽略"""
+    """加入看板；url 已在看板上則忽略，不在看板上則放回"""
     await insert_applications([item.model_dump()])
 
 
 @router.post("/import", status_code=204)
 async def import_applications(items: list[ApplicationIn]):
-    """一次性匯入（localStorage → SQLite）；重複 url 忽略"""
+    """一次性匯入（localStorage → SQLite）；規則同新增"""
     await insert_applications([i.model_dump() for i in items])
 
 
@@ -38,6 +38,6 @@ async def set_application_status(body: ApplicationStatusUpdate):
 
 @router.delete("", status_code=204)
 async def remove_application(url: str):
-    """刪除指定 url 的應徵紀錄"""
-    if not await delete_application(url):
+    """從看板移除（status 設為 NULL，列保留）"""
+    if not await unboard_application(url):
         raise HTTPException(status_code=404, detail="找不到此應徵紀錄")
