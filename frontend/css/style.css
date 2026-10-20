@@ -23,6 +23,8 @@
   --purple:        #7C3AED;
 
   /* legacy compat */
+  --color-primary: var(--accent);
+  --color-error:   var(--red);
   --bg-primary:    var(--bg-base);
   --bg-secondary:  var(--bg-surface);
   --bg-card:       var(--bg-raised);
