@@ -59,12 +59,14 @@ const SOURCE_BADGE_KEY: Record<string, string> = {
   '104': '104',
   CakeResume: 'cake',
   Yourator: 'yourator',
+  MichaelPage: 'michaelpage',
 }
 
 const SOURCE_BADGE_LABEL: Record<string, string> = {
   '104': '104',
   CakeResume: 'Cake',
   Yourator: 'Yourator',
+  MichaelPage: 'Michael Page',
 }
 
 export default function SearchPage() {
@@ -96,7 +98,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     if (sources.length > 0 && !sources.includes(activeTab)) {
-      setActiveTab(sources[0])
+      setActiveTab(sources.find(source => source !== 'michaelpage') || 'michaelpage')
     }
   }, [sources, activeTab])
 
@@ -256,6 +258,7 @@ export default function SearchPage() {
                 { value: '104', label: '104 人力銀行' },
                 { value: 'cake', label: 'CakeResume' },
                 { value: 'yourator', label: 'Yourator' },
+                { value: 'michaelpage', label: 'Michael Page' },
               ].map(opt => (
                 <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.9rem' }}>
                   <input
@@ -272,8 +275,9 @@ export default function SearchPage() {
             </div>
           </div>
 
+          {sources.includes('michaelpage') && <p>Michael Page 為獵頭職缺（以中高階為主），只依關鍵字搜尋，不套用其他平台的地區、年資與薪資條件；不公開客戶公司與薪資。</p>}
           {/* Tabs Navigation */}
-          {sources.length > 0 && (
+          {sources.some(source => source !== 'michaelpage') && (
             <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #e2e8f0', marginBottom: '1.5rem', paddingBottom: '0.5rem' }}>
               {sources.includes('104') && (
                 <button
@@ -340,6 +344,7 @@ export default function SearchPage() {
             {sources.length === 0 && (
               <p style={{ color: '#64748b', textAlign: 'center', marginTop: '2rem' }}>請至少勾選一個搜尋來源</p>
             )}
+            {activeTab === 'michaelpage' && <p>Michael Page 使用上方關鍵字搜尋，沒有其他篩選條件。</p>}
 
             {activeTab === '104' && sources.includes('104') && (
               <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>

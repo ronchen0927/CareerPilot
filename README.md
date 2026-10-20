@@ -6,7 +6,7 @@
 
 ## ✨ 功能特色
 
-- 🔍 **多來源搜尋** — 同時搜尋 104 人力銀行、CakeResume 與 Yourator，結果自動合併去重
+- 🔍 **多來源搜尋** — 同時搜尋 104 人力銀行、CakeResume、Yourator 與 Michael Page，結果自動合併去重
 - 🧠 **多關鍵字** — 逗號分隔最多 5 個關鍵字
 - 📍 **平台專屬篩選** — 分頁標籤設定各平台條件：**104**（地區、工作經歷）、**CakeResume**（地區、資歷層級、月薪區間）、**Yourator**（地區、工作經歷、職缺類別、月薪區間）
 - ⚡ **非同步爬取** — 多頁、多關鍵字同時抓取，速度飛快
@@ -113,7 +113,7 @@ docker compose up -d --build   # 建置並啟動（首次建置需下載 Chromiu
 |------|------|
 | 後端 API | FastAPI + Uvicorn |
 | 排程 | asyncio 背景 task（內建，零額外依賴） |
-| 爬蟲 | aiohttp（104 / Yourator JSON API）、Playwright（CakeResume SSR 資料擷取） |
+| 爬蟲 | aiohttp（104 / Yourator JSON API、Michael Page SSR HTML）、Playwright（CakeResume SSR 資料擷取） |
 | 內容擷取 | trafilatura + Goose3（aiohttp 路徑）、Playwright（JS 渲染頁面 fallback） |
 | AI 功能 | OpenAI API（GPT）、pdfplumber（PDF 解析）、StreamingResponse（串流回應） |
 | RAG 技術 | 原生純 Python Cosine Similarity（輕量化檢索）、OpenAI Text Embedding |
@@ -152,6 +152,8 @@ POST /api/jobs/search
 ```
 
 > 平台過濾參數各自獨立，例如 `categories` 適用於 Yourator，`cake_seniority` 適用於 CakeResume。
+
+Michael Page（`"michaelpage"`）為獵頭職缺，只依關鍵字搜尋，最多 5 頁（每頁 30 筆），每頁間隔 1 秒，不套用其他平台的篩選條件。客戶公司與薪資不公開；刊登日期取自職缺編號中的年月（精確到月）。
 
 ### AI 評分
 
