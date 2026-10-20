@@ -822,6 +822,12 @@ body {
   color: var(--amber);
 }
 
+.source-badge--michaelpage {
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  color: var(--purple);
+}
+
 /* Job link / detail button */
 .job-link,
 .job-detail-btn {
