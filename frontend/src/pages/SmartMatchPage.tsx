@@ -258,7 +258,6 @@ export default function SmartMatchPage() {
                 { value: '104', label: '104 人力銀行' },
                 { value: 'cake', label: 'CakeResume' },
                 { value: 'yourator', label: 'Yourator' },
-                { value: 'linkedin', label: 'LinkedIn（台灣）' },
               ].map(opt => (
                 <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.9rem' }}>
                   <input
