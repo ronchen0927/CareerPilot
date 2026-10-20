@@ -28,6 +28,8 @@ type Phase = 'input' | 'keywords' | 'results'
 const AUTO_EVAL_LIMIT = 10
 // Mirrors CVSuggestKeywordsRequest.cv_text max_length in backend/app/models.py
 const SUGGEST_KEYWORDS_MAX_CHARS = 20000
+// Each keyword is a separate scrape, so cap how many run per search
+const MAX_SEARCH_KEYWORDS = 3
 
 export default function SmartMatchPage() {
   const [prefs] = usePreferences()
@@ -83,7 +85,7 @@ export default function SmartMatchPage() {
   function handleAddKeyword() {
     const kw = newKeyword.trim()
     if (kw && !keywords.includes(kw)) {
-      setKeywords(prev => [...prev, kw])
+      setKeywords(prev => [kw, ...prev])
     }
     setNewKeyword('')
   }
@@ -98,20 +100,29 @@ export default function SmartMatchPage() {
     setLoadingSearch(true)
     setError(null)
     try {
-      const res = await searchJobs({
-        keyword: keywords[0],
-        pages: 5,
-        areas,
-        experience: [],
-        sources,
-        categories: [],
-        salary_min: 0,
-        salary_max: 0,
-        cake_seniority: [],
-        cake_salary_min: 0,
-        cake_salary_max: 0,
-      })
-      const allJobs = res.results
+      const responses = await Promise.all(
+        keywords.slice(0, MAX_SEARCH_KEYWORDS).map(keyword =>
+          searchJobs({
+            keyword,
+            pages: 5,
+            areas,
+            experience: [],
+            sources,
+            categories: [],
+            salary_min: 0,
+            salary_max: 0,
+            cake_seniority: [],
+            cake_salary_min: 0,
+            cake_salary_max: 0,
+          }),
+        ),
+      )
+      // Same job can match several keywords; keep its first occurrence
+      const byLink = new Map<string, JobListing>()
+      for (const job of responses.flatMap(r => r.results)) {
+        if (!byLink.has(job.link)) byLink.set(job.link, job)
+      }
+      const allJobs = [...byLink.values()]
       setJobs(allJobs)
       setPhase('results')
 
@@ -214,7 +225,7 @@ export default function SmartMatchPage() {
         <section className="search-card">
           <h2 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>AI 建議的搜尋關鍵字</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '1rem' }}>
-            搜尋時將使用第一個關鍵字，可刪除或調整順序。
+            搜尋時會使用前 {MAX_SEARCH_KEYWORDS} 個關鍵字並合併結果；新增的關鍵字會排在最前面。
           </p>
           {keywords.length === 0 && (
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
@@ -222,11 +233,12 @@ export default function SmartMatchPage() {
             </p>
           )}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-            {keywords.map(kw => (
-              <span key={kw} style={{
+            {keywords.map((kw, i) => (
+              <span key={kw} title={i < MAX_SEARCH_KEYWORDS ? undefined : '不會被搜尋'} style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
                 padding: '0.25rem 0.6rem', borderRadius: '999px',
                 background: 'var(--color-primary)', color: '#fff', fontSize: '0.85rem',
+                opacity: i < MAX_SEARCH_KEYWORDS ? 1 : 0.4,
               }}>
                 {kw}
                 <button
