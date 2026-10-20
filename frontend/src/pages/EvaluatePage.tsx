@@ -19,6 +19,8 @@ function getScoreClass(score: string): string {
 export default function EvaluatePage() {
   const [jobUrl, setJobUrl] = useState('')
   const [jobText, setJobText] = useState('')
+  // URL the current jobText was fetched from; empty when the JD was pasted manually
+  const [fetchedUrl, setFetchedUrl] = useState('')
   const [cv, setCv] = useState(() => localStorage.getItem('careerpilot_cv') ?? '')
   const [result, setResult] = useState<JobEvaluateResponse | null>(null)
 
@@ -45,6 +47,7 @@ export default function EvaluatePage() {
     try {
       const data = await fetchJobUrl(jobUrl.trim())
       setJobText(data.text)
+      setFetchedUrl(jobUrl.trim())
     } catch (err) {
       setFetchError(err instanceof Error ? err.message : '頁面擷取失敗')
     } finally {
@@ -76,7 +79,11 @@ export default function EvaluatePage() {
     setEvalError(null)
     setResult(null)
     try {
-      const data = await evaluateJobText({ job_text: jobText, user_cv: cv + formatPrefsForPrompt(prefs) })
+      const data = await evaluateJobText({
+        job_text: jobText,
+        user_cv: cv + formatPrefsForPrompt(prefs),
+        job_url: fetchedUrl || undefined,
+      })
       setResult(data)
     } catch (err) {
       setEvalError(err instanceof Error ? err.message : '評分失敗，請稍後再試')
@@ -140,7 +147,10 @@ export default function EvaluatePage() {
               rows={10}
               placeholder="貼上職缺標題、公司名稱、工作內容、要求條件、薪資等資訊..."
               value={jobText}
-              onChange={e => setJobText(e.target.value)}
+              onChange={e => {
+                setJobText(e.target.value)
+                if (!e.target.value.trim()) setFetchedUrl('')
+              }}
               required
               style={{ resize: 'vertical', fontFamily: 'inherit' }}
             />
