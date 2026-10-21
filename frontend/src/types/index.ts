@@ -56,6 +56,19 @@ export interface BookmarkEntry {
 
 export type Bookmarks = Record<string, BookmarkEntry>
 
+export interface ApplicationIn extends BookmarkEntry {
+  url: string
+}
+
+export interface ApplicationRecord extends ApplicationIn {
+  id: number
+  status_changed_at: string
+  evaluation_id: number | null
+  reason: string | null
+  notes: string | null
+  created_at: string
+}
+
 export interface AlertCreateRequest {
   keyword: string
   areas: string[]

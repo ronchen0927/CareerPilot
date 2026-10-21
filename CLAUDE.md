@@ -42,7 +42,7 @@ backend/
     main.py           # FastAPI app: CORS, static files, lifespan (init_db + scheduler + liveness tasks)
     config.py         # Settings (pydantic-settings), AREA_OPTIONS, EXPERIENCE_OPTIONS constants
     models.py         # Pydantic models: JobSearchRequest, JobListing, AlertCreateRequest, etc.
-    db.py             # aiosqlite helpers: init_db(), CRUD for evaluations / cover_letters / resume_rewrites / job_liveness
+    db.py             # aiosqlite helpers: init_db(), CRUD for evaluations / cover_letters / resume_rewrites / jobs (kanban + liveness)
     scraper.py        # Async scraper hitting 104's internal JSON API via aiohttp
     scraper_cake.py   # Async scraper for CakeResume via Playwright (extracts Next.js SSR data)
     scraper_yourator.py # Async scraper for Yourator via aiohttp (JSON API); supports categories & salary_min/max
@@ -63,6 +63,7 @@ backend/
       resume.py       # POST /api/jobs/resume-rewrite, GET /api/resume-rewrites, GET /api/resume-rewrites/{id}
       history.py      # GET /api/history, GET /api/history/{id} — evaluation history records
       liveness.py     # POST /api/liveness/status, POST /api/liveness/check
+      applications.py # GET/POST /api/applications, POST /import, PATCH /status, DELETE ?url= — kanban (SQLite)
       rag.py          # POST /api/rag/documents, /api/rag/mock-interview, /api/rag/resume-match — Local RAG pipeline
   tests/
     conftest.py               # Fixtures: tmp_alerts_file (monkeypatches ALERTS_FILE), client (TestClient)
@@ -103,7 +104,7 @@ frontend/
       InterviewPrepPage.tsx / MockInterviewHistoryPage.tsx / ResumeMatchHistoryPage.tsx
       SettingsPage.tsx  # User preferences (job prefs stored via usePreferences)
     hooks/
-      useBookmarks.ts   # Bookmark CRUD backed by localStorage
+      useBookmarks.ts   # Bookmark/kanban CRUD via /api/applications (one-time import of legacy localStorage)
       useLocalStorage.ts
       useTheme.ts
       usePreferences.ts # User job preferences (stored in localStorage)
@@ -131,9 +132,9 @@ static/                 # Served at /static by FastAPI
 
 **URL fetch endpoint (`fetch_url.py`):** `POST /api/jobs/fetch-url` uses a three-tier strategy: 104 detail API → aiohttp+trafilatura → Playwright. Returns 422 if content is too short (likely blocked).
 
-**SQLite persistence (`db.py`):** `init_db()` creates four tables on startup — `evaluations`, `cover_letters`, `resume_rewrites`, `job_liveness`. Migrations are idempotent (uses `PRAGMA table_info` + `ALTER TABLE`). All I/O is async via `aiosqlite`.
+**SQLite persistence (`db.py`):** `init_db()` creates the tables on startup (`evaluations`, `cover_letters`, `resume_rewrites`, `jobs`, RAG tables). `jobs` is the job-centric table (#86): `url` UNIQUE but nullable, `status` NULL = not on the kanban, plus liveness columns. Migrations are idempotent (uses `PRAGMA table_info` + `ALTER TABLE`). All I/O is async via `aiosqlite` through `_connect()`, which enables `PRAGMA foreign_keys=ON`.
 
-**Liveness checker (`liveness.py`):** Background asyncio task that wakes every 6 hours. For each URL in `evaluations`, it calls `fetch_with_aiohttp` and looks for "closed" keywords. Uses a debounce of 2 consecutive failures before marking a job `dead`. Results stored in `job_liveness` table. The `/api/liveness/check` endpoint triggers an immediate re-check.
+**Liveness checker (`liveness.py`):** Background asyncio task that wakes every 6 hours. For each URL in `jobs` plus `evaluations.job_url` (transitional union until #86 phase 2), it calls `fetch_with_aiohttp` and looks for "closed" keywords. Uses a debounce of 2 consecutive failures before marking a job `dead`. Results stored in the `jobs` liveness columns. The `/api/liveness/check` endpoint triggers an immediate re-check.
 
 **AI Evaluation:** Two modes — structured (`/evaluate`, takes a `JobListing` object) and free-text (`/evaluate-text`, takes raw JD string). Both share `_make_openai_client` / `_call_openai` helpers. The free-text endpoint is used by `EvaluatePage`. Requires `OPENAI_API_KEY` in `.env`. Results are cached by content hash in `evaluations` table.
 
@@ -145,7 +146,7 @@ static/                 # Served at /static by FastAPI
 
 **Scheduler:** Runs as an asyncio task inside the FastAPI `lifespan` context manager (no external dependency). Wakes every 60 seconds, checks each alert's `interval_minutes` against `last_run`, scrapes if due, sends Discord or generic Webhook notifications (legacy `line` alerts are skipped with a warning — LINE Notify was discontinued 2025-03-31), updates `seen_links` and `last_run` in `alerts.json`.
 
-**Frontend state:** Bookmarks and kanban status stored in `localStorage`. CV text stored under key `careerpilot_cv`. Per-job chat history stored under key `careerpilot_chats` (object keyed by job URL). User preferences stored under key `careerpilot_prefs`.
+**Frontend state:** Bookmarks and kanban status live in the SQLite `jobs` table (API stays `/api/applications`; removing a card sets `status` NULL instead of deleting; legacy `careerpilot_bookmarks` localStorage is imported once then deleted). CV text stored under key `careerpilot_cv`. Per-job chat history stored under key `careerpilot_chats` (object keyed by job URL). User preferences stored under key `careerpilot_prefs`.
 
 ## Testing approach
 

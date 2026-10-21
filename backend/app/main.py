@@ -11,6 +11,7 @@ from .config import settings
 from .db import init_db
 from .routers import (
     alerts,
+    applications,
     chat,
     cover_letter,
     cv,
@@ -80,6 +81,7 @@ app.include_router(resume.router)
 app.include_router(liveness.router)
 app.include_router(chat.router)
 app.include_router(rag.router)
+app.include_router(applications.router)
 
 
 @app.get("/")
