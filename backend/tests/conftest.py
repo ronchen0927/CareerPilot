@@ -22,10 +22,19 @@ def tmp_alerts_file(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def client(tmp_alerts_file):
+def db_file(tmp_path, monkeypatch):
+    """Point SQLite at a temp file so no test touches the real DB."""
+    path = tmp_path / "test.db"
+    monkeypatch.setattr("app.config.settings.DB_PATH", str(path))
+    monkeypatch.setattr("app.db._DB_PATH", path)
+    return path
+
+
+@pytest.fixture
+def client(tmp_alerts_file, db_file):
     """
     TestClient that:
-    - uses a temp alerts.json (no real file left behind)
+    - uses a temp alerts.json and a temp SQLite DB (no real file left behind)
     - replaces run_scheduler and run_liveness_loop with no-ops
     - mocks all non-104 scrapers to return [] so no real network calls occur;
     """

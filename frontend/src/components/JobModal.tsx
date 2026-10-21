@@ -41,7 +41,9 @@ export default function JobModal({ job, onClose, bookmarkStatus }: Props) {
       `最低學歷：${job.education}`,
       `薪水：${job.salary}`,
     ].join('\n')
-    navigate(route, { state: { job_text: jobContent ?? metadataText, job_url: job.link } })
+    navigate(route, {
+      state: { job_text: jobContent ?? metadataText, job_url: job.link, job_id: evalResult?.job_id },
+    })
     onClose()
   }
 
@@ -85,6 +87,7 @@ export default function JobModal({ job, onClose, bookmarkStatus }: Props) {
         job,
         user_cv: cv + formatPrefsForPrompt(prefs),
         job_description: jobContent ?? '',
+        job_id: evalResult?.job_id,
       })
       setEvalResult(result)
     } catch (err) {

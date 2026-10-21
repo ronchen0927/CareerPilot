@@ -5,7 +5,7 @@ import { usePreferences } from '../hooks/usePreferences'
 
 export default function CoverLetterPage() {
   const location = useLocation()
-  const locState = location.state as { job_text?: string; job_url?: string } | null
+  const locState = location.state as { job_text?: string; job_url?: string; job_id?: number | null } | null
   const navigate = useNavigate()
 
   const [jobUrl, setJobUrl] = useState(locState?.job_url ?? '')
@@ -90,6 +90,8 @@ export default function CoverLetterPage() {
         user_cv: cv,
         company_name: companyName.trim(),
         user_name: prefs.user_name.trim(),
+        job_url: jobUrl.trim() || null,
+        job_id: locState?.job_id,
       })
       setLetter(data.letter)
       navigate(`/cover-letters/${data.id}`, { state: { id: data.id, job_text: jobText, letter: data.letter } })

@@ -5,7 +5,7 @@ import type { MockInterviewResponse, ResumeMatchResponse } from '../types'
 
 export default function InterviewPrepPage() {
   const location = useLocation()
-  const locState = location.state as { job_text?: string; job_url?: string } | null
+  const locState = location.state as { job_text?: string; job_url?: string; job_id?: number | null } | null
 
   const [jobUrl, setJobUrl] = useState(locState?.job_url ?? '')
   const [jobText, setJobText] = useState(locState?.job_text ?? '')
@@ -44,7 +44,7 @@ export default function InterviewPrepPage() {
     setError(null)
     setMockResult(null)
     try {
-      const res = await generateMockInterview({ job_text: jobText })
+      const res = await generateMockInterview({ job_text: jobText, job_url: jobUrl || null, job_id: locState?.job_id })
       setMockResult(res)
     } catch (e) {
       setError(e instanceof Error ? e.message : '生成失敗')
@@ -62,7 +62,7 @@ export default function InterviewPrepPage() {
     setError(null)
     setMatchResult(null)
     try {
-      const res = await generateResumeMatch({ job_text: jobText, job_url: jobUrl || undefined, user_cv: cvText })
+      const res = await generateResumeMatch({ job_text: jobText, job_url: jobUrl || undefined, user_cv: cvText, job_id: locState?.job_id })
       setMatchResult(res)
     } catch (e) {
       setError(e instanceof Error ? e.message : '比對失敗')

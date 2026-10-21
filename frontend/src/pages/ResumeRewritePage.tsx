@@ -6,6 +6,7 @@ import type { ResumeRewriteResponse } from '../types'
 interface LocationState {
   job_text?: string
   job_url?: string | null
+  job_id?: number | null
 }
 
 export default function ResumeRewritePage() {
@@ -73,6 +74,7 @@ export default function ResumeRewritePage() {
         job_text: jobText,
         user_cv: cv,
         job_url: jobUrl.trim() || null,
+        job_id: state?.job_id,
       })
       setResult(data)
     } catch (err) {

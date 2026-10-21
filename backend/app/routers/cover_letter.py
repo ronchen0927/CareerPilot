@@ -2,7 +2,13 @@ from fastapi import APIRouter, HTTPException
 from openai import AsyncOpenAI
 
 from ..config import settings
-from ..db import delete_cover_letter, get_cover_letter, list_cover_letters, save_cover_letter
+from ..db import (
+    delete_cover_letter,
+    get_cover_letter,
+    get_or_create_job,
+    list_cover_letters,
+    save_cover_letter,
+)
 from ..models import (
     CoverLetterRecord,
     CoverLetterRequest,
@@ -102,8 +108,12 @@ async def generate_cover_letter(request: CoverLetterRequest):
     if not letter:
         raise HTTPException(status_code=502, detail="AI 未回傳內容，請稍後再試")
 
-    record_id = await save_cover_letter(job_text=request.job_text.strip(), letter=letter)
-    return CoverLetterResponse(id=record_id, letter=letter)
+    job_text = request.job_text.strip()
+    job_id = await get_or_create_job(
+        request.job_url, job_text, company=company, job_id=request.job_id
+    )
+    record_id = await save_cover_letter(job_text=job_text, letter=letter, job_id=job_id)
+    return CoverLetterResponse(id=record_id, letter=letter, job_id=job_id)
 
 
 @router.post("/api/jobs/extract-company", response_model=ExtractCompanyResponse)

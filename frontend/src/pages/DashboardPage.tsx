@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { fetchJobRecords } from '../api/client'
 import { useBookmarks } from '../hooks/useBookmarks'
 import { useLiveness } from '../hooks/useLiveness'
-import type { BookmarkEntry, BookmarkStatus } from '../types'
+import type { BookmarkEntry, BookmarkStatus, JobRecords } from '../types'
 
 const STATUSES: BookmarkStatus[] = ['想投', '已投', '面試中', '錄取', '不適合']
 
@@ -151,6 +152,35 @@ export default function DashboardPage() {
   )
 }
 
+const RECORD_LINKS: [keyof JobRecords, string, string][] = [
+  ['evaluations', '評估', '/history'],
+  ['cover_letters', '求職信', '/cover-letters'],
+  ['resume_rewrites', '改寫履歷', '/resume-rewrites'],
+  ['resume_matches', '履歷比對', '/resume-match-history'],
+  ['mock_interviews', '模擬面試', '/mock-interviews'],
+]
+
+// ponytail: one request per card; batch into the list endpoint if boards get large
+function RelatedRecords({ jobId }: { jobId: number }) {
+  const [records, setRecords] = useState<JobRecords | null>(null)
+  useEffect(() => {
+    fetchJobRecords(jobId).then(setRecords).catch(() => {})
+  }, [jobId])
+  const links = RECORD_LINKS.flatMap(([key, label, base]) =>
+    (records?.[key] ?? []).map((id, i) => ({ to: `${base}/${id}`, label: i ? `${label} ${i + 1}` : label })),
+  )
+  if (!links.length) return null
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.35rem', fontSize: '0.72rem' }}>
+      {links.map(l => (
+        <Link key={l.to} to={l.to} style={{ color: 'var(--color-primary)' }}>
+          {l.label}
+        </Link>
+      ))}
+    </div>
+  )
+}
+
 interface CardProps {
   link: string
   bm: BookmarkEntry
@@ -224,6 +254,7 @@ function KanbanCard({ link, bm, liveness, onDragStart, onRemove }: CardProps) {
           狀態未知
         </span>
       )}
+      {bm.id != null && <RelatedRecords jobId={bm.id} />}
     </div>
   )
 }

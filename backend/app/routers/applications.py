@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from ..db import (
     insert_applications,
     list_applications,
+    list_job_records,
     unboard_application,
     update_application_status,
 )
@@ -15,6 +16,12 @@ router = APIRouter(prefix="/api/applications", tags=["applications"])
 async def get_applications():
     """回傳所有應徵追蹤紀錄（看板）"""
     return await list_applications()
+
+
+@router.get("/{job_id}/records")
+async def get_job_records(job_id: int) -> dict[str, list[int]]:
+    """該職缺的相關紀錄 id（評估、求職信、履歷改寫、履歷比對、模擬面試）"""
+    return await list_job_records(job_id)
 
 
 @router.post("", status_code=204)

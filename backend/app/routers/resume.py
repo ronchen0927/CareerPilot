@@ -4,6 +4,7 @@ from openai import AsyncOpenAI
 from ..config import settings
 from ..db import (
     delete_resume_rewrite,
+    get_or_create_job,
     get_resume_rewrite,
     list_resume_rewrites,
     save_resume_rewrite,
@@ -91,13 +92,15 @@ async def rewrite_resume(request: ResumeRewriteRequest):
     user_cv = request.user_cv.strip()
 
     rewritten = await _call_openai(client, job_text, user_cv)
+    job_id = await get_or_create_job(request.job_url, job_text, job_id=request.job_id)
     record_id = await save_resume_rewrite(
         job_text=job_text,
         job_url=request.job_url,
         original_cv=user_cv,
         result=rewritten,
+        job_id=job_id,
     )
-    return ResumeRewriteResponse(id=record_id, result=rewritten)
+    return ResumeRewriteResponse(id=record_id, result=rewritten, job_id=job_id)
 
 
 @router.get("/api/resume-rewrites", response_model=list[ResumeRewriteRecord])

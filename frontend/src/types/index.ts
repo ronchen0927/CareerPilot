@@ -52,6 +52,7 @@ export interface BookmarkEntry {
   city: string
   salary: string
   status: BookmarkStatus
+  id?: number  // jobs.id; set once loaded from the server
 }
 
 export type Bookmarks = Record<string, BookmarkEntry>
@@ -67,6 +68,15 @@ export interface ApplicationRecord extends ApplicationIn {
   reason: string | null
   notes: string | null
   created_at: string
+}
+
+// GET /api/applications/{job_id}/records — ids per table, newest first
+export interface JobRecords {
+  evaluations: number[]
+  cover_letters: number[]
+  resume_rewrites: number[]
+  resume_matches: number[]
+  mock_interviews: number[]
 }
 
 export interface AlertCreateRequest {
@@ -106,12 +116,14 @@ export interface JobEvaluateRequest {
   job: JobListing
   user_cv: string
   job_description?: string
+  job_id?: number | null
 }
 
 export interface JobEvaluateTextRequest {
   job_text: string
   user_cv: string
   job_url?: string
+  job_id?: number | null
 }
 
 export interface EvaluationDimensions {
@@ -132,6 +144,7 @@ export interface JobEvaluateResponse {
   recommendation: string
   from_cache?: boolean
   dimensions?: EvaluationDimensions | null
+  job_id?: number | null
 }
 
 export interface CoverLetterRequest {
@@ -139,11 +152,14 @@ export interface CoverLetterRequest {
   user_cv: string
   company_name?: string
   user_name?: string
+  job_url?: string | null
+  job_id?: number | null
 }
 
 export interface CoverLetterResponse {
   id: number
   letter: string
+  job_id?: number | null
 }
 
 export interface CoverLetterRecord {
@@ -158,11 +174,13 @@ export interface ResumeRewriteRequest {
   job_text: string
   user_cv: string
   job_url?: string | null
+  job_id?: number | null
 }
 
 export interface ResumeRewriteResponse {
   id: number
   result: string
+  job_id?: number | null
 }
 
 export interface ResumeRewriteRecord {
@@ -229,10 +247,13 @@ export interface RagDocumentResponse {
 
 export interface MockInterviewRequest {
   job_text: string
+  job_url?: string | null
+  job_id?: number | null
 }
 
 export interface MockInterviewResponse {
   id?: number;
+  job_id?: number | null;
   technical_questions: string[];
   behavioral_questions: string[];
   tips: string;
@@ -252,10 +273,12 @@ export interface ResumeMatchRequest {
   job_text: string
   job_url?: string
   user_cv: string
+  job_id?: number | null
 }
 
 export interface ResumeMatchResponse {
   id?: number;
+  job_id?: number | null;
   gap_analysis: string;
   answer_strategy: string;
   match_score: number;
