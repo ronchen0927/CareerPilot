@@ -18,17 +18,8 @@ JOB = {
 
 
 @pytest.fixture
-def db_file(tmp_path, monkeypatch):
-    path = tmp_path / "test.db"
-    monkeypatch.setattr("app.config.settings.DB_PATH", str(path))
-    monkeypatch.setattr("app.db._DB_PATH", path)
-    return path
-
-
-@pytest.fixture
-def app_client(db_file, request):
-    # Resolve `client` after the DB is redirected so lifespan's init_db() hits tmp_path.
-    return request.getfixturevalue("client")
+def app_client(client):
+    return client
 
 
 def _list(c):
@@ -131,15 +122,6 @@ def test_upsert_liveness_writes_jobs(app_client, db_file):
 
     status = app_client.post("/api/liveness/status", json={"urls": [JOB["url"]]}).json()
     assert status[JOB["url"]]["status"] == "dead"
-
-
-def test_liveness_targets_union_jobs_and_evaluations(app_client, db_file):
-    app_client.post("/api/applications", json=JOB)
-    asyncio.run(db.save_evaluation("h1", "jd", "https://example.com/eval", "A", "s", [], [], "r"))
-    asyncio.run(db.save_evaluation("h2", "jd", JOB["url"], "A", "s", [], [], "r"))
-    asyncio.run(db.save_evaluation("h3", "jd", None, "A", "s", [], [], "r"))
-    targets = asyncio.run(db.list_liveness_targets())
-    assert sorted(targets) == sorted([JOB["url"], "https://example.com/eval"])
 
 
 def test_connect_enables_foreign_keys(db_file):

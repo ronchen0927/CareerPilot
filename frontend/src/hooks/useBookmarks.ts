@@ -25,7 +25,7 @@ async function fetchBookmarks(): Promise<Bookmarks> {
   await migrateLegacy().catch(err => console.error('bookmark import failed', err))
   const rows = await listApplications()
   return Object.fromEntries(
-    rows.map(r => [r.url, { job: r.job, date: r.date, company: r.company, city: r.city, salary: r.salary, status: r.status }]),
+    rows.map(r => [r.url, { id: r.id, job: r.job, date: r.date, company: r.company, city: r.city, salary: r.salary, status: r.status }]),
   )
 }
 

@@ -66,6 +66,7 @@ class JobEvaluateRequest(BaseModel):
     job: JobListing = Field(description="要評分的職缺")
     user_cv: str = Field(default="", description="求職者履歷或背景描述（選填）")
     job_description: str = Field(default="", description="職缺內文全文（選填）")
+    job_id: int | None = Field(default=None, description="關聯的 jobs.id（選填）")
 
 
 class JobEvaluateTextRequest(BaseModel):
@@ -74,6 +75,7 @@ class JobEvaluateTextRequest(BaseModel):
     job_text: str = Field(min_length=10, description="貼上的職缺描述文字")
     user_cv: str = Field(default="", description="求職者履歷或背景描述（選填）")
     job_url: str | None = Field(default=None, description="職缺來源網址（選填，供存活檢查）")
+    job_id: int | None = Field(default=None, description="關聯的 jobs.id（選填）")
 
 
 class EvaluationDimensions(BaseModel):
@@ -98,6 +100,7 @@ class JobEvaluateResponse(BaseModel):
     recommendation: str = Field(description="投遞建議")
     from_cache: bool = Field(default=False, description="是否來自快取（未重新呼叫 AI）")
     dimensions: EvaluationDimensions | None = Field(default=None, description="多維度評分細項")
+    job_id: int | None = Field(default=None, description="關聯的 jobs.id")
 
 
 class CoverLetterRequest(BaseModel):
@@ -107,6 +110,8 @@ class CoverLetterRequest(BaseModel):
     user_cv: str = Field(default="", description="求職者履歷或背景描述")
     company_name: str = Field(default="", description="招募公司名稱（選填，用於開頭稱呼）")
     user_name: str = Field(default="", description="求職者姓名（選填，用於結尾署名）")
+    job_url: str | None = Field(default=None, description="職缺網址（選填）")
+    job_id: int | None = Field(default=None, description="關聯的 jobs.id（選填）")
 
 
 class CoverLetterResponse(BaseModel):
@@ -114,6 +119,7 @@ class CoverLetterResponse(BaseModel):
 
     id: int = Field(description="資料庫記錄 ID")
     letter: str = Field(description="推薦信內文")
+    job_id: int | None = Field(default=None, description="關聯的 jobs.id")
 
 
 class ExtractCompanyRequest(BaseModel):
@@ -144,6 +150,7 @@ class ResumeRewriteRequest(BaseModel):
     job_text: str = Field(min_length=10, description="職缺描述文字")
     user_cv: str = Field(min_length=1, description="原始履歷內容")
     job_url: str | None = Field(default=None, description="職缺原始網址（選填）")
+    job_id: int | None = Field(default=None, description="關聯的 jobs.id（選填）")
 
 
 class ResumeRewriteResponse(BaseModel):
@@ -151,6 +158,7 @@ class ResumeRewriteResponse(BaseModel):
 
     id: int = Field(description="資料庫記錄 ID")
     result: str = Field(description="改寫後的履歷全文（語言與原始履歷一致）")
+    job_id: int | None = Field(default=None, description="關聯的 jobs.id")
 
 
 class ResumeRewriteRecord(BaseModel):
@@ -210,10 +218,13 @@ class RagDocumentResponse(BaseModel):
 
 class MockInterviewRequest(BaseModel):
     job_text: str = Field(description="職缺描述全文")
+    job_url: str | None = Field(default=None, description="職缺網址（選填）")
+    job_id: int | None = Field(default=None, description="關聯的 jobs.id（選填）")
 
 
 class MockInterviewResponse(BaseModel):
     id: int | None = Field(default=None, description="儲存的 ID")
+    job_id: int | None = Field(default=None, description="關聯的 jobs.id")
     technical_questions: list[str] = Field(description="技術面試問題")
     behavioral_questions: list[str] = Field(description="行為面試問題")
     tips: str = Field(description="準備建議")
@@ -226,10 +237,12 @@ class ResumeMatchRequest(BaseModel):
     job_text: str = Field(..., description="目標職缺描述")
     user_cv: str = Field(..., description="求職者履歷")
     job_url: str | None = Field(default=None, description="職缺網址（選填）")
+    job_id: int | None = Field(default=None, description="關聯的 jobs.id（選填）")
 
 
 class ResumeMatchResponse(BaseModel):
     id: int | None = Field(default=None, description="儲存的 ID")
+    job_id: int | None = Field(default=None, description="關聯的 jobs.id")
     gap_analysis: str = Field(description="能力缺口分析")
     answer_strategy: str = Field(description="答題策略")
     match_score: int = Field(ge=0, le=100, description="契合度分數")

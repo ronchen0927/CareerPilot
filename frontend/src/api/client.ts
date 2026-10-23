@@ -16,6 +16,7 @@ import type {
   JobEvaluateResponse,
   JobEvaluateTextRequest,
   JobListing,
+  JobRecords,
   JobOptions,
   JobSearchRequest,
   JobSearchResponse,
@@ -287,6 +288,10 @@ export function setApplicationStatus(url: string, status: BookmarkStatus): Promi
     method: 'PATCH',
     body: JSON.stringify({ url, status }),
   })
+}
+
+export function fetchJobRecords(jobId: number): Promise<JobRecords> {
+  return apiFetch<JobRecords>(`/api/applications/${jobId}/records`)
 }
 
 export function deleteApplication(url: string): Promise<void> {

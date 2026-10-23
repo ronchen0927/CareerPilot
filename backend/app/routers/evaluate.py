@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from openai import AsyncOpenAI
 
 from ..config import settings
-from ..db import get_cached, save_evaluation, set_evaluation_url
+from ..db import backfill_evaluation, get_cached, get_or_create_job, save_evaluation
 from ..models import (
     EvaluationDimensions,
     JobEvaluateRequest,
@@ -71,6 +71,19 @@ async def _call_openai(client: AsyncOpenAI, prompt: str) -> JobEvaluateResponse:
     )
 
 
+async def _cached_response(
+    cached: dict, job_url: str | None, job_text: str, title: str, company: str, job_id: int | None
+) -> JobEvaluateResponse:
+    """Cache hit: link the old record to a job if it predates job_id / job_url."""
+    if cached["job_id"] is None or (job_url and not cached["job_url"]):
+        job_id = await get_or_create_job(
+            cached["job_url"] or job_url, job_text, title, company, job_id or cached["job_id"]
+        )
+        await backfill_evaluation(cached["id"], job_url, job_id)
+        cached = {**cached, "job_id": cached["job_id"] or job_id}
+    return _row_to_response(cached)
+
+
 def _row_to_response(row: dict) -> JobEvaluateResponse:
     dimensions: EvaluationDimensions | None = None
     if row.get("dimensions"):
@@ -86,6 +99,7 @@ def _row_to_response(row: dict) -> JobEvaluateResponse:
         recommendation=row["recommendation"],
         from_cache=True,
         dimensions=dimensions,
+        job_id=row.get("job_id"),
     )
 
 
@@ -97,9 +111,14 @@ async def evaluate_job(request: JobEvaluateRequest):
     job_repr = f"{job.job}|{job.company}|{job.city}|{job.experience}|{job.education}|{job.salary}"
     job_hash = _compute_hash(job_repr, request.user_cv.strip(), request.job_description.strip())
 
+    job_url = job.link or None
+    job_text = request.job_description.strip() or job_repr
+
     cached = await get_cached(job_hash)
     if cached:
-        return _row_to_response(cached)
+        return await _cached_response(
+            cached, job_url, job_text, job.job, job.company, request.job_id
+        )
 
     client = _make_openai_client()
     cv_section = f"\n\n## 求職者背景\n{request.user_cv.strip()}" if request.user_cv.strip() else ""
@@ -132,16 +151,18 @@ async def evaluate_job(request: JobEvaluateRequest):
 All text values must be written in Traditional Chinese (繁體中文).
 """
     result = await _call_openai(client, prompt)
+    result.job_id = await get_or_create_job(job_url, job_text, job.job, job.company, request.job_id)
     await save_evaluation(
         job_hash=job_hash,
         job_text=job_repr,
-        job_url=job.link or None,
+        job_url=job_url,
         score=result.score,
         summary=result.summary,
         match_points=result.match_points,
         gap_points=result.gap_points,
         recommendation=result.recommendation,
         dimensions=result.dimensions.model_dump() if result.dimensions else None,
+        job_id=result.job_id,
     )
     return result
 
@@ -152,11 +173,11 @@ async def evaluate_job_text(request: JobEvaluateTextRequest):
     job_hash = _compute_hash(request.job_text.strip(), request.user_cv.strip())
     job_url = (request.job_url or "").strip() or None
 
+    job_text = request.job_text.strip()
+
     cached = await get_cached(job_hash)
     if cached:
-        if job_url and not cached["job_url"]:
-            await set_evaluation_url(cached["id"], job_url)
-        return _row_to_response(cached)
+        return await _cached_response(cached, job_url, job_text, "", "", request.job_id)
 
     client = _make_openai_client()
     cv_section = f"\n\n## 求職者背景\n{request.user_cv.strip()}" if request.user_cv.strip() else ""
@@ -179,9 +200,10 @@ async def evaluate_job_text(request: JobEvaluateTextRequest):
 All text values must be written in Traditional Chinese (繁體中文).
 """
     result = await _call_openai(client, prompt)
+    result.job_id = await get_or_create_job(job_url, job_text, job_id=request.job_id)
     await save_evaluation(
         job_hash=job_hash,
-        job_text=request.job_text.strip(),
+        job_text=job_text,
         job_url=job_url,
         score=result.score,
         summary=result.summary,
@@ -189,5 +211,6 @@ All text values must be written in Traditional Chinese (繁體中文).
         gap_points=result.gap_points,
         recommendation=result.recommendation,
         dimensions=result.dimensions.model_dump() if result.dimensions else None,
+        job_id=result.job_id,
     )
     return result

@@ -11,6 +11,7 @@ from ..db import (
     delete_rag_document,
     delete_resume_match,
     get_mock_interview,
+    get_or_create_job,
     get_resume_match,
     list_mock_interviews,
     list_rag_documents,
@@ -179,15 +180,20 @@ All text values must be written in Traditional Chinese (繁體中文)."""
         data = json.loads(response.choices[0].message.content or "{}")
 
         # 儲存到資料庫
+        job_id = await get_or_create_job(req.job_url, req.job_text, job_id=req.job_id)
         record_id = await save_mock_interview(
             job_text=req.job_text,
             technical_questions=data.get("technical_questions", []),
             behavioral_questions=data.get("behavioral_questions", []),
             tips=data.get("tips", ""),
+            job_id=job_id,
         )
 
         return MockInterviewResponse(
-            id=record_id, used_contexts=[d["content"] for d in retrieved_docs], **data
+            id=record_id,
+            job_id=job_id,
+            used_contexts=[d["content"] for d in retrieved_docs],
+            **data,
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"OpenAI API 錯誤：{e}") from e
@@ -227,6 +233,7 @@ All text values must be written in Traditional Chinese (繁體中文)."""
         data = json.loads(response.choices[0].message.content or "{}")
 
         # Save to database
+        job_id = await get_or_create_job(req.job_url, req.job_text, job_id=req.job_id)
         record_id = await save_resume_match(
             job_text=req.job_text,
             job_url=req.job_url,
@@ -234,10 +241,14 @@ All text values must be written in Traditional Chinese (繁體中文)."""
             gap_analysis=data.get("gap_analysis", ""),
             answer_strategy=data.get("answer_strategy", ""),
             match_score=data.get("match_score", 0),
+            job_id=job_id,
         )
 
         return ResumeMatchResponse(
-            id=record_id, used_contexts=[d["content"] for d in retrieved_docs], **data
+            id=record_id,
+            job_id=job_id,
+            used_contexts=[d["content"] for d in retrieved_docs],
+            **data,
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"OpenAI API 錯誤：{e}") from e

@@ -137,7 +137,84 @@ async def init_db() -> None:
             )
             """
         )
+        # #86 phase 2: link records to jobs. Idempotent: add column, then backfill by url.
+        for table in _JOB_LINKED_TABLES:
+            async with db.execute(f"PRAGMA table_info({table})") as cur:
+                cols = {row[1] for row in await cur.fetchall()}
+            if "job_id" not in cols:
+                await db.execute(
+                    f"ALTER TABLE {table} ADD COLUMN job_id INTEGER"
+                    " REFERENCES jobs(id) ON DELETE SET NULL"
+                )
+        await db.execute(
+            "INSERT OR IGNORE INTO jobs (url, job_text)"
+            " SELECT job_url, job_text FROM evaluations WHERE job_url IS NOT NULL"
+        )
+        for table in ("evaluations", "resume_rewrites", "resume_matches"):
+            await db.execute(
+                f"UPDATE {table} SET job_id = (SELECT id FROM jobs WHERE url = {table}.job_url)"  # noqa: S608
+                " WHERE job_id IS NULL AND job_url IS NOT NULL"
+            )
         await db.commit()
+
+
+_JOB_LINKED_TABLES = (
+    "evaluations",
+    "cover_letters",
+    "resume_rewrites",
+    "resume_matches",
+    "mock_interviews",
+)
+
+
+async def get_or_create_job(
+    url: str | None,
+    job_text: str,
+    title: str = "",
+    company: str = "",
+    job_id: int | None = None,
+) -> int:
+    """Return job_id if that row exists (giving it url if it had none); else the jobs
+    row for url (created off-kanban if new); else a fresh url-less row.
+    Existing rows only get blank fields filled, so kanban state is never touched."""
+    async with _connect() as db:
+        if job_id is not None:
+            async with db.execute("SELECT id FROM jobs WHERE id = ?", (job_id,)) as cur:
+                if await cur.fetchone():
+                    if url:  # OR IGNORE: url already on another row → liveness covers it there
+                        await db.execute(
+                            "UPDATE OR IGNORE jobs SET url = ? WHERE id = ? AND url IS NULL",
+                            (url, job_id),
+                        )
+                        await db.commit()
+                    return job_id
+        cur = await db.execute(
+            """
+            INSERT INTO jobs (url, job_text, job, company) VALUES (?, ?, ?, ?)
+            ON CONFLICT(url) DO UPDATE SET
+                job_text = COALESCE(jobs.job_text, excluded.job_text),
+                job      = CASE WHEN jobs.job = '' THEN excluded.job ELSE jobs.job END,
+                company  = CASE WHEN jobs.company = '' THEN excluded.company ELSE jobs.company END
+            RETURNING id
+            """,
+            (url or None, job_text, title, company),
+        )
+        new_id = (await cur.fetchone())[0]
+        await db.commit()
+        return new_id
+
+
+async def list_job_records(job_id: int) -> dict[str, list[int]]:
+    """Ids of every record linked to a job, per table, newest first."""
+    out: dict[str, list[int]] = {}
+    async with _connect() as db:
+        for table in _JOB_LINKED_TABLES:
+            async with db.execute(
+                f"SELECT id FROM {table} WHERE job_id = ? ORDER BY id DESC",  # noqa: S608
+                (job_id,),
+            ) as cur:
+                out[table] = [r[0] for r in await cur.fetchall()]
+    return out
 
 
 async def get_evaluation(record_id: int) -> dict | None:
@@ -168,14 +245,15 @@ async def save_evaluation(
     gap_points: list[str],
     recommendation: str,
     dimensions: dict | None = None,
+    job_id: int | None = None,
 ) -> int:
     async with _connect() as db:
         cur = await db.execute(
             """
             INSERT INTO evaluations
                 (job_hash, job_text, job_url, score, summary,
-                 match_points, gap_points, recommendation, dimensions)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 match_points, gap_points, recommendation, dimensions, job_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 job_hash,
@@ -187,18 +265,20 @@ async def save_evaluation(
                 json.dumps(gap_points, ensure_ascii=False),
                 recommendation,
                 json.dumps(dimensions, ensure_ascii=False) if dimensions else None,
+                job_id,
             ),
         )
         await db.commit()
         return cur.lastrowid  # type: ignore[return-value]
 
 
-async def set_evaluation_url(record_id: int, job_url: str) -> None:
-    """Backfill job_url on an evaluation that was saved without one."""
+async def backfill_evaluation(record_id: int, job_url: str | None, job_id: int) -> None:
+    """Fill job_url / job_id on an evaluation that was saved without them."""
     async with _connect() as db:
         await db.execute(
-            "UPDATE evaluations SET job_url = ? WHERE id = ? AND job_url IS NULL",
-            (job_url, record_id),
+            "UPDATE evaluations SET job_url = COALESCE(job_url, ?), job_id = COALESCE(job_id, ?)"
+            " WHERE id = ?",
+            (job_url, job_id, record_id),
         )
         await db.commit()
 
@@ -221,11 +301,11 @@ async def delete_evaluation(record_id: int) -> bool:
 # ── Cover letters ─────────────────────────────────────────────────────────────
 
 
-async def save_cover_letter(job_text: str, letter: str) -> int:
+async def save_cover_letter(job_text: str, letter: str, job_id: int | None = None) -> int:
     async with _connect() as db:
         cur = await db.execute(
-            "INSERT INTO cover_letters (job_text, letter) VALUES (?, ?)",
-            (job_text, letter),
+            "INSERT INTO cover_letters (job_text, letter, job_id) VALUES (?, ?, ?)",
+            (job_text, letter, job_id),
         )
         await db.commit()
         return cur.lastrowid  # type: ignore[return-value]
@@ -262,15 +342,16 @@ async def save_resume_rewrite(
     job_url: str | None,
     original_cv: str,
     result: str,
+    job_id: int | None = None,
 ) -> int:
     async with _connect() as db:
         cur = await db.execute(
             """
             INSERT INTO resume_rewrites
-                (job_text, job_url, original_cv, mode, result)
-            VALUES (?, ?, ?, 'plain', ?)
+                (job_text, job_url, original_cv, mode, result, job_id)
+            VALUES (?, ?, ?, 'plain', ?, ?)
             """,
-            (job_text, job_url, original_cv, result),
+            (job_text, job_url, original_cv, result, job_id),
         )
         await db.commit()
         return cur.lastrowid  # type: ignore[return-value]
@@ -346,16 +427,9 @@ async def get_liveness_fail_count(job_url: str) -> int:
 
 
 async def list_liveness_targets() -> list[str]:
-    """Distinct urls from jobs plus evaluations.job_url.
-
-    Transitional (#86 phase 1): evaluations don't write to jobs yet, so their urls
-    are unioned in. Drop the evaluations half once phase 2 links them via job_id.
-    """
+    """Every job url (evaluations with a url always have a jobs row)."""
     async with _connect() as db:
-        async with db.execute(
-            "SELECT url FROM jobs WHERE url IS NOT NULL"
-            " UNION SELECT job_url FROM evaluations WHERE job_url IS NOT NULL"
-        ) as cur:
+        async with db.execute("SELECT url FROM jobs WHERE url IS NOT NULL") as cur:
             rows = await cur.fetchall()
     return [r[0] for r in rows]
 
@@ -405,15 +479,16 @@ async def save_resume_match(
     gap_analysis: str,
     answer_strategy: str,
     match_score: int,
+    job_id: int | None = None,
 ) -> int:
     async with _connect() as db:
         cur = await db.execute(
             """
             INSERT INTO resume_matches
-                (job_text, job_url, user_cv, gap_analysis, answer_strategy, match_score)
-            VALUES (?, ?, ?, ?, ?, ?)
+                (job_text, job_url, user_cv, gap_analysis, answer_strategy, match_score, job_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            (job_text, job_url, user_cv, gap_analysis, answer_strategy, match_score),
+            (job_text, job_url, user_cv, gap_analysis, answer_strategy, match_score, job_id),
         )
         await db.commit()
         return cur.lastrowid  # type: ignore[return-value]
@@ -450,19 +525,21 @@ async def save_mock_interview(
     technical_questions: list[str],
     behavioral_questions: list[str],
     tips: str,
+    job_id: int | None = None,
 ) -> int:
     async with _connect() as db:
         cur = await db.execute(
             """
             INSERT INTO mock_interviews
-                (job_text, technical_questions, behavioral_questions, tips)
-            VALUES (?, ?, ?, ?)
+                (job_text, technical_questions, behavioral_questions, tips, job_id)
+            VALUES (?, ?, ?, ?, ?)
             """,
             (
                 job_text,
                 json.dumps(technical_questions, ensure_ascii=False),
                 json.dumps(behavioral_questions, ensure_ascii=False),
                 tips,
+                job_id,
             ),
         )
         await db.commit()
@@ -541,7 +618,7 @@ async def update_application_status(url: str, status: str) -> bool:
 
 
 async def unboard_application(url: str) -> bool:
-    """Take a job off the kanban. The row stays: liveness (and later job_id refs) use it."""
+    """Take a job off the kanban. The row stays: liveness and job_id refs use it."""
     async with _connect() as db:
         cur = await db.execute(
             "UPDATE jobs SET status = NULL, status_changed_at = datetime('now','localtime')"
