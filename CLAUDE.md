@@ -48,7 +48,7 @@ backend/
     scraper_yourator.py # Async scraper for Yourator via aiohttp (JSON API); supports categories & salary_min/max
     scraper_michaelpage.py # Async scraper for Michael Page Taiwan via aiohttp (Drupal SSR HTML + BeautifulSoup)
     openai_client.py  # get_openai_client(): shared AsyncOpenAI factory + 503 guard when OPENAI_API_KEY is unset
-    fetchers.py       # Shared HTTP helpers: fetch_104_detail, fetch_with_aiohttp (trafilatura/Goose3), fetch_with_playwright
+    fetchers.py       # Shared HTTP helpers: fetch_104_detail, fetch_with_aiohttp (trafilatura), fetch_with_playwright
     alerts.py         # load_alerts() / save_alerts() — persists to backend/alerts.json
     liveness.py       # Background liveness loop: checks evaluated job URLs every 6 h; debounce threshold = 2
     scheduler.py      # Background asyncio loop: checks due alerts, scrapes, notifies
@@ -127,9 +127,9 @@ static/                 # Served at /static by FastAPI
 
 **Fetchers (`fetchers.py`):** Shared HTTP helpers used by the URL-fetch endpoint and the liveness checker.
 - `fetch_104_detail(url)` — calls `https://www.104.com.tw/job/ajax/content/{job_id}` and formats structured job data as plain text.
-- `fetch_with_aiohttp(url)` — lightweight GET with trafilatura → Goose3 fallback for HTML extraction. Returns `None` on failure.
+- `fetch_with_aiohttp(url)` — lightweight GET with trafilatura HTML extraction. Returns `None` on failure.
 - `fetch_with_playwright(url)` — headless Chromium fallback; waits for `networkidle`, extracts parsed text.
-- `parse_html(html)` — strips `<noscript>` blocks, runs trafilatura then Goose3.
+- `parse_html(html)` — strips `<noscript>` blocks, runs trafilatura (which has its own readability/justext fallback).
 
 **URL fetch endpoint (`fetch_url.py`):** `POST /api/jobs/fetch-url` uses a three-tier strategy: 104 detail API → aiohttp+trafilatura → Playwright. Returns 422 if content is too short (likely blocked).
 

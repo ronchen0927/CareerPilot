@@ -7,7 +7,6 @@ import re
 
 import aiohttp
 import trafilatura
-from goose3 import Goose
 from playwright.async_api import TimeoutError as PlaywrightTimeout
 from playwright.async_api import async_playwright
 
@@ -33,20 +32,10 @@ _HEADERS = {
 
 
 def parse_html(html: str) -> str:
-    """Extract main content from HTML using trafilatura → Goose3 fallback."""
+    """Extract main content from HTML using trafilatura (falls back to readability/justext)."""
     html = _NOSCRIPT_RE.sub("", html)
     text = trafilatura.extract(html, include_comments=False, include_tables=True)
-    if text and text.strip():
-        return text.strip()
-    try:
-        g = Goose()
-        article = g.extract(raw_html=html)
-        text = article.cleaned_text
-        if text and text.strip():
-            return text.strip()
-    except Exception:
-        pass
-    return ""
+    return (text or "").strip()
 
 
 def _format_104_data(data: dict) -> str:
@@ -141,7 +130,7 @@ async def fetch_104_detail(url: str) -> str:
 
 
 async def fetch_with_aiohttp(url: str) -> str | None:
-    """Try to fetch the page with aiohttp + trafilatura/Goose3. Returns None on failure."""
+    """Try to fetch the page with aiohttp + trafilatura. Returns None on failure."""
     try:
         timeout = aiohttp.ClientTimeout(total=FETCH_TIMEOUT_S)
         async with aiohttp.ClientSession(headers=_HEADERS, timeout=timeout) as session:
