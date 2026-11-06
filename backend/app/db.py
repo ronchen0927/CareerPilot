@@ -1,6 +1,7 @@
 import json
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from functools import partial
 
 import aiosqlite
 
@@ -207,12 +208,34 @@ async def list_job_records(job_id: int) -> dict[str, list[int]]:
     return out
 
 
-async def get_evaluation(record_id: int) -> dict | None:
+def _table(table: str) -> str:
+    # Table names can't be bound as parameters, so only hard-coded names reach the SQL.
+    if table not in _JOB_LINKED_TABLES:
+        raise ValueError(f"unknown table: {table}")
+    return table
+
+
+async def _list(table: str) -> list[dict]:
     async with _connect() as db:
         db.row_factory = aiosqlite.Row
-        async with db.execute("SELECT * FROM evaluations WHERE id = ?", (record_id,)) as cur:
+        async with db.execute(f"SELECT * FROM {_table(table)} ORDER BY created_at DESC") as cur:  # noqa: S608
+            rows = await cur.fetchall()
+    return [dict(r) for r in rows]
+
+
+async def _get(table: str, record_id: int) -> dict | None:
+    async with _connect() as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(f"SELECT * FROM {_table(table)} WHERE id = ?", (record_id,)) as cur:  # noqa: S608
             row = await cur.fetchone()
     return dict(row) if row else None
+
+
+async def _delete(table: str, record_id: int) -> bool:
+    async with _connect() as db:
+        cur = await db.execute(f"DELETE FROM {_table(table)} WHERE id = ?", (record_id,))  # noqa: S608
+        await db.commit()
+        return cur.rowcount > 0
 
 
 async def get_cached(job_hash: str) -> dict | None:
@@ -273,19 +296,9 @@ async def backfill_evaluation(record_id: int, job_url: str | None, job_id: int) 
         await db.commit()
 
 
-async def list_evaluations() -> list[dict]:
-    async with _connect() as db:
-        db.row_factory = aiosqlite.Row
-        async with db.execute("SELECT * FROM evaluations ORDER BY created_at DESC") as cur:
-            rows = await cur.fetchall()
-    return [dict(r) for r in rows]
-
-
-async def delete_evaluation(record_id: int) -> bool:
-    async with _connect() as db:
-        cur = await db.execute("DELETE FROM evaluations WHERE id = ?", (record_id,))
-        await db.commit()
-        return cur.rowcount > 0
+list_evaluations = partial(_list, "evaluations")
+get_evaluation = partial(_get, "evaluations")
+delete_evaluation = partial(_delete, "evaluations")
 
 
 # ── Cover letters ─────────────────────────────────────────────────────────────
@@ -301,27 +314,9 @@ async def save_cover_letter(job_text: str, letter: str, job_id: int | None = Non
         return cur.lastrowid  # type: ignore[return-value]
 
 
-async def list_cover_letters() -> list[dict]:
-    async with _connect() as db:
-        db.row_factory = aiosqlite.Row
-        async with db.execute("SELECT * FROM cover_letters ORDER BY created_at DESC") as cur:
-            rows = await cur.fetchall()
-    return [dict(r) for r in rows]
-
-
-async def get_cover_letter(record_id: int) -> dict | None:
-    async with _connect() as db:
-        db.row_factory = aiosqlite.Row
-        async with db.execute("SELECT * FROM cover_letters WHERE id = ?", (record_id,)) as cur:
-            row = await cur.fetchone()
-    return dict(row) if row else None
-
-
-async def delete_cover_letter(record_id: int) -> bool:
-    async with _connect() as db:
-        cur = await db.execute("DELETE FROM cover_letters WHERE id = ?", (record_id,))
-        await db.commit()
-        return cur.rowcount > 0
+list_cover_letters = partial(_list, "cover_letters")
+get_cover_letter = partial(_get, "cover_letters")
+delete_cover_letter = partial(_delete, "cover_letters")
 
 
 # ── Resume rewrites ───────────────────────────────────────────────────────────
@@ -347,27 +342,9 @@ async def save_resume_rewrite(
         return cur.lastrowid  # type: ignore[return-value]
 
 
-async def list_resume_rewrites() -> list[dict]:
-    async with _connect() as db:
-        db.row_factory = aiosqlite.Row
-        async with db.execute("SELECT * FROM resume_rewrites ORDER BY created_at DESC") as cur:
-            rows = await cur.fetchall()
-    return [dict(r) for r in rows]
-
-
-async def get_resume_rewrite(record_id: int) -> dict | None:
-    async with _connect() as db:
-        db.row_factory = aiosqlite.Row
-        async with db.execute("SELECT * FROM resume_rewrites WHERE id = ?", (record_id,)) as cur:
-            row = await cur.fetchone()
-    return dict(row) if row else None
-
-
-async def delete_resume_rewrite(record_id: int) -> bool:
-    async with _connect() as db:
-        cur = await db.execute("DELETE FROM resume_rewrites WHERE id = ?", (record_id,))
-        await db.commit()
-        return cur.rowcount > 0
+list_resume_rewrites = partial(_list, "resume_rewrites")
+get_resume_rewrite = partial(_get, "resume_rewrites")
+delete_resume_rewrite = partial(_delete, "resume_rewrites")
 
 
 # ── Job liveness ──────────────────────────────────────────────────────────────
@@ -484,27 +461,9 @@ async def save_resume_match(
         return cur.lastrowid  # type: ignore[return-value]
 
 
-async def list_resume_matches() -> list[dict]:
-    async with _connect() as db:
-        db.row_factory = aiosqlite.Row
-        async with db.execute("SELECT * FROM resume_matches ORDER BY created_at DESC") as cur:
-            rows = await cur.fetchall()
-    return [dict(r) for r in rows]
-
-
-async def get_resume_match(record_id: int) -> dict | None:
-    async with _connect() as db:
-        db.row_factory = aiosqlite.Row
-        async with db.execute("SELECT * FROM resume_matches WHERE id = ?", (record_id,)) as cur:
-            row = await cur.fetchone()
-    return dict(row) if row else None
-
-
-async def delete_resume_match(record_id: int) -> bool:
-    async with _connect() as db:
-        cur = await db.execute("DELETE FROM resume_matches WHERE id = ?", (record_id,))
-        await db.commit()
-        return cur.rowcount > 0
+list_resume_matches = partial(_list, "resume_matches")
+get_resume_match = partial(_get, "resume_matches")
+delete_resume_match = partial(_delete, "resume_matches")
 
 
 # ── Mock Interviews ────────────────────────────────────────────────────────────
@@ -536,27 +495,9 @@ async def save_mock_interview(
         return cur.lastrowid  # type: ignore[return-value]
 
 
-async def list_mock_interviews() -> list[dict]:
-    async with _connect() as db:
-        db.row_factory = aiosqlite.Row
-        async with db.execute("SELECT * FROM mock_interviews ORDER BY created_at DESC") as cur:
-            rows = await cur.fetchall()
-    return [dict(r) for r in rows]
-
-
-async def get_mock_interview(record_id: int) -> dict | None:
-    async with _connect() as db:
-        db.row_factory = aiosqlite.Row
-        async with db.execute("SELECT * FROM mock_interviews WHERE id = ?", (record_id,)) as cur:
-            row = await cur.fetchone()
-    return dict(row) if row else None
-
-
-async def delete_mock_interview(record_id: int) -> bool:
-    async with _connect() as db:
-        cur = await db.execute("DELETE FROM mock_interviews WHERE id = ?", (record_id,))
-        await db.commit()
-        return cur.rowcount > 0
+list_mock_interviews = partial(_list, "mock_interviews")
+get_mock_interview = partial(_get, "mock_interviews")
+delete_mock_interview = partial(_delete, "mock_interviews")
 
 
 # ── Jobs on the kanban (/api/applications) ────────────────────────────────────
