@@ -40,8 +40,8 @@ def _make_fake_stream(contents: list[str]):
 class TestChat:
     def test_streams_text_response(self, client):
         with (
-            patch("app.routers.chat.settings") as mock_settings,
-            patch("app.routers.chat.AsyncOpenAI") as MockAI,
+            patch("app.openai_client.settings") as mock_settings,
+            patch("app.openai_client.AsyncOpenAI") as MockAI,
         ):
             mock_settings.OPENAI_API_KEY = "sk-test"
             inst = MagicMock()
@@ -61,8 +61,8 @@ class TestChat:
 
     def test_empty_messages_still_returns_200(self, client):
         with (
-            patch("app.routers.chat.settings") as mock_settings,
-            patch("app.routers.chat.AsyncOpenAI") as MockAI,
+            patch("app.openai_client.settings") as mock_settings,
+            patch("app.openai_client.AsyncOpenAI") as MockAI,
         ):
             mock_settings.OPENAI_API_KEY = "sk-test"
             inst = MagicMock()
@@ -75,7 +75,7 @@ class TestChat:
         assert resp.status_code == 200
 
     def test_missing_openai_key_returns_503(self, client):
-        with patch("app.routers.chat.settings") as mock_settings:
+        with patch("app.openai_client.settings") as mock_settings:
             mock_settings.OPENAI_API_KEY = ""
             resp = client.post(
                 "/api/chat",
@@ -109,8 +109,8 @@ class TestChat:
             return _make_fake_stream(["OK"])
 
         with (
-            patch("app.routers.chat.settings") as mock_settings,
-            patch("app.routers.chat.AsyncOpenAI") as MockAI,
+            patch("app.openai_client.settings") as mock_settings,
+            patch("app.openai_client.AsyncOpenAI") as MockAI,
         ):
             mock_settings.OPENAI_API_KEY = "sk-test"
             inst = MagicMock()
@@ -132,8 +132,8 @@ class TestChat:
 
     def test_openai_error_yields_warning_marker(self, client):
         with (
-            patch("app.routers.chat.settings") as mock_settings,
-            patch("app.routers.chat.AsyncOpenAI") as MockAI,
+            patch("app.openai_client.settings") as mock_settings,
+            patch("app.openai_client.AsyncOpenAI") as MockAI,
         ):
             mock_settings.OPENAI_API_KEY = "sk-test"
             inst = MagicMock()

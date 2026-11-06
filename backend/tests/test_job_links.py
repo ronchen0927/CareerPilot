@@ -26,7 +26,7 @@ def _ai(content: str) -> MagicMock:
 def _evaluate_text(client, **extra):
     fake = JobEvaluateResponse(score="A", summary="s", recommendation="r")
     with (
-        patch("app.routers.evaluate.settings") as s,
+        patch("app.openai_client.settings") as s,
         patch("app.routers.evaluate._call_openai", AsyncMock(return_value=fake)),
     ):
         s.OPENAI_API_KEY = "sk-test"
@@ -46,7 +46,7 @@ def _evaluate_structured(client, **extra):
         "salary": "面議",
     }
     with (
-        patch("app.routers.evaluate.settings") as s,
+        patch("app.openai_client.settings") as s,
         patch("app.routers.evaluate._call_openai", AsyncMock(return_value=fake)),
     ):
         s.OPENAI_API_KEY = "sk-test"
@@ -55,8 +55,8 @@ def _evaluate_structured(client, **extra):
 
 def _cover_letter(client, **extra):
     with (
-        patch("app.routers.cover_letter.settings") as s,
-        patch("app.routers.cover_letter.AsyncOpenAI", return_value=_ai("信件內容")),
+        patch("app.openai_client.settings") as s,
+        patch("app.openai_client.AsyncOpenAI", return_value=_ai("信件內容")),
     ):
         s.OPENAI_API_KEY = "sk-test"
         return client.post("/api/jobs/cover-letter", json={"job_text": JD, **extra})
@@ -64,8 +64,8 @@ def _cover_letter(client, **extra):
 
 def _resume_rewrite(client, **extra):
     with (
-        patch("app.routers.resume.settings") as s,
-        patch("app.routers.resume.AsyncOpenAI", return_value=_ai("改寫後履歷")),
+        patch("app.openai_client.settings") as s,
+        patch("app.openai_client.AsyncOpenAI", return_value=_ai("改寫後履歷")),
     ):
         s.OPENAI_API_KEY = "sk-test"
         return client.post(
@@ -75,8 +75,8 @@ def _resume_rewrite(client, **extra):
 
 def _rag(client, path, content, **extra):
     with (
-        patch("app.routers.rag.settings") as s,
-        patch("app.routers.rag.AsyncOpenAI", return_value=_ai(json.dumps(content))),
+        patch("app.openai_client.settings") as s,
+        patch("app.openai_client.AsyncOpenAI", return_value=_ai(json.dumps(content))),
         patch("app.routers.rag._get_embedding", AsyncMock(return_value=[1.0])),
     ):
         s.OPENAI_API_KEY = "sk-test"

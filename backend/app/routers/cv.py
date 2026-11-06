@@ -3,10 +3,9 @@ import json
 
 import pdfplumber
 from fastapi import APIRouter, HTTPException, UploadFile
-from openai import AsyncOpenAI
 
-from ..config import settings
 from ..models import CVSuggestKeywordsRequest, CVSuggestKeywordsResponse
+from ..openai_client import get_openai_client
 
 router = APIRouter(prefix="/api/cv", tags=["cv"])
 
@@ -39,13 +38,7 @@ async def parse_cv(file: UploadFile):
 @router.post("/suggest-keywords", response_model=CVSuggestKeywordsResponse)
 async def suggest_keywords(request: CVSuggestKeywordsRequest):
     """根據履歷內容，用 AI 建議 3-5 組求職關鍵字"""
-    if not settings.OPENAI_API_KEY:
-        raise HTTPException(
-            status_code=503,
-            detail="尚未設定 OPENAI_API_KEY，請在 backend/.env 加入 OPENAI_API_KEY=sk-...",
-        )
-
-    client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+    client = get_openai_client()
     prompt = f"""You are a career advisor. Based on the resume below, suggest 3 to 5 Traditional Chinese job search keywords (職位名稱) that best match the candidate's skills and experience.
 
 ## Resume

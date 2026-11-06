@@ -47,6 +47,7 @@ backend/
     scraper_cake.py   # Async scraper for CakeResume via Playwright (extracts Next.js SSR data)
     scraper_yourator.py # Async scraper for Yourator via aiohttp (JSON API); supports categories & salary_min/max
     scraper_michaelpage.py # Async scraper for Michael Page Taiwan via aiohttp (Drupal SSR HTML + BeautifulSoup)
+    openai_client.py  # get_openai_client(): shared AsyncOpenAI factory + 503 guard when OPENAI_API_KEY is unset
     fetchers.py       # Shared HTTP helpers: fetch_104_detail, fetch_with_aiohttp (trafilatura/Goose3), fetch_with_playwright
     alerts.py         # load_alerts() / save_alerts() — persists to backend/alerts.json
     liveness.py       # Background liveness loop: checks evaluated job URLs every 6 h; debounce threshold = 2
@@ -136,7 +137,7 @@ static/                 # Served at /static by FastAPI
 
 **Liveness checker (`liveness.py`):** Background asyncio task that wakes every 6 hours. For each URL in `jobs` plus `evaluations.job_url` (transitional union until #86 phase 2), it calls `fetch_with_aiohttp` and looks for "closed" keywords. Uses a debounce of 2 consecutive failures before marking a job `dead`. Results stored in the `jobs` liveness columns. The `/api/liveness/check` endpoint triggers an immediate re-check.
 
-**AI Evaluation:** Two modes — structured (`/evaluate`, takes a `JobListing` object) and free-text (`/evaluate-text`, takes raw JD string). Both share `_make_openai_client` / `_call_openai` helpers. The free-text endpoint is used by `EvaluatePage`. Requires `OPENAI_API_KEY` in `.env`. Results are cached by content hash in `evaluations` table.
+**AI Evaluation:** Two modes — structured (`/evaluate`, takes a `JobListing` object) and free-text (`/evaluate-text`, takes raw JD string). Both share the `_call_openai` helper. The free-text endpoint is used by `EvaluatePage`. Requires `OPENAI_API_KEY` in `.env`. Results are cached by content hash in `evaluations` table.
 
 **RAG Pipeline (`rag.py`):** Provides a pure Python implementation of Vector Search using Cosine Similarity over OpenAI `text-embedding-3-small` embeddings. User can upload CV text which gets split and extracted into `rag_documents`. When generating mock interviews (`/api/rag/mock-interview`) or resume matches (`/api/rag/resume-match`), relevant chunks are fetched and injected into the LLM context. `used_contexts` is returned for explainability. Both outputs persist in SQLite `mock_interviews` and `resume_matches` respectively.
 
@@ -155,7 +156,7 @@ static/                 # Served at /static by FastAPI
 - `run_scheduler` and `run_liveness_loop` are replaced with `AsyncMock` in the `client` fixture so the lifespan completes instantly.
 - DB tests use an in-memory or `tmp_path` SQLite file via monkeypatching `settings.DB_PATH`.
 - When patching functions that are imported lazily inside a function body (e.g. `_fetch_new_jobs` in `trigger_alert`), patch the source module (`app.scheduler`) not the importing module (`app.routers.alerts`).
-- AI endpoint tests must mock `settings.OPENAI_API_KEY` (e.g. `patch("app.routers.chat.settings")` with `mock_settings.OPENAI_API_KEY = "sk-test"`) — otherwise the 503 guard fires in CI where no `.env` exists.
+- All AI routers get their client from `app.openai_client.get_openai_client()`, which owns the `OPENAI_API_KEY` 503 guard. Tests must patch `app.openai_client.settings` (with `mock_settings.OPENAI_API_KEY = "sk-test"`) or `patch.object(settings, "OPENAI_API_KEY", ...)`, and `app.openai_client.AsyncOpenAI` — not the router module — otherwise the 503 guard fires in CI where no `.env` exists.
 
 ## Agent skills
 

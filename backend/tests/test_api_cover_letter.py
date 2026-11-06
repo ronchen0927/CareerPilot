@@ -16,8 +16,8 @@ class TestGenerateCoverLetterGreetingClosing:
     def test_returns_letter_with_company_and_name(self, client):
         inst = _make_mock_ai("親愛的 ACME 招募夥伴：\n\n正文內容...\n\n此致 敬禮\nPin Yuan Chen")
         with (
-            patch("app.routers.cover_letter.settings") as mock_settings,
-            patch("app.routers.cover_letter.AsyncOpenAI", return_value=inst),
+            patch("app.openai_client.settings") as mock_settings,
+            patch("app.openai_client.AsyncOpenAI", return_value=inst),
             patch("app.routers.cover_letter.save_cover_letter", new=AsyncMock(return_value=1)),
         ):
             mock_settings.OPENAI_API_KEY = "sk-test"
@@ -38,8 +38,8 @@ class TestGenerateCoverLetterGreetingClosing:
     def test_returns_letter_without_optional_fields(self, client):
         inst = _make_mock_ai("正文內容...")
         with (
-            patch("app.routers.cover_letter.settings") as mock_settings,
-            patch("app.routers.cover_letter.AsyncOpenAI", return_value=inst),
+            patch("app.openai_client.settings") as mock_settings,
+            patch("app.openai_client.AsyncOpenAI", return_value=inst),
             patch("app.routers.cover_letter.save_cover_letter", new=AsyncMock(return_value=2)),
         ):
             mock_settings.OPENAI_API_KEY = "sk-test"
@@ -53,7 +53,7 @@ class TestGenerateCoverLetterGreetingClosing:
         assert "id" in data
 
     def test_missing_openai_key_returns_503(self, client):
-        with patch("app.routers.cover_letter.settings") as mock_settings:
+        with patch("app.openai_client.settings") as mock_settings:
             mock_settings.OPENAI_API_KEY = ""
             resp = client.post(
                 "/api/jobs/cover-letter",
@@ -72,8 +72,8 @@ class TestGenerateCoverLetterGreetingClosing:
         inst = MagicMock()
         inst.chat.completions.create = AsyncMock(side_effect=Exception("rate limit"))
         with (
-            patch("app.routers.cover_letter.settings") as mock_settings,
-            patch("app.routers.cover_letter.AsyncOpenAI", return_value=inst),
+            patch("app.openai_client.settings") as mock_settings,
+            patch("app.openai_client.AsyncOpenAI", return_value=inst),
         ):
             mock_settings.OPENAI_API_KEY = "sk-test"
             resp = client.post(
@@ -87,8 +87,8 @@ class TestExtractCompanyName:
     def test_returns_company_name(self, client):
         inst = _make_mock_ai("ACME 科技")
         with (
-            patch("app.routers.cover_letter.settings") as mock_settings,
-            patch("app.routers.cover_letter.AsyncOpenAI", return_value=inst),
+            patch("app.openai_client.settings") as mock_settings,
+            patch("app.openai_client.AsyncOpenAI", return_value=inst),
         ):
             mock_settings.OPENAI_API_KEY = "sk-test"
             resp = client.post(
@@ -103,8 +103,8 @@ class TestExtractCompanyName:
     def test_returns_empty_string_when_not_found(self, client):
         inst = _make_mock_ai("")
         with (
-            patch("app.routers.cover_letter.settings") as mock_settings,
-            patch("app.routers.cover_letter.AsyncOpenAI", return_value=inst),
+            patch("app.openai_client.settings") as mock_settings,
+            patch("app.openai_client.AsyncOpenAI", return_value=inst),
         ):
             mock_settings.OPENAI_API_KEY = "sk-test"
             resp = client.post(
@@ -115,7 +115,7 @@ class TestExtractCompanyName:
         assert resp.json()["company_name"] == ""
 
     def test_missing_openai_key_returns_503(self, client):
-        with patch("app.routers.cover_letter.settings") as mock_settings:
+        with patch("app.openai_client.settings") as mock_settings:
             mock_settings.OPENAI_API_KEY = ""
             resp = client.post(
                 "/api/jobs/extract-company",
@@ -131,8 +131,8 @@ class TestExtractCompanyName:
         inst = MagicMock()
         inst.chat.completions.create = AsyncMock(side_effect=Exception("rate limit"))
         with (
-            patch("app.routers.cover_letter.settings") as mock_settings,
-            patch("app.routers.cover_letter.AsyncOpenAI", return_value=inst),
+            patch("app.openai_client.settings") as mock_settings,
+            patch("app.openai_client.AsyncOpenAI", return_value=inst),
         ):
             mock_settings.OPENAI_API_KEY = "sk-test"
             resp = client.post(
