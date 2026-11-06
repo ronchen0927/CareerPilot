@@ -4,12 +4,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Application settings loaded from environment variables / .env file."""
 
-    # 104 人力銀行 base URL
-    BASE_URL: str = "https://www.104.com.tw/jobs/search/api/jobs"
-
-    # 預設爬取頁數
-    DEFAULT_PAGES: int = 5
-
     # CORS 允許的來源（前端 URL）
     CORS_ORIGINS: list[str] = ["*"]
 

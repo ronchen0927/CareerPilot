@@ -26,7 +26,6 @@ def db_file(tmp_path, monkeypatch):
     """Point SQLite at a temp file so no test touches the real DB."""
     path = tmp_path / "test.db"
     monkeypatch.setattr("app.config.settings.DB_PATH", str(path))
-    monkeypatch.setattr("app.db._DB_PATH", path)
     return path
 
 
