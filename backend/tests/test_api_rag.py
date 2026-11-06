@@ -58,7 +58,7 @@ def test_create_document_then_list_and_delete(client):
     ]
     assert client.get("/api/rag/documents?doc_type=experience").json() == []
 
-    assert client.delete(f"/api/rag/documents/{doc['id']}").status_code == 200
+    assert client.delete(f"/api/rag/documents/{doc['id']}").status_code == 204
     assert client.get("/api/rag/documents").json() == []
 
 
@@ -121,7 +121,7 @@ def test_mock_interview_uses_closest_docs_and_persists(client):
     assert detail["technical_questions"] == ["Q1"]
     assert detail["behavioral_questions"] == ["B1"]
 
-    assert client.delete(f"/api/rag/mock-interviews/{data['id']}").status_code == 200
+    assert client.delete(f"/api/rag/mock-interviews/{data['id']}").status_code == 204
     assert client.get(f"/api/rag/mock-interviews/{data['id']}").status_code == 404
 
 
@@ -167,7 +167,7 @@ def test_resume_match_uses_closest_docs_and_persists(client):
     assert detail["gap_analysis"] == "缺 K8s"
     assert detail["job_url"] == "https://example.com/j"
 
-    assert client.delete(f"/api/rag/resume-matches/{data['id']}").status_code == 200
+    assert client.delete(f"/api/rag/resume-matches/{data['id']}").status_code == 204
     assert client.get(f"/api/rag/resume-matches/{data['id']}").status_code == 404
 
 
