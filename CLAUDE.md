@@ -156,3 +156,17 @@ static/                 # Served at /static by FastAPI
 - DB tests use an in-memory or `tmp_path` SQLite file via monkeypatching `settings.DB_PATH`.
 - When patching functions that are imported lazily inside a function body (e.g. `_fetch_new_jobs` in `trigger_alert`), patch the source module (`app.scheduler`) not the importing module (`app.routers.alerts`).
 - AI endpoint tests must mock `settings.OPENAI_API_KEY` (e.g. `patch("app.routers.chat.settings")` with `mock_settings.OPENAI_API_KEY = "sk-test"`) — otherwise the 503 guard fires in CI where no `.env` exists.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues (`ronchen0927/CareerPilot`) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` + `docs/adr/` at the repo root (created lazily). See `docs/agents/domain.md`.
