@@ -114,7 +114,7 @@ docker compose up -d --build   # 建置並啟動（首次建置需下載 Chromiu
 | 後端 API | FastAPI + Uvicorn |
 | 排程 | asyncio 背景 task（內建，零額外依賴） |
 | 爬蟲 | aiohttp（104 / Yourator JSON API、Michael Page SSR HTML）、Playwright（CakeResume SSR 資料擷取） |
-| 內容擷取 | trafilatura + Goose3（aiohttp 路徑）、Playwright（JS 渲染頁面 fallback） |
+| 內容擷取 | trafilatura（aiohttp 路徑）、Playwright（JS 渲染頁面 fallback） |
 | AI 功能 | OpenAI API（GPT）、pdfplumber（PDF 解析）、StreamingResponse（串流回應） |
 | RAG 技術 | 原生純 Python Cosine Similarity（輕量化檢索）、OpenAI Text Embedding |
 | 資料庫 | SQLite（aiosqlite），儲存評分、求職信、履歷改寫、職缺活躍度記錄 |
@@ -231,7 +231,7 @@ POST /api/jobs/fetch-url
 { "url": "https://www.cakeresume.com/jobs/..." }
 ```
 
-擷取策略：104 detail API → aiohttp+trafilatura/Goose3 → Playwright（三層 fallback）。
+擷取策略：104 detail API → aiohttp+trafilatura → Playwright（三層 fallback）。
 
 ### 職缺活躍度
 
