@@ -32,6 +32,16 @@ npm run build      # Build for production
 npx tsc --noEmit   # Type-check without emitting files
 ```
 
+### Docker
+
+```bash
+docker compose up -d --build   # Build + start (frontend at http://localhost:8080)
+docker compose logs -f backend # Tail backend logs
+docker compose down            # Stop
+```
+
+SQLite DB and `alerts.json` persist to `./data` (mounted at `/app/data`). `OPENAI_API_KEY` is read from the host env.
+
 `API_BASE` in `frontend/src/api/client.ts` comes from `VITE_API_BASE` (build-time, typed in `src/vite-env.d.ts`; see `frontend/.env.example`). Unset → `http://localhost:8000`; empty string → relative paths (docker-compose sets `""` so nginx proxies `/api/` to the backend).
 
 ## Architecture
@@ -60,12 +70,16 @@ backend/
                       # POST /api/cv/suggest-keywords — AI keyword suggestions from CV text
       fetch_url.py    # POST /api/jobs/fetch-url — smart fetch: 104 detail API → aiohttp → Playwright fallback
       chat.py         # POST /api/chat — streaming per-job Q&A via StreamingResponse
-      cover_letter.py # POST /api/jobs/cover-letter, GET /api/cover-letters, GET /api/cover-letters/{id}
-      resume.py       # POST /api/jobs/resume-rewrite, GET /api/resume-rewrites, GET /api/resume-rewrites/{id}
-      history.py      # GET /api/history, GET /api/history/{id} — evaluation history records
+      cover_letter.py # POST /api/jobs/cover-letter, POST /api/jobs/extract-company, GET /api/cover-letters, GET|DELETE /api/cover-letters/{id}
+      resume.py       # POST /api/jobs/resume-rewrite, GET /api/resume-rewrites, GET|DELETE /api/resume-rewrites/{id}
+      history.py      # GET /api/evaluations, GET|DELETE /api/evaluations/{id} — evaluation history records
       liveness.py     # POST /api/liveness/status, POST /api/liveness/check
-      applications.py # GET/POST /api/applications, POST /import, PATCH /status, DELETE ?url= — kanban (SQLite)
-      rag.py          # POST /api/rag/documents, /api/rag/mock-interview, /api/rag/resume-match — Local RAG pipeline
+      applications.py # GET/POST /api/applications, GET /{job_id}/records, POST /import, PATCH /status, DELETE ?url= — kanban (SQLite)
+      rag.py          # Local RAG pipeline, all under /api/rag:
+                      #   GET|POST /documents, DELETE /documents/{doc_id}, POST /extract-cv
+                      #   POST /mock-interview, GET /mock-interviews, GET|DELETE /mock-interviews/{id}
+                      #   POST /resume-match, GET /resume-matches, GET|DELETE /resume-matches/{id}
+  Dockerfile          # python:3.13-slim + uv + Playwright Chromium
   tests/
     conftest.py               # Fixtures: tmp_alerts_file (monkeypatches ALERTS_FILE), client (TestClient)
     test_scraper.py
@@ -79,11 +93,16 @@ backend/
     test_api_chat.py
     test_api_cv.py
     test_api_evaluate.py
+    test_api_applications.py / test_api_cover_letter.py / test_api_history.py
+    test_api_liveness.py / test_api_rag.py / test_api_resume.py
+    test_db_crud.py / test_db_path.py / test_job_links.py / test_openai_client.py
     test_fetchers.py
 frontend/
   src/
     main.tsx            # React entry point
-    App.tsx             # Routes: / | /dashboard | /alerts | /evaluate | /history | /cover-letter | /cover-letters | /resume-rewrite | /resume-rewrites | /settings
+    App.tsx             # Routes: / | /dashboard | /alerts | /evaluate | /history[/:id] | /cover-letter | /cover-letters[/:id]
+                        #   | /resume-rewrite | /resume-rewrites[/:id] | /settings | /smart-match | /knowledge-base
+                        #   | /interview-prep | /resume-match-history[/:id] | /mock-interviews[/:id]; unknown → /
     api/
       client.ts         # All fetch calls to the backend API
     components/
@@ -102,17 +121,23 @@ frontend/
       CoverLetterPage.tsx / CoverLetterHistoryPage.tsx / CoverLetterDetailPage.tsx
       ResumeRewritePage.tsx / ResumeRewriteHistoryPage.tsx / ResumeRewriteDetailPage.tsx
       KnowledgeBasePage.tsx # Local RAG Knowledge Base management and CV extraction
-      InterviewPrepPage.tsx / MockInterviewHistoryPage.tsx / ResumeMatchHistoryPage.tsx
+      InterviewPrepPage.tsx # RAG mock interview + resume match generation
+      MockInterviewHistoryPage.tsx / MockInterviewDetailPage.tsx
+      ResumeMatchHistoryPage.tsx / ResumeMatchDetailPage.tsx
+      SmartMatchPage.tsx # CV → AI keyword suggestions → search → evaluate
       SettingsPage.tsx  # User preferences (job prefs stored via usePreferences)
     hooks/
       useBookmarks.ts   # Bookmark/kanban CRUD via /api/applications (one-time import of legacy localStorage)
       useLocalStorage.ts
       useTheme.ts
       usePreferences.ts # User job preferences (stored in localStorage)
-      useLiveness.ts    # Polls GET /api/liveness to check backend connectivity
+      useLiveness.ts    # Job-posting liveness (still listed?) for bookmark URLs via POST /api/liveness/status|check
     types/
       index.ts          # Shared TypeScript interfaces
+  Dockerfile            # Vite build → nginx
+  nginx.conf            # Serves SPA; proxies /api/ and /static/ to backend:8000 (buffering off for chat streaming)
 static/                 # Served at /static by FastAPI
+docker-compose.yml      # backend + frontend (port 8080), ./data volume, VITE_API_BASE=""
 ```
 
 **Data flow:** Frontend form (with tab-based platform filters) → `POST /api/jobs/search` → `scraper.scrape_jobs()` / `scraper_cake.scrape_jobs()` / `scraper_yourator.scrape_jobs()` / `scraper_michaelpage.scrape_jobs()` fetch concurrently via `asyncio.gather` → deduplicates by job link → sorts by date descending → returns `JobSearchResponse`.
