@@ -208,9 +208,15 @@ async def list_job_records(job_id: int) -> dict[str, list[int]]:
     return out
 
 
+# History tables sharing list/get/delete; each has `id` and `created_at`.
+_HISTORY_TABLES = frozenset(
+    {"evaluations", "cover_letters", "resume_rewrites", "resume_matches", "mock_interviews"}
+)
+
+
 def _table(table: str) -> str:
     # Table names can't be bound as parameters, so only hard-coded names reach the SQL.
-    if table not in _JOB_LINKED_TABLES:
+    if table not in _HISTORY_TABLES:
         raise ValueError(f"unknown table: {table}")
     return table
 
@@ -218,7 +224,7 @@ def _table(table: str) -> str:
 async def _list(table: str) -> list[dict]:
     async with _connect() as db:
         db.row_factory = aiosqlite.Row
-        async with db.execute(f"SELECT * FROM {_table(table)} ORDER BY created_at DESC") as cur:  # noqa: S608
+        async with db.execute(f"SELECT * FROM {_table(table)} ORDER BY created_at DESC") as cur:
             rows = await cur.fetchall()
     return [dict(r) for r in rows]
 
@@ -226,14 +232,14 @@ async def _list(table: str) -> list[dict]:
 async def _get(table: str, record_id: int) -> dict | None:
     async with _connect() as db:
         db.row_factory = aiosqlite.Row
-        async with db.execute(f"SELECT * FROM {_table(table)} WHERE id = ?", (record_id,)) as cur:  # noqa: S608
+        async with db.execute(f"SELECT * FROM {_table(table)} WHERE id = ?", (record_id,)) as cur:
             row = await cur.fetchone()
     return dict(row) if row else None
 
 
 async def _delete(table: str, record_id: int) -> bool:
     async with _connect() as db:
-        cur = await db.execute(f"DELETE FROM {_table(table)} WHERE id = ?", (record_id,))  # noqa: S608
+        cur = await db.execute(f"DELETE FROM {_table(table)} WHERE id = ?", (record_id,))
         await db.commit()
         return cur.rowcount > 0
 
