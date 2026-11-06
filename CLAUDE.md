@@ -32,7 +32,7 @@ npm run build      # Build for production
 npx tsc --noEmit   # Type-check without emitting files
 ```
 
-`API_BASE` is hardcoded to `http://localhost:8000` in `frontend/src/api/client.ts`.
+`API_BASE` in `frontend/src/api/client.ts` comes from `VITE_API_BASE` (build-time, typed in `src/vite-env.d.ts`; see `frontend/.env.example`). Unset → `http://localhost:8000`; empty string → relative paths (docker-compose sets `""` so nginx proxies `/api/` to the backend).
 
 ## Architecture
 

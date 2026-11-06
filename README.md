@@ -107,6 +107,25 @@ docker compose up -d --build   # 建置並啟動（首次建置需下載 Chromiu
 - 停止服務：`docker compose down`
 - 查看後端日誌：`docker compose logs -f backend`
 
+### 後端位址設定（`VITE_API_BASE`）
+
+前端呼叫的後端位址由 `VITE_API_BASE` 決定，**在 build 時寫入**靜態檔（改完要重新 build）：
+
+| 值 | 行為 |
+|----|------|
+| 未設定 | 預設 `http://localhost:8000`（本機開發） |
+| 空字串 `""` | 使用相對路徑，由同源反向代理轉發（docker-compose 即用此設定，交給 nginx） |
+| 完整 URL | 直接呼叫該後端，例如前後端部署在不同主機 |
+
+非 docker-compose 部署時：
+
+```bash
+cd frontend
+VITE_API_BASE=https://api.example.com npm run build
+```
+
+也可參考 `frontend/.env.example` 建立 `frontend/.env`。跨網域部署時，若有收緊後端 `CORS_ORIGINS`（預設 `["*"]`），記得包含前端網域。
+
 ## 🏗️ 技術架構
 
 | 層級 | 技術 |
