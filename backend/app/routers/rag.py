@@ -91,12 +91,11 @@ async def get_documents(doc_type: str | None = None):
     return [RagDocumentResponse(**doc) for doc in docs]
 
 
-@router.delete("/documents/{doc_id}")
+@router.delete("/documents/{doc_id}", status_code=204)
 async def delete_document(doc_id: int):
     success = await delete_rag_document(doc_id)
     if not success:
         raise HTTPException(status_code=404, detail="Document not found")
-    return {"message": "deleted"}
 
 
 @router.post("/extract-cv")
@@ -262,12 +261,11 @@ async def read_resume_match(match_id: int):
     return match
 
 
-@router.delete("/resume-matches/{match_id}")
+@router.delete("/resume-matches/{match_id}", status_code=204)
 async def delete_resume_match_endpoint(match_id: int):
     success = await delete_resume_match(match_id)
     if not success:
         raise HTTPException(status_code=404, detail="Resume match not found")
-    return {"message": "deleted"}
 
 
 @router.get("/mock-interviews")
@@ -288,9 +286,8 @@ async def read_mock_interview(match_id: int):
     return match
 
 
-@router.delete("/mock-interviews/{match_id}")
+@router.delete("/mock-interviews/{match_id}", status_code=204)
 async def delete_mock_interview_endpoint(match_id: int):
     success = await delete_mock_interview(match_id)
     if not success:
         raise HTTPException(status_code=404, detail="Mock interview not found")
-    return {"message": "deleted"}
