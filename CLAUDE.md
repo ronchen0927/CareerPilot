@@ -156,7 +156,7 @@ static/                 # Served at /static by FastAPI
 - `run_scheduler` and `run_liveness_loop` are replaced with `AsyncMock` in the `client` fixture so the lifespan completes instantly.
 - DB tests use an in-memory or `tmp_path` SQLite file via monkeypatching `settings.DB_PATH`.
 - When patching functions that are imported lazily inside a function body (e.g. `_fetch_new_jobs` in `trigger_alert`), patch the source module (`app.scheduler`) not the importing module (`app.routers.alerts`).
-- All AI routers get their client from `app.openai_client.get_openai_client()`, which owns the `OPENAI_API_KEY` 503 guard. Tests must patch `app.openai_client.settings` (with `mock_settings.OPENAI_API_KEY = "sk-test"`) and `app.openai_client.AsyncOpenAI`, not the router module — otherwise the 503 guard fires in CI where no `.env` exists.
+- All AI routers get their client from `app.openai_client.get_openai_client()`, which owns the `OPENAI_API_KEY` 503 guard. Tests must patch `app.openai_client.settings` (with `mock_settings.OPENAI_API_KEY = "sk-test"`) or `patch.object(settings, "OPENAI_API_KEY", ...)`, and `app.openai_client.AsyncOpenAI` — not the router module — otherwise the 503 guard fires in CI where no `.env` exists.
 
 ## Agent skills
 
