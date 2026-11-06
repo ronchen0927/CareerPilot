@@ -109,7 +109,7 @@ docker compose up -d --build   # 建置並啟動（首次建置需下載 Chromiu
 
 ### 後端位址設定（`VITE_API_BASE`）
 
-前端呼叫的後端位址由 `VITE_API_BASE` 決定，**在 build 時寫入**靜態檔（改完要重新 build）：
+前端呼叫的後端位址由 `VITE_API_BASE` 決定，**在 build 時寫入**靜態檔（改完要重新 build；`npm run dev` 則需重啟 dev server）：
 
 | 值 | 行為 |
 |----|------|
