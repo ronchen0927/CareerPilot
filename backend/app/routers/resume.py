@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from openai import AsyncOpenAI
 
-from ..config import settings
 from ..db import (
     delete_resume_rewrite,
     get_or_create_job,
@@ -10,6 +9,7 @@ from ..db import (
     save_resume_rewrite,
 )
 from ..models import ResumeRewriteRecord, ResumeRewriteRequest, ResumeRewriteResponse
+from ..openai_client import get_openai_client
 
 router = APIRouter(tags=["resume-rewrite"])
 
@@ -39,15 +39,6 @@ Detect the primary language of the ORIGINAL RESUME and write the rewritten resum
 ## Original Resume
 {user_cv}
 """
-
-
-def _make_client() -> AsyncOpenAI:
-    if not settings.OPENAI_API_KEY:
-        raise HTTPException(
-            status_code=503,
-            detail="尚未設定 OPENAI_API_KEY，請在 backend/.env 加入 OPENAI_API_KEY=sk-...",
-        )
-    return AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 async def _call_openai(client: AsyncOpenAI, job_text: str, user_cv: str) -> str:
@@ -87,7 +78,7 @@ def _row_to_record(row: dict) -> ResumeRewriteRecord:
 @router.post("/api/jobs/resume-rewrite", response_model=ResumeRewriteResponse)
 async def rewrite_resume(request: ResumeRewriteRequest):
     """根據職缺描述改寫履歷。輸出語言跟隨原始履歷（中文 → 中文、英文 → 英文）"""
-    client = _make_client()
+    client = get_openai_client()
     job_text = request.job_text.strip()
     user_cv = request.user_cv.strip()
 

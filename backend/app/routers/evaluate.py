@@ -4,7 +4,6 @@ import json
 from fastapi import APIRouter, HTTPException
 from openai import AsyncOpenAI
 
-from ..config import settings
 from ..db import backfill_evaluation, get_cached, get_or_create_job, save_evaluation
 from ..models import (
     EvaluationDimensions,
@@ -12,6 +11,7 @@ from ..models import (
     JobEvaluateResponse,
     JobEvaluateTextRequest,
 )
+from ..openai_client import get_openai_client
 
 router = APIRouter(prefix="/api/jobs", tags=["evaluate"])
 
@@ -25,15 +25,6 @@ _DIMENSIONS_SPEC = """\
     "location_flexibility": <1~5的數字，一位小數，地理或遠端彈性>,
     "overall_score": <1~5的數字，一位小數，對以上各項的綜合評分>
   }"""
-
-
-def _make_openai_client() -> AsyncOpenAI:
-    if not settings.OPENAI_API_KEY:
-        raise HTTPException(
-            status_code=503,
-            detail="尚未設定 OPENAI_API_KEY，請在 backend/.env 加入 OPENAI_API_KEY=sk-...",
-        )
-    return AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 def _compute_hash(*parts: str) -> str:
@@ -120,7 +111,7 @@ async def evaluate_job(request: JobEvaluateRequest):
             cached, job_url, job_text, job.job, job.company, request.job_id
         )
 
-    client = _make_openai_client()
+    client = get_openai_client()
     cv_section = f"\n\n## 求職者背景\n{request.user_cv.strip()}" if request.user_cv.strip() else ""
     jd_section = (
         f"\n\nJob Description (full text):\n{request.job_description.strip()}"
@@ -179,7 +170,7 @@ async def evaluate_job_text(request: JobEvaluateTextRequest):
     if cached:
         return await _cached_response(cached, job_url, job_text, "", "", request.job_id)
 
-    client = _make_openai_client()
+    client = get_openai_client()
     cv_section = f"\n\n## 求職者背景\n{request.user_cv.strip()}" if request.user_cv.strip() else ""
 
     prompt = f"""You are a professional career advisor. Evaluate the fit between the candidate and the job listing below, then respond in strict JSON format.

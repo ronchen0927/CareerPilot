@@ -43,7 +43,7 @@ def test_job_description_included_in_prompt(client):
         return _FAKE_RESULT
 
     with (
-        patch("app.routers.evaluate.settings") as mock_settings,
+        patch("app.openai_client.settings") as mock_settings,
         patch("app.routers.evaluate._call_openai", fake_call_openai),
         patch("app.routers.evaluate.get_cached", AsyncMock(return_value=None)),
         patch("app.routers.evaluate.save_evaluation", AsyncMock()),
@@ -70,7 +70,7 @@ def test_evaluate_without_job_description_omits_jd_section(client):
         return _FAKE_RESULT
 
     with (
-        patch("app.routers.evaluate.settings") as mock_settings,
+        patch("app.openai_client.settings") as mock_settings,
         patch("app.routers.evaluate._call_openai", fake_call_openai),
         patch("app.routers.evaluate.get_cached", AsyncMock(return_value=None)),
         patch("app.routers.evaluate.save_evaluation", AsyncMock()),
@@ -92,7 +92,7 @@ _URL = "https://www.104.com.tw/job/xyz"
 
 def _post_evaluate_text(client, **extra):
     with (
-        patch("app.routers.evaluate.settings") as mock_settings,
+        patch("app.openai_client.settings") as mock_settings,
         patch("app.routers.evaluate._call_openai", AsyncMock(return_value=_FAKE_RESULT)),
     ):
         mock_settings.OPENAI_API_KEY = "sk-test"

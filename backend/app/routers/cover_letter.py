@@ -1,7 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from openai import AsyncOpenAI
 
-from ..config import settings
 from ..db import (
     delete_cover_letter,
     get_cover_letter,
@@ -16,6 +14,7 @@ from ..models import (
     ExtractCompanyRequest,
     ExtractCompanyResponse,
 )
+from ..openai_client import get_openai_client
 
 router = APIRouter(tags=["cover-letter"])
 
@@ -49,19 +48,10 @@ Job Description:
 """
 
 
-def _make_client() -> AsyncOpenAI:
-    if not settings.OPENAI_API_KEY:
-        raise HTTPException(
-            status_code=503,
-            detail="尚未設定 OPENAI_API_KEY，請在 backend/.env 加入 OPENAI_API_KEY=sk-...",
-        )
-    return AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-
-
 @router.post("/api/jobs/cover-letter", response_model=CoverLetterResponse)
 async def generate_cover_letter(request: CoverLetterRequest):
     """根據職缺描述與履歷，用 AI 產生自我推薦信並存入資料庫"""
-    client = _make_client()
+    client = get_openai_client()
     cv_section = request.user_cv.strip() or "（未提供）"
     company = request.company_name.strip()
     user = request.user_name.strip()
@@ -119,7 +109,7 @@ async def generate_cover_letter(request: CoverLetterRequest):
 @router.post("/api/jobs/extract-company", response_model=ExtractCompanyResponse)
 async def extract_company_name(request: ExtractCompanyRequest):
     """從職缺描述中用 AI 萃取公司名稱"""
-    client = _make_client()
+    client = get_openai_client()
     try:
         response = await client.chat.completions.create(
             model="gpt-5.4-mini",

@@ -2,13 +2,12 @@
 
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-from openai import AsyncOpenAI
 from pydantic import BaseModel
 
-from ..config import settings
 from ..models import JobListing
+from ..openai_client import get_openai_client
 
 router = APIRouter(tags=["chat"])
 
@@ -45,13 +44,7 @@ Job URL: {link}
 
 @router.post("/api/chat")
 async def chat(request: ChatRequest):
-    if not settings.OPENAI_API_KEY:
-        raise HTTPException(
-            status_code=503,
-            detail="尚未設定 OPENAI_API_KEY，請在 backend/.env 加入 OPENAI_API_KEY=sk-...",
-        )
-
-    client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+    client = get_openai_client()
     job = request.job
     system_content = _SYSTEM_PROMPT.format(
         job=job.job,

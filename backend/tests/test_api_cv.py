@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 class TestSuggestKeywords:
     def test_returns_keywords_list(self, client):
         with (
-            patch("app.routers.cv.settings") as mock_settings,
-            patch("app.routers.cv.AsyncOpenAI") as MockAI,
+            patch("app.openai_client.settings") as mock_settings,
+            patch("app.openai_client.AsyncOpenAI") as MockAI,
         ):
             mock_settings.OPENAI_API_KEY = "sk-test"
             inst = MagicMock()
@@ -30,7 +30,7 @@ class TestSuggestKeywords:
         assert len(data["keywords"]) >= 1
 
     def test_missing_openai_key_returns_503(self, client):
-        with patch("app.routers.cv.settings") as mock_settings:
+        with patch("app.openai_client.settings") as mock_settings:
             mock_settings.OPENAI_API_KEY = ""
             resp = client.post(
                 "/api/cv/suggest-keywords",
@@ -51,8 +51,8 @@ class TestSuggestKeywords:
 
     def test_openai_error_returns_502(self, client):
         with (
-            patch("app.routers.cv.settings") as mock_settings,
-            patch("app.routers.cv.AsyncOpenAI") as MockAI,
+            patch("app.openai_client.settings") as mock_settings,
+            patch("app.openai_client.AsyncOpenAI") as MockAI,
         ):
             mock_settings.OPENAI_API_KEY = "sk-test"
             inst = MagicMock()

@@ -5,7 +5,6 @@ import traceback
 from fastapi import APIRouter, HTTPException
 from openai import AsyncOpenAI
 
-from ..config import settings
 from ..db import (
     delete_mock_interview,
     delete_rag_document,
@@ -29,6 +28,7 @@ from ..models import (
     ResumeMatchRequest,
     ResumeMatchResponse,
 )
+from ..openai_client import get_openai_client
 
 router = APIRouter(prefix="/api/rag", tags=["RAG"])
 
@@ -40,12 +40,6 @@ def cosine_similarity(v1: list[float], v2: list[float]) -> float:
     if magnitude1 == 0 or magnitude2 == 0:
         return 0.0
     return dot_product / (magnitude1 * magnitude2)
-
-
-def _make_openai_client() -> AsyncOpenAI:
-    if not settings.OPENAI_API_KEY:
-        raise HTTPException(status_code=503, detail="OPENAI_API_KEY is missing")
-    return AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 async def _get_embedding(client: AsyncOpenAI, text: str) -> list[float]:
@@ -72,7 +66,7 @@ async def _retrieve_top_k(
 
 @router.post("/documents", response_model=RagDocumentResponse)
 async def create_document(req: RagDocumentCreate):
-    client = _make_openai_client()
+    client = get_openai_client()
     try:
         embedding = await _get_embedding(client, req.content)
         doc_id = await save_rag_document(req.doc_type, req.content, embedding)
@@ -107,7 +101,7 @@ async def delete_document(doc_id: int):
 
 @router.post("/extract-cv")
 async def extract_cv_to_documents(req: CVExtractRequest):
-    client = _make_openai_client()
+    client = get_openai_client()
     system_prompt = """You are an expert resume parser.
 Extract individual distinct "projects" and "work experiences" from the provided resume text.
 For each item, provide a detailed textual description that encapsulates the skills, tech stack, and achievements.
@@ -149,7 +143,7 @@ Each object must have:
 
 @router.post("/mock-interview", response_model=MockInterviewResponse)
 async def generate_mock_interview(req: MockInterviewRequest):
-    client = _make_openai_client()
+    client = get_openai_client()
     jd_embedding = await _get_embedding(client, req.job_text)
 
     retrieved_docs = await _retrieve_top_k(jd_embedding, ["project", "interview_question"], top_k=5)
@@ -201,7 +195,7 @@ All text values must be written in Traditional Chinese (繁體中文)."""
 
 @router.post("/resume-match", response_model=ResumeMatchResponse)
 async def generate_resume_match(req: ResumeMatchRequest):
-    client = _make_openai_client()
+    client = get_openai_client()
     jd_embedding = await _get_embedding(client, req.job_text)
 
     retrieved_docs = await _retrieve_top_k(jd_embedding, ["experience", "project"], top_k=5)
