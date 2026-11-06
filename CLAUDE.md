@@ -32,17 +32,15 @@ npm run build      # Build for production
 npx tsc --noEmit   # Type-check without emitting files
 ```
 
+`API_BASE` in `frontend/src/api/client.ts` comes from `VITE_API_BASE` (build-time, typed in `src/vite-env.d.ts`; see `frontend/.env.example`). Unset → `http://localhost:8000`; empty string → relative paths (docker-compose sets `""` so nginx proxies `/api/` to the backend).
+
 ### Docker
 
 ```bash
 docker compose up -d --build   # Build + start (frontend at http://localhost:8080)
-docker compose logs -f backend # Tail backend logs
-docker compose down            # Stop
 ```
 
-SQLite DB and `alerts.json` persist to `./data` (mounted at `/app/data`). `OPENAI_API_KEY` is read from the host env.
-
-`API_BASE` in `frontend/src/api/client.ts` comes from `VITE_API_BASE` (build-time, typed in `src/vite-env.d.ts`; see `frontend/.env.example`). Unset → `http://localhost:8000`; empty string → relative paths (docker-compose sets `""` so nginx proxies `/api/` to the backend).
+SQLite DB and `alerts.json` persist to `./data`; `OPENAI_API_KEY` comes from the host env or root `.env`. More in README §Docker.
 
 ## Architecture
 
@@ -70,15 +68,15 @@ backend/
                       # POST /api/cv/suggest-keywords — AI keyword suggestions from CV text
       fetch_url.py    # POST /api/jobs/fetch-url — smart fetch: 104 detail API → aiohttp → Playwright fallback
       chat.py         # POST /api/chat — streaming per-job Q&A via StreamingResponse
-      cover_letter.py # POST /api/jobs/cover-letter, POST /api/jobs/extract-company, GET /api/cover-letters, GET|DELETE /api/cover-letters/{id}
-      resume.py       # POST /api/jobs/resume-rewrite, GET /api/resume-rewrites, GET|DELETE /api/resume-rewrites/{id}
-      history.py      # GET /api/evaluations, GET|DELETE /api/evaluations/{id} — evaluation history records
+      cover_letter.py # POST /api/jobs/cover-letter, POST /api/jobs/extract-company, GET /api/cover-letters, GET/DELETE /api/cover-letters/{id}
+      resume.py       # POST /api/jobs/resume-rewrite, GET /api/resume-rewrites, GET/DELETE /api/resume-rewrites/{id}
+      history.py      # GET /api/evaluations, GET/DELETE /api/evaluations/{id} — evaluation history records
       liveness.py     # POST /api/liveness/status, POST /api/liveness/check
       applications.py # GET/POST /api/applications, GET /{job_id}/records, POST /import, PATCH /status, DELETE ?url= — kanban (SQLite)
       rag.py          # Local RAG pipeline, all under /api/rag:
-                      #   GET|POST /documents, DELETE /documents/{doc_id}, POST /extract-cv
-                      #   POST /mock-interview, GET /mock-interviews, GET|DELETE /mock-interviews/{id}
-                      #   POST /resume-match, GET /resume-matches, GET|DELETE /resume-matches/{id}
+                      #   GET/POST /documents, DELETE /documents/{doc_id}, POST /extract-cv
+                      #   POST /mock-interview, GET /mock-interviews, GET/DELETE /mock-interviews/{id}
+                      #   POST /resume-match, GET /resume-matches, GET/DELETE /resume-matches/{id}
   Dockerfile          # python:3.13-slim + uv + Playwright Chromium
   tests/
     conftest.py               # Fixtures: tmp_alerts_file (monkeypatches ALERTS_FILE), client (TestClient)
@@ -131,13 +129,13 @@ frontend/
       useLocalStorage.ts
       useTheme.ts
       usePreferences.ts # User job preferences (stored in localStorage)
-      useLiveness.ts    # Job-posting liveness (still listed?) for bookmark URLs via POST /api/liveness/status|check
+      useLiveness.ts    # Checks whether bookmarked postings are still open (POST /api/liveness/status, /check)
     types/
       index.ts          # Shared TypeScript interfaces
   Dockerfile            # Vite build → nginx
   nginx.conf            # Serves SPA; proxies /api/ and /static/ to backend:8000 (buffering off for chat streaming)
 static/                 # Served at /static by FastAPI
-docker-compose.yml      # backend + frontend (port 8080), ./data volume, VITE_API_BASE=""
+docker-compose.yml      # backend + frontend (port 8080), ./data volume, VITE_API_BASE="" build arg
 ```
 
 **Data flow:** Frontend form (with tab-based platform filters) → `POST /api/jobs/search` → `scraper.scrape_jobs()` / `scraper_cake.scrape_jobs()` / `scraper_yourator.scrape_jobs()` / `scraper_michaelpage.scrape_jobs()` fetch concurrently via `asyncio.gather` → deduplicates by job link → sorts by date descending → returns `JobSearchResponse`.
