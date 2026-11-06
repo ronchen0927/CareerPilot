@@ -4,10 +4,11 @@ import ssl
 
 import aiohttp
 
-from .config import settings
 from .models import JobListing, JobSearchRequest
 
 logger = logging.getLogger(__name__)
+
+BASE_URL = "https://www.104.com.tw/jobs/search/api/jobs"
 
 
 # Education mapping
@@ -63,7 +64,7 @@ def _build_url(keyword: str, area: str, page: int, jobexp: str) -> str:
         params += f"&area={area}"
     if jobexp:
         params += f"&jobexp={jobexp}"
-    return f"{settings.BASE_URL}?{params}"
+    return f"{BASE_URL}?{params}"
 
 
 def _sort_key(job: JobListing) -> str:

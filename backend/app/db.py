@@ -1,26 +1,16 @@
 import json
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 import aiosqlite
 
 from .config import settings
 
-_DB_PATH: Path | None = None
-
-
-def _db_path() -> Path:
-    global _DB_PATH
-    if _DB_PATH is None:
-        _DB_PATH = Path(settings.DB_PATH)
-    return _DB_PATH
-
 
 @asynccontextmanager
 async def _connect() -> AsyncIterator[aiosqlite.Connection]:
     """Open a connection with foreign-key enforcement (SQLite disables it per connection)."""
-    async with aiosqlite.connect(_db_path()) as db:
+    async with aiosqlite.connect(settings.DB_PATH) as db:
         await db.execute("PRAGMA foreign_keys=ON")
         yield db
 
